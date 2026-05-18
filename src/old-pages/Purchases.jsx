@@ -58,7 +58,7 @@ export function Purchases() {
       setIsAddingMode(false);
       setSelectedCompany("");
       setPurchaseItems([]);
-    } catch (err) {
+    } catch (_err) {
       // Error handled in hook
     }
   };

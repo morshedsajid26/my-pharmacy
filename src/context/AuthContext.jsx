@@ -1,54 +1,85 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import Cookies from "js-cookie";
+import { loginAction, signupAction, logoutAction, getSession, getCurrentUser } from "@/lib/actions/auth.actions";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("pharma_user");
-    const token = Cookies.get("pharma_token");
-    return (savedUser && token) ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
-    // Initial loading state check
-    setLoading(false);
+    async function initAuth() {
+      try {
+        const session = await getSession();
+        if (session) {
+          // Fetch full user details from PostgreSQL including profile picture
+          const fullUser = await getCurrentUser();
+          if (fullUser) {
+            setUser(fullUser);
+          } else {
+            setUser(session);
+          }
+        }
+      } catch (error) {
+        console.error("Auth init error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    initAuth();
   }, []);
 
   const login = async (email, password) => {
-    const mockUser = { id: '1', name: 'Admin', email: email, role: 'admin' };
-    setUser(mockUser);
-    localStorage.setItem("pharma_user", JSON.stringify(mockUser));
-    Cookies.set("pharma_token", "mock_token", { expires: 7, secure: true, sameSite: 'strict' });
-    toast.success("Mock Login successful!");
-    return true; // the component expects truthy for success
+    try {
+      const result = await loginAction(email, password);
+      if (result.success) {
+        // Fetch full profile including profile picture right after login
+        const fullUser = await getCurrentUser();
+        setUser(fullUser || result.user);
+        toast.success("Login successful!");
+        return true;
+      }
+    } catch (error) {
+      toast.error(error.message || "Login failed");
+      return false;
+    }
   };
 
-  const signup = async (name, email, password) => {
-    const mockUser = { id: '1', name: name, email: email, role: 'user' };
-    setUser(mockUser);
-    localStorage.setItem("pharma_user", JSON.stringify(mockUser));
-    Cookies.set("pharma_token", "mock_token", { expires: 7, secure: true, sameSite: 'strict' });
-    toast.success("Mock Account created successfully!");
-    return true;
+  const signup = async (name, email, password, role) => {
+    try {
+      const result = await signupAction(name, email, password, role);
+      if (result.success) {
+        toast.success("Account created! Please login.");
+        return true;
+      }
+    } catch (error) {
+      toast.error(error.message || "Signup failed");
+      return false;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("pharma_user");
-    Cookies.remove("pharma_token");
-    queryClient.clear();
-    toast.success("Logged out successfully");
+  const logout = async () => {
+    try {
+      await logoutAction();
+      setUser(null);
+      queryClient.clear();
+      toast.success("Logged out successfully");
+      router.replace("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed");
+    }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
+      setUser,
       login, 
       signup, 
       logout, 
@@ -56,7 +87,7 @@ export function AuthProvider({ children }) {
       isLoggingIn: false,
       isSigningUp: false
     }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String    @unique
+  password            String
+  role                String    @default("staff") // "admin", "staff"
+  profilePicture      String?
+  resetOtp            String?
+  resetOtpExpiresAt   DateTime?
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Medicine {
+  id            String     @id @default(cuid())
+  name          String
+  company       String
+  category      String
+  purchasePrice Float
+  sellingPrice  Float
+  stock         Int        @default(0)
+  expiryDate    DateTime?
+  status        String     @default("In Stock") // "In Stock", "Low", "Out of Stock"
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  SaleItem      SaleItem[]
+  PurchaseItem  PurchaseItem[]
+}
+
+model Sale {
+  id                  String     @id @default(cuid())
+  invoiceNo           String     @unique
+  date                DateTime   @default(now())
+  totalAmount         Float
+  paidAmount          Float      @default(0)
+  dueAmount           Float      @default(0)
+  profit              Float
+  itemsCount          Int
+  items               SaleItem[]
+  customer            Customer?  @relation(fields: [customerId], references: [id])
+  customerId          String?
+  walkingCustomerName String?
+  createdAt           DateTime   @default(now())
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String   @unique
+  email       String?
+  dueAmount   Float    @default(0)
+  totalSpent  Float    @default(0)
+  status      String   @default("Regular") // "Regular", "VIP", "Credit"
+  sales       Sale[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  saleId      String
+  medicine    Medicine @relation(fields: [medicineId], references: [id])
+  medicineId  String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  createdAt   DateTime @default(now())
+}
+
+model Purchase {
+  id          String         @id @default(cuid())
+  invoiceNo   String         @unique
+  date        DateTime       @default(now())
+  supplier    String
+  totalAmount Float
+  items       PurchaseItem[]
+  createdAt   DateTime       @default(now())
+}
+
+model PurchaseItem {
+  id          String   @id @default(cuid())
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  purchaseId  String
+  medicine    Medicine @relation(fields: [medicineId], references: [id])
+  medicineId  String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  createdAt   DateTime @default(now())
+}

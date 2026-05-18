@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Mail, Lock, UserPlus, Loader2 } from "lucide-react";
-import { Input } from "../components/FormElements";
+import { UserPlus, Loader2 } from "lucide-react";
+import InputField from "../components/InputField";
+import Password from "../components/Password";
+import Dropdown from "../components/Dropdown";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,6 +12,7 @@ export function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("Pharmacist");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -20,7 +23,7 @@ export function Signup() {
       return alert("Passwords do not match!");
     }
     setIsSubmitting(true);
-    const success = await signup(name, email, password);
+    const success = await signup(name, email, password, role);
     setIsSubmitting(false);
     if (success) {
       navigate("/");
@@ -35,56 +38,48 @@ export function Signup() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
-          <User className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-          <Input 
-            label="Full Name"
-            placeholder="John Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
+        <InputField 
+          label="Full Name"
+          placeholder="John Doe"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
 
-        <div className="relative">
-          <Mail className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-          <Input 
-            label="Email Address"
-            type="email"
-            placeholder="john@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
+        <InputField 
+          label="Email Address"
+          type="email"
+          placeholder="john@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <Dropdown 
+          label="Account Role"
+          placeholder="Select Role"
+          options={["Owner", "Pharmacist", "Staff"]}
+          value={role}
+          onSelect={(val) => setRole(val)}
+          labelClass="text-slate-700 font-medium text-sm"
+          inputClass="!border-slate-200 !text-slate-900"
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <Lock className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-            <Input 
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10"
-              required
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-            <Input 
-              label="Confirm"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10"
-              required
-            />
-          </div>
+          <Password 
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Password 
+            label="Confirm"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
         </div>
 
         <div className="flex items-start gap-2 pt-2 cursor-pointer group">

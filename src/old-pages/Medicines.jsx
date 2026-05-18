@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Search, Filter, Edit2, Trash2, Loader2 } from "lucide-react";
-import { Table, TableRow, TableCell } from "../components/Table";
+import { Table } from "../components/Table";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Modal } from "../components/Modal";
 import { Input, Select } from "../components/FormElements";
+import InputField from "../components/InputField";
+import Dropdown from "../components/Dropdown";
 import { useMedicines } from "../hooks/useMedicines";
-import toast from "react-hot-toast";
 
 export function Medicines() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,7 +26,7 @@ export function Medicines() {
   const [editingMedicine, setEditingMedicine] = useState(null);
   const [formData, setFormData] = useState({});
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingMedicine(null);
     setFormData({
       name: "",
@@ -37,15 +38,15 @@ export function Medicines() {
       expiryDate: ""
     });
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openEditModal = (medicine) => {
+  const openEditModal = useCallback((medicine) => {
     setEditingMedicine(medicine);
     setFormData(medicine);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       if (editingMedicine) {
         await updateMedicine({ id: editingMedicine.id, data: formData });
@@ -53,16 +54,16 @@ export function Medicines() {
         await addMedicine(formData);
       }
       setIsModalOpen(false);
-    } catch (err) {
+    } catch (_err) {
       // Error handled in hook
     }
-  };
+  }, [editingMedicine, formData, updateMedicine, addMedicine]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm("Are you sure you want to delete this medicine?")) {
       await deleteMedicine(id);
     }
-  };
+  }, [deleteMedicine]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -76,6 +77,43 @@ export function Medicines() {
         return status;
     }
   };
+
+  const columns = useMemo(() => [
+    { key: "name", Title: "Medicine Name" },
+    { key: "company", Title: "Company" },
+    { key: "category", Title: "Category", render: (row) => (
+      <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">{row.category}</span>
+    )},
+    { key: "stock", Title: "Stock", render: (row) => (
+      <span className={row.stock <= 5 ? "text-red-600 font-bold" : row.stock <= 10 ? "text-amber-600 font-bold" : "font-medium"}>
+        {row.stock}
+      </span>
+    )},
+    { key: "sellingPrice", Title: "Selling Price", render: (row) => (
+      <span className="font-medium">৳{row.sellingPrice?.toFixed(2)}</span>
+    )},
+    { key: "status", Title: "Status", render: (row) => getStatusBadge(row.status || "In Stock") },
+    { key: "expiryDate", Title: "Expiry", render: (row) => (
+      <span className="text-slate-500">{row.expiryDate}</span>
+    )},
+    { key: "actions", Title: "Actions", sortable: false, render: (row) => (
+      <div className="flex items-center justify-center gap-2">
+        <button 
+          onClick={() => openEditModal(row)} 
+          className="p-1.5 text-slate-400 hover:text-medical-blue-600 hover:bg-medical-blue-50 rounded-lg transition-colors"
+        >
+          <Edit2 size={16} />
+        </button>
+        <button 
+          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+          onClick={() => handleDelete(row.id)}
+          disabled={isDeleting}
+        >
+          {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+        </button>
+      </div>
+    )},
+  ], [isDeleting, handleDelete, openEditModal]);
 
   return (
     <div className="space-y-6">
@@ -92,27 +130,22 @@ export function Medicines() {
 
       <Card className="overflow-hidden">
         {/* Filters */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input 
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+          <div className="flex-1">
+            <InputField 
               placeholder="Search by name or company..." 
-              className="pl-10"
+              icon={<Search size={18} />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-3">
-             <Select 
-                className="w-40"
-                options={[
-                  { label: "All Categories", value: "all" },
-                  { label: "Tablet", value: "tablet" },
-                  { label: "Capsule", value: "capsule" },
-                  { label: "Syrup", value: "syrup" },
-                ]}
+             <Dropdown 
+                className="w-48"
+                placeholder="All Categories"
+                options={["All Categories", "Tablet", "Capsule", "Syrup", "Suspension", "Inhaler"]}
              />
-             <Button variant="outline" className="gap-2">
+             <Button variant="outline" className="h-13 gap-2 rounded-xl">
                 <Filter size={16} />
                 <span>More Filters</span>
              </Button>
@@ -120,70 +153,11 @@ export function Medicines() {
         </div>
 
         {/* Table */}
-        <Table headers={[
-          "Medicine Name", 
-          "Company", 
-          "Category", 
-          "Stock", 
-          "Selling Price", 
-          "Status", 
-          "Expiry", 
-          "Actions"
-        ]}>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center py-10">
-                <div className="flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 className="w-8 h-8 animate-spin text-medical-blue-600" />
-                  <p className="text-sm font-medium">Fetching medicines...</p>
-                </div>
-              </TableCell>
-            </TableRow>
-          ) : (medicines || []).map((med) => (
-            <TableRow key={med.id}>
-              <TableCell className="font-semibold text-slate-900">{med.name}</TableCell>
-              <TableCell>{med.company}</TableCell>
-              <TableCell>
-                <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">{med.category}</span>
-              </TableCell>
-              <TableCell>
-                <span className={med.stock <= 5 ? "text-red-600 font-bold" : med.stock <= 10 ? "text-amber-600 font-bold" : "font-medium"}>
-                  {med.stock}
-                </span>
-              </TableCell>
-              <TableCell className="font-medium">${med.sellingPrice?.toFixed(2)}</TableCell>
-              <TableCell>{getStatusBadge(med.status || "In Stock")}</TableCell>
-              <TableCell className="text-slate-500">{med.expiryDate}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => openEditModal(med)} 
-                    className="p-1.5 text-slate-400 hover:text-medical-blue-600 hover:bg-medical-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button 
-                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
-                    onClick={() => handleDelete(med.id)}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                  </button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </Table>
-
-        {/* Pagination Placeholder */}
-        <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-50">
-          <p className="text-xs text-slate-500">Showing {medicines?.length || 0} entries</p>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" disabled>Previous</Button>
-            <Button variant="outline" size="sm" className="bg-medical-blue-50 text-medical-blue-600 border-medical-blue-200">1</Button>
-            <Button variant="outline" size="sm" disabled>Next</Button>
-          </div>
-        </div>
+        <Table 
+          TableHeads={columns} 
+          TableRows={medicines || []}
+          isLoading={isLoading}
+        />
       </Card>
 
       {/* Add/Edit Modal */}
@@ -202,39 +176,35 @@ export function Medicines() {
         }
       >
         <div className="space-y-4">
-          <Input 
+          <InputField 
             label="Medicine Name" 
             placeholder="e.g. Napa Extend" 
             value={formData.name || ''} 
             onChange={(e) => setFormData({...formData, name: e.target.value})}
           />
           <div className="grid grid-cols-2 gap-4">
-            <Input 
+            <InputField 
               label="Company" 
               placeholder="e.g. Beximco" 
               value={formData.company || ''} 
               onChange={(e) => setFormData({...formData, company: e.target.value})}
             />
-            <Select 
+            <Dropdown 
               label="Category" 
-              options={[
-                { label: "Tablet", value: "Tablet" },
-                { label: "Capsule", value: "Capsule" },
-                { label: "Syrup", value: "Syrup" },
-              ]}
+              options={["Tablet", "Capsule", "Syrup", "Suspension", "Inhaler"]}
               value={formData.category || 'Tablet'}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              onSelect={(val) => setFormData({...formData, category: val})}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input 
+            <InputField 
               label="Purchase Price" 
               type="number" 
               step="0.01" 
               value={formData.purchasePrice || 0} 
               onChange={(e) => setFormData({...formData, purchasePrice: parseFloat(e.target.value)})}
             />
-            <Input 
+            <InputField 
               label="Selling Price" 
               type="number" 
               step="0.01" 
@@ -243,13 +213,13 @@ export function Medicines() {
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input 
+            <InputField 
               label="Current Stock" 
               type="number" 
               value={formData.stock || 0} 
               onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value)})}
             />
-            <Input 
+            <InputField 
               label="Expiry Date" 
               type="date" 
               value={formData.expiryDate || ''} 

@@ -44,7 +44,7 @@ const categoryData = [
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444'];
 
-const SummaryCard = ({ title, value, icon: Icon, trend, trendValue, colorClass, isCurrency = true }) => (
+const SummaryCard = ({ title, value, icon: IconComponent, trend, trendValue, colorClass, isCurrency = true }) => (
   <Card className="hover:translate-y-[-4px] transition-transform duration-300">
     <div className="flex items-start justify-between">
       <div>
@@ -60,7 +60,7 @@ const SummaryCard = ({ title, value, icon: Icon, trend, trendValue, colorClass, 
         )}
       </div>
       <div className={`p-3 rounded-xl ${colorClass}`}>
-        <Icon size={24} className="text-white" />
+        <IconComponent size={24} className="text-white" />
       </div>
     </div>
   </Card>

@@ -1,79 +1,60 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../api/client";
+import { getMedicines, getLowStockMedicines, addMedicine, updateMedicine, deleteMedicine } from "@/lib/actions/medicine.actions";
 import toast from "react-hot-toast";
 
 export function useMedicines(params = {}) {
   const queryClient = useQueryClient();
 
-  // Fetch all medicines with search, filters, pagination
   const fetchMedicines = useQuery({
     queryKey: ["medicines", params],
     queryFn: async () => {
-      const { data } = await apiClient.get("/medicines", { params });
-      return Array.isArray(data) ? data : data.data || [];
+      return await getMedicines(params);
     },
   });
 
-  // Fetch low stock medicines
   const fetchLowStock = useQuery({
     queryKey: ["medicines", "low-stock"],
     queryFn: async () => {
-      const { data } = await apiClient.get("/medicines/status/low-stock");
-      return Array.isArray(data) ? data : data.data || [];
+      return await getLowStockMedicines();
     },
   });
 
-  // Fetch stock out medicines
-  const fetchStockOut = useQuery({
-    queryKey: ["medicines", "stock-out"],
-    queryFn: async () => {
-      const { data } = await apiClient.get("/medicines/status/stock-out");
-      return Array.isArray(data) ? data : data.data || [];
-    },
-  });
-
-  // Add new medicine
   const addMedicineMutation = useMutation({
     mutationFn: async (newMedicine) => {
-      const { data } = await apiClient.post("/medicines", newMedicine);
-      return data;
+      return await addMedicine(newMedicine);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
       toast.success("Medicine added successfully!");
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Failed to add medicine");
+      toast.error(error.message || "Failed to add medicine");
     },
   });
 
-  // Update medicine
   const updateMedicineMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      const { data: updatedData } = await apiClient.put(`/medicines/${id}`, data);
-      return updatedData;
+      return await updateMedicine(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
       toast.success("Medicine updated successfully!");
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Failed to update medicine");
+      toast.error(error.message || "Failed to update medicine");
     },
   });
 
-  // Delete medicine
   const deleteMedicineMutation = useMutation({
     mutationFn: async (id) => {
-      const { data } = await apiClient.delete(`/medicines/${id}`);
-      return data;
+      return await deleteMedicine(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
       toast.success("Medicine deleted successfully!");
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Failed to delete medicine");
+      toast.error(error.message || "Failed to delete medicine");
     },
   });
 
@@ -82,7 +63,6 @@ export function useMedicines(params = {}) {
     isLoading: fetchMedicines.isLoading,
     isError: fetchMedicines.isError,
     lowStock: fetchLowStock.data,
-    stockOut: fetchStockOut.data,
     addMedicine: addMedicineMutation.mutateAsync,
     updateMedicine: updateMedicineMutation.mutateAsync,
     deleteMedicine: deleteMedicineMutation.mutateAsync,

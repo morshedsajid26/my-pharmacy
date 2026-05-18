@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, LogIn, Loader2 } from "lucide-react";
-import { Input } from "../components/FormElements";
+import { LogIn, Loader2 } from "lucide-react";
+import InputField from "../components/InputField";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/AuthContext";
+import Password from "../components/Password";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -35,39 +36,32 @@ export function Login() {
         <p className="text-sm text-slate-500 mt-1">Please enter your details to sign in.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="relative">
-          <Mail className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-          <Input 
-            label="Email Address"
-            type="email"
-            placeholder="admin@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <InputField 
+          label="Email Address"
+          type="email"
+          placeholder="admin@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        <div className="relative">
-          <Lock className="absolute left-3 top-[38px] text-slate-400 w-4 h-4 z-10" />
-          <Input 
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="pl-10"
-            required
-          />
-        </div>
-
+        <Password
+          name="password"
+          id="password"
+          label="Password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full"
+        />
+        
         <div className="flex items-center justify-between text-xs sm:text-sm">
           <label className="flex items-center gap-2 cursor-pointer group">
             <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-medical-blue-600 focus:ring-medical-blue-500 transition-colors" />
             <span className="text-slate-500 group-hover:text-slate-700 transition-colors">Remember me</span>
           </label>
-          <a href="#" className="font-semibold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">Forgot password?</a>
+          <Link to="/forgot-password" title="Click here to reset your password" className="font-semibold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">Forgot password?</Link>
         </div>
 
         <Button 

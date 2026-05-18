@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --color-medical-blue-50: #eff6ff;
+  --color-medical-blue-100: #dbeafe;
+  --color-medical-blue-200: #bfdbfe;
+  --color-medical-blue-300: #93c5fd;
+  --color-medical-blue-400: #60a5fa;
+  --color-medical-blue-500: #3b82f6;
+  --color-medical-blue-600: #2563eb;
+  --color-medical-blue-700: #1d4ed8;
+  --color-medical-blue-800: #1e40af;
+  --color-medical-blue-900: #1e3a8a;
+
+  --color-medical-green-50: #f0fdf4;
+  --color-medical-green-100: #dcfce7;
+  --color-medical-green-200: #bbf7d0;
+  --color-medical-green-300: #86efac;
+  --color-medical-green-400: #4ade80;
+  --color-medical-green-500: #22c55e;
+  --color-medical-green-600: #16a34a;
+  --color-medical-green-700: #15803d;
+  --color-medical-green-800: #166534;
+  --color-medical-green-900: #14532d;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media print {
+  /* Set html & body to hidden by default but ensure background is white */
+  html, body {
+    visibility: hidden !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  /* Remove default browser print headers and footers (date, title, page numbers) */
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+
+  /* Collapse the visual height of all other layout containers so they don't force page breaks */
+  main, aside, header, nav, footer, button, .no-print, div[role="dialog"] {
+    display: block !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Render receipt cleanly */
+  #print-area, #print-area * {
+    visibility: visible !important;
+  }
+
+  #print-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Standard 76mm Thermal Paper Receipt */
+  #print-area.receipt-width {
+    width: 76mm !important;
+    max-width: 76mm !important;
+    padding: 3mm !important;
+    margin: 0 !important;
+    font-family: monospace !important;
+  }
+
+  /* Full Page A4 Printout */
+  #print-area.a4-width {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  }
+}
+
+button{
+  cursor: pointer;
+}
