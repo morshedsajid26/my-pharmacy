@@ -24,9 +24,9 @@ import { useAuth } from "../context/AuthContext";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Pill, label: "Medicines", path: "/medicines" },
   { icon: ShoppingCart, label: "Sales (POS)", path: "/sales" },
   { icon: Truck, label: "Purchases", path: "/purchases" },
+  { icon: Pill, label: "Medicines", path: "/medicines" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: CreditCard, label: "Due Management", path: "/dues" },
   { icon: AlertTriangle, label: "Low Stock", path: "/low-stock" },
