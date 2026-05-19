@@ -7,7 +7,7 @@ export async function getDashboardSummary() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [todaySales, todayPurchase, medicines] = await Promise.all([
+    const [todaySales, todayPurchase, medicines, totalDeliveryChargeAgg] = await Promise.all([
       prisma.sale.aggregate({
         where: { date: { gte: today } },
         _sum: { totalAmount: true, profit: true },
@@ -18,6 +18,10 @@ export async function getDashboardSummary() {
       }),
       prisma.medicine.findMany({
         select: { stock: true, purchasePrice: true, status: true },
+      }),
+      prisma.onlineOrder.aggregate({
+        where: { status: "APPROVED" },
+        _sum: { deliveryCharge: true },
       }),
     ]);
 
@@ -30,26 +34,54 @@ export async function getDashboardSummary() {
     ).length;
     const stockOutCount = medicines.filter((m) => m.stock === 0).length;
 
-    const monthlySales = await prisma.sale.aggregate({
-      where: {
-        date: {
-          gte: new Date(today.getFullYear(), today.getMonth(), 1),
-        },
-      },
-      _sum: { totalAmount: true },
-    });
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+
+    const [
+      monthlyOnlineSalesAgg,
+      monthlyShopSalesAgg,
+      yearlyOnlineSalesAgg,
+      yearlyShopSalesAgg
+    ] = await Promise.all([
+      prisma.sale.aggregate({
+        where: { date: { gte: startOfMonth }, isOnline: true },
+        _sum: { totalAmount: true }
+      }),
+      prisma.sale.aggregate({
+        where: { date: { gte: startOfMonth }, isOnline: false },
+        _sum: { totalAmount: true }
+      }),
+      prisma.sale.aggregate({
+        where: { date: { gte: startOfYear }, isOnline: true },
+        _sum: { totalAmount: true }
+      }),
+      prisma.sale.aggregate({
+        where: { date: { gte: startOfYear }, isOnline: false },
+        _sum: { totalAmount: true }
+      })
+    ]);
+
+    const mOnlineSales = monthlyOnlineSalesAgg._sum.totalAmount || 0;
+    const mShopSales = monthlyShopSalesAgg._sum.totalAmount || 0;
+    const yOnlineSales = yearlyOnlineSalesAgg._sum.totalAmount || 0;
+    const yShopSales = yearlyShopSalesAgg._sum.totalAmount || 0;
 
     return {
       todaySales: todaySales._sum.totalAmount || 0,
       todayProfit: todaySales._sum.profit || 0,
       todayPurchase: todayPurchase._sum.totalAmount || 0,
-      monthlySales: monthlySales._sum.totalAmount || 0,
-      yearlySales: (monthlySales._sum.totalAmount || 0) * 12,
+      monthlySales: mOnlineSales + mShopSales,
+      monthlyOnlineSales: mOnlineSales,
+      monthlyShopSales: mShopSales,
+      yearlySales: yOnlineSales + yShopSales,
+      yearlyOnlineSales: yOnlineSales,
+      yearlyShopSales: yShopSales,
       totalStockValue,
       lowStockCount,
       stockOutCount,
       totalMedicines: medicines.length,
       totalTransactions: await prisma.sale.count(),
+      totalDeliveryCharge: totalDeliveryChargeAgg._sum.deliveryCharge || 0,
     };
   } catch (error) {
     console.error("Dashboard summary error:", error);
@@ -88,9 +120,13 @@ export async function getChartData(range = "month") {
         const nextDayDate = new Date(dayDate);
         nextDayDate.setDate(dayDate.getDate() + 1);
 
-        const [dailySales, dailyPurchase] = await Promise.all([
+        const [dailyOnlineSales, dailyShopSales, dailyPurchase] = await Promise.all([
           prisma.sale.aggregate({
-            where: { date: { gte: dayDate, lt: nextDayDate } },
+            where: { date: { gte: dayDate, lt: nextDayDate }, isOnline: true },
+            _sum: { totalAmount: true, profit: true },
+          }),
+          prisma.sale.aggregate({
+            where: { date: { gte: dayDate, lt: nextDayDate }, isOnline: false },
             _sum: { totalAmount: true, profit: true },
           }),
           prisma.purchase.aggregate({
@@ -104,11 +140,16 @@ export async function getChartData(range = "month") {
           day: "numeric",
         });
 
+        const onlineAmt = dailyOnlineSales._sum.totalAmount || 0;
+        const shopAmt = dailyShopSales._sum.totalAmount || 0;
+
         chartData.push({
           name: label,
-          sales: dailySales._sum.totalAmount || 0,
+          sales: onlineAmt + shopAmt,
+          onlineSales: onlineAmt,
+          shopSales: shopAmt,
           purchase: dailyPurchase._sum.totalAmount || 0,
-          profit: dailySales._sum.profit || 0,
+          profit: (dailyOnlineSales._sum.profit || 0) + (dailyShopSales._sum.profit || 0),
         });
       }
     } else if (range === "year") {
@@ -119,9 +160,13 @@ export async function getChartData(range = "month") {
         const yearDate = new Date(year, 0, 1);
         const nextYearDate = new Date(year + 1, 0, 1);
 
-        const [yearlySales, yearlyPurchase] = await Promise.all([
+        const [yearlyOnlineSales, yearlyShopSales, yearlyPurchase] = await Promise.all([
           prisma.sale.aggregate({
-            where: { date: { gte: yearDate, lt: nextYearDate } },
+            where: { date: { gte: yearDate, lt: nextYearDate }, isOnline: true },
+            _sum: { totalAmount: true, profit: true },
+          }),
+          prisma.sale.aggregate({
+            where: { date: { gte: yearDate, lt: nextYearDate }, isOnline: false },
             _sum: { totalAmount: true, profit: true },
           }),
           prisma.purchase.aggregate({
@@ -130,11 +175,16 @@ export async function getChartData(range = "month") {
           }),
         ]);
 
+        const onlineAmt = yearlyOnlineSales._sum.totalAmount || 0;
+        const shopAmt = yearlyShopSales._sum.totalAmount || 0;
+
         chartData.push({
           name: String(year),
-          sales: yearlySales._sum.totalAmount || 0,
+          sales: onlineAmt + shopAmt,
+          onlineSales: onlineAmt,
+          shopSales: shopAmt,
           purchase: yearlyPurchase._sum.totalAmount || 0,
-          profit: yearlySales._sum.profit || 0,
+          profit: (yearlyOnlineSales._sum.profit || 0) + (yearlyShopSales._sum.profit || 0),
         });
       }
     } else {
@@ -147,9 +197,13 @@ export async function getChartData(range = "month") {
           1,
         );
 
-        const [monthlySales, monthlyPurchase] = await Promise.all([
+        const [monthlyOnlineSales, monthlyShopSales, monthlyPurchase] = await Promise.all([
           prisma.sale.aggregate({
-            where: { date: { gte: monthDate, lt: nextMonthDate } },
+            where: { date: { gte: monthDate, lt: nextMonthDate }, isOnline: true },
+            _sum: { totalAmount: true, profit: true },
+          }),
+          prisma.sale.aggregate({
+            where: { date: { gte: monthDate, lt: nextMonthDate }, isOnline: false },
             _sum: { totalAmount: true, profit: true },
           }),
           prisma.purchase.aggregate({
@@ -158,11 +212,16 @@ export async function getChartData(range = "month") {
           }),
         ]);
 
+        const onlineAmt = monthlyOnlineSales._sum.totalAmount || 0;
+        const shopAmt = monthlyShopSales._sum.totalAmount || 0;
+
         chartData.push({
           name: months[monthDate.getMonth()],
-          sales: monthlySales._sum.totalAmount || 0,
+          sales: onlineAmt + shopAmt,
+          onlineSales: onlineAmt,
+          shopSales: shopAmt,
           purchase: monthlyPurchase._sum.totalAmount || 0,
-          profit: monthlySales._sum.profit || 0,
+          profit: (monthlyOnlineSales._sum.profit || 0) + (monthlyShopSales._sum.profit || 0),
         });
       }
     }
@@ -412,7 +471,8 @@ export async function getDailyLedger(year, month) {
         select: {
           date: true,
           totalAmount: true,
-          profit: true
+          profit: true,
+          isOnline: true
         }
       }),
       prisma.purchase.findMany({
@@ -435,6 +495,8 @@ export async function getDailyLedger(year, month) {
       return {
         day,
         sales: 0,
+        onlineSales: 0,
+        shopSales: 0,
         purchases: 0,
         profit: 0,
         transactions: 0
@@ -445,6 +507,11 @@ export async function getDailyLedger(year, month) {
       const day = new Date(sale.date).getDate();
       if (day >= 1 && day <= daysInMonth) {
         ledger[day - 1].sales += sale.totalAmount;
+        if (sale.isOnline) {
+          ledger[day - 1].onlineSales += sale.totalAmount;
+        } else {
+          ledger[day - 1].shopSales += sale.totalAmount;
+        }
         ledger[day - 1].profit += sale.profit;
         ledger[day - 1].transactions += 1;
       }

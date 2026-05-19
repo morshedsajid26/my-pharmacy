@@ -19,10 +19,17 @@ export default function PurchasesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [newCompanyText, setNewCompanyText] = useState("");
   const [purchaseItems, setPurchaseItems] = useState([]);
   const [viewingPurchase, setViewingPurchase] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [purchaseDiscount, setPurchaseDiscount] = useState(0);
+
+  const defaultCompanies = ["Beximco Pharma", "Square Pharma", "Healthcare Pharma", "Incepta"];
+  const companies = useMemo(() => {
+    const all = new Set([...defaultCompanies, ...(purchases || []).map(p => p.supplier).filter(Boolean)]);
+    return Array.from(all);
+  }, [purchases]);
 
   const columns = useMemo(() => [
     { key: "id", Title: "Purchase ID", render: (row) => <span className="font-bold text-medical-blue-600">#{row.id}</span> },
@@ -111,8 +118,9 @@ export default function PurchasesPage() {
   };
 
   const handlePurchase = async () => {
-    if (!selectedCompany) {
-      toast.error("Please select a supplier company!");
+    const companyToSave = selectedCompany === "new" ? newCompanyText.trim() : selectedCompany;
+    if (!companyToSave) {
+      toast.error("Please select a supplier company or enter a new company name!");
       return;
     }
     if (purchaseItems.length === 0) {
@@ -128,7 +136,7 @@ export default function PurchasesPage() {
 
     try {
       const payload = {
-        company: selectedCompany,
+        company: companyToSave,
         items: purchaseItems.map(item => ({
           medicineId: item.isNew || item.medicineId === "new" ? null : item.medicineId,
           name: item.name,
@@ -148,6 +156,7 @@ export default function PurchasesPage() {
       setIsAddingMode(false);
       setEditingPurchaseId(null);
       setSelectedCompany("");
+      setNewCompanyText("");
       setPurchaseItems([]);
       setPurchaseDiscount(0);
     } catch (err) {
@@ -176,18 +185,31 @@ export default function PurchasesPage() {
         <Card title={editingPurchaseId ? "Edit Purchase Entry" : "New Purchase Entry"} subtitle="Enter details for the stock procurement">
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Select 
-                label="Supplier Company" 
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                options={[
-                  { label: "Select Company", value: "" },
-                  { label: "Beximco Pharma", value: "Beximco Pharma" },
-                  { label: "Square Pharma", value: "Square Pharma" },
-                  { label: "Healthcare Pharma", value: "Healthcare Pharma" },
-                  { label: "Incepta", value: "Incepta" },
-                ]}
-              />
+              <div className="space-y-4">
+                <Select 
+                  label="Supplier Company" 
+                  value={selectedCompany}
+                  onChange={(e) => {
+                    setSelectedCompany(e.target.value);
+                    if (e.target.value !== "new") {
+                      setNewCompanyText("");
+                    }
+                  }}
+                  options={[
+                    { label: "Select Company", value: "" },
+                    { label: "+ Add New Company", value: "new" },
+                    ...companies.map(comp => ({ label: comp, value: comp }))
+                  ]}
+                />
+                {selectedCompany === "new" && (
+                  <Input 
+                    label="New Company Name" 
+                    placeholder="Enter company name"
+                    value={newCompanyText}
+                    onChange={(e) => setNewCompanyText(e.target.value)}
+                  />
+                )}
+              </div>
               <Input label="Purchase Date" type="date" defaultValue={new Date().toISOString().split('T')[0]} />
               <Input label="Invoice Number" placeholder="e.g. INV-2024-001" />
             </div>
@@ -306,7 +328,7 @@ export default function PurchasesPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-              <Button variant="outline" className="w-full sm:w-auto order-2 sm:order-1" onClick={() => { setIsAddingMode(false); setEditingPurchaseId(null); setPurchaseItems([]); setSelectedCompany(""); }}>Cancel</Button>
+              <Button variant="outline" className="w-full sm:w-auto order-2 sm:order-1" onClick={() => { setIsAddingMode(false); setEditingPurchaseId(null); setPurchaseItems([]); setSelectedCompany(""); setNewCompanyText(""); }}>Cancel</Button>
               <Button onClick={handlePurchase} disabled={isRecording || isUpdating} className="w-full sm:w-auto order-1 sm:order-2">
                 {isRecording || isUpdating ? <Loader2 size={18} className="animate-spin" /> : null}
                 <span>{editingPurchaseId ? "Update Purchase" : "Complete Purchase"}</span>

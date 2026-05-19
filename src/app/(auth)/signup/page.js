@@ -38,7 +38,7 @@ export default function SignupPage() {
     try {
       const success = await signup(name, email, password, role);
       if (success) {
-        router.push("/");
+        router.push("/login");
       }
     } catch (error) {
       console.error("Signup component error:", error);
@@ -138,7 +138,7 @@ export default function SignupPage() {
             <div className="mt-8 pt-8 border-t border-slate-50 text-center">
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
-                <Link href="/" className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">
+                <Link href="/login" className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">
                   Sign In
                 </Link>
               </p>

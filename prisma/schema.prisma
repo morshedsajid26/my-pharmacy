@@ -39,6 +39,8 @@ model Medicine {
   updatedAt     DateTime   @updatedAt
   SaleItem      SaleItem[]
   PurchaseItem  PurchaseItem[]
+  OnlineOrderItem OnlineOrderItem[]
+  requests      MedicineRequest[]
 }
 
 model Sale {
@@ -54,6 +56,7 @@ model Sale {
   customer            Customer?  @relation(fields: [customerId], references: [id])
   customerId          String?
   walkingCustomerName String?
+  isOnline            Boolean    @default(false)
   createdAt           DateTime   @default(now())
 }
 
@@ -102,4 +105,75 @@ model PurchaseItem {
   unitPrice   Float
   totalPrice  Float
   createdAt   DateTime @default(now())
+}
+
+model OnlineCustomer {
+  id            String         @id @default(cuid())
+  name          String
+  phone         String         @unique
+  password      String
+  address       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orders        OnlineOrder[]
+  requests      MedicineRequest[]
+}
+
+model OnlineOrder {
+  id                  String            @id @default(cuid())
+  orderNo             String            @unique
+  customer            OnlineCustomer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId          String
+  customerName        String
+  customerPhone       String
+  address             String
+  notes               String?
+  subtotal            Float             @default(0)
+  deliveryCharge      Float             @default(0)
+  discount            Float             @default(0)
+  totalAmount         Float
+  status              String            @default("PENDING")
+  items               OnlineOrderItem[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model StorefrontSetting {
+  id                      String         @id @default("settings")
+  minOrderForFreeDelivery Float          @default(500)
+  deliveryCharge          Float          @default(20)
+  discountTiers           DiscountTier[]
+  updatedAt               DateTime       @updatedAt
+}
+
+model DiscountTier {
+  id        Int               @id @default(autoincrement())
+  settingId String
+  threshold Float             // subtotal amount needed to qualify
+  percent   Float             // discount percent for this tier
+  setting   StorefrontSetting @relation(fields: [settingId], references: [id])
+}
+
+model OnlineOrderItem {
+  id            String      @id @default(cuid())
+  order         OnlineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId       String
+  medicine      Medicine    @relation(fields: [medicineId], references: [id])
+  medicineId    String
+  quantity      Int
+  unitPrice     Float
+  totalPrice    Float
+  createdAt     DateTime    @default(now())
+}
+
+model MedicineRequest {
+  id          String         @id @default(cuid())
+  customer    OnlineCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  String
+  medicine    Medicine       @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  medicineId  String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([customerId, medicineId])
 }

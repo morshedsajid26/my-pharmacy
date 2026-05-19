@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
       const result = await resetPasswordAction(email, token, password);
       if (result.success) {
         toast.success("Password reset successful!");
-        router.push("/");
+        router.push("/login");
       }
     } catch (error) {
       toast.error(error.message || "Failed to reset password");
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
 
             <div className="mt-8 pt-8 border-t border-slate-50 text-center">
               <Link
-                href="/"
+                href="/login"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-medical-blue-600 transition-colors"
               >
                 <ArrowLeft size={16} />

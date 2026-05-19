@@ -38,6 +38,7 @@ import {
   ArrowUp,
   ArrowDown,
   Search,
+  Truck,
 } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -56,6 +57,42 @@ const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl border border-slate-800 text-xs font-mono space-y-2.5">
+        <p className="font-extrabold border-b border-slate-800 pb-1 text-slate-300">{label}</p>
+        <div className="space-y-1">
+          <div className="flex justify-between gap-6">
+            <span className="text-sky-400 font-bold">REVENUE:</span>
+            <span className="font-black">৳{(data.sales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="pl-3 space-y-0.5 text-[10px] text-slate-400">
+            <div className="flex justify-between">
+              <span>• Shop Sales:</span>
+              <span>৳{(data.shopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>• Online Sales:</span>
+              <span>৳{(data.onlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-between gap-6">
+          <span className="text-rose-400 font-bold">PURCHASES:</span>
+          <span className="font-black">৳{(data.purchase || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div className="flex justify-between gap-6 border-t border-slate-800 pt-1">
+          <span className="text-emerald-400 font-bold">NET PROFIT:</span>
+          <span className="font-black text-emerald-300">৳{(data.profit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function ReportsPage() {
   const [range, setRange] = useState("month");
@@ -94,19 +131,20 @@ export default function ReportsPage() {
   const categoryTotal = useMemo(() => {
     return categoryData.reduce((acc, curr) => acc + (curr.value || 0), 0);
   }, [categoryData]);
-
   // Ledger summation calculations (calculated on the whole dataset to preserve absolute totals)
   const ledgerTotals = useMemo(() => {
-    if (!ledger || ledger.length === 0) return { sales: 0, purchases: 0, profit: 0, transactions: 0 };
+    if (!ledger || ledger.length === 0) return { sales: 0, shopSales: 0, onlineSales: 0, purchases: 0, profit: 0, transactions: 0 };
     return ledger.reduce(
       (acc, day) => {
         acc.sales += day.sales || 0;
+        acc.shopSales += day.shopSales || 0;
+        acc.onlineSales += day.onlineSales || 0;
         acc.purchases += day.purchases || 0;
         acc.profit += day.profit || 0;
         acc.transactions += day.transactions || 0;
         return acc;
       },
-      { sales: 0, purchases: 0, profit: 0, transactions: 0 }
+      { sales: 0, shopSales: 0, onlineSales: 0, purchases: 0, profit: 0, transactions: 0 }
     );
   }, [ledger]);
 
@@ -122,8 +160,18 @@ export default function ReportsPage() {
         },
       },
       {
+        accessorKey: "shopSales",
+        header: "Shop Sales (POS)",
+        cell: (info) => `৳${(info.getValue() || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+      },
+      {
+        accessorKey: "onlineSales",
+        header: "Online Sales",
+        cell: (info) => `৳${(info.getValue() || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+      },
+      {
         accessorKey: "sales",
-        header: "Sales Revenue",
+        header: "Total Revenue",
         cell: (info) => `৳${(info.getValue() || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
       },
       {
@@ -248,24 +296,35 @@ export default function ReportsPage() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-medical-blue-600 to-medical-blue-800 text-white rounded-2xl p-6 shadow-lg shadow-medical-blue-600/10 flex items-center justify-between group">
-          <div className="space-y-1">
-            <p className="text-medical-blue-100 text-xs font-bold uppercase tracking-widest">
-              Active Monthly Sales
-            </p>
-            <h3 className="text-3xl font-black font-mono tracking-tight">
-              ৳{stats.monthlySales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] text-medical-blue-200 font-medium pt-1">
-              Real-time calculations for the current month
-            </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Monthly Sales Card */}
+        <div className="bg-gradient-to-br from-medical-blue-600 to-medical-blue-800 text-white rounded-2xl p-6 shadow-lg shadow-medical-blue-600/10 flex flex-col justify-between group gap-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-medical-blue-100 text-xs font-bold uppercase tracking-widest">
+                Active Monthly Sales
+              </p>
+              <h3 className="text-3xl font-black font-mono tracking-tight">
+                ৳{stats.monthlySales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </h3>
+            </div>
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
+              <DollarSign size={22} className="text-white" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-            <DollarSign size={22} className="text-white" />
+          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-medical-blue-100">
+            <div className="space-y-0.5">
+              <span className="text-slate-200 block">🏪 Shop POS:</span>
+              <span className="text-white font-mono text-xs">৳{(stats.monthlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="space-y-0.5 text-right">
+              <span className="text-amber-200 block">🌐 Online:</span>
+              <span className="text-white font-mono text-xs">৳{(stats.monthlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
           </div>
         </div>
 
+        {/* Stock Valuation Card */}
         <div className="bg-gradient-to-br from-indigo-600 to-purple-800 text-white rounded-2xl p-6 shadow-lg shadow-indigo-600/10 flex items-center justify-between group">
           <div className="space-y-1">
             <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest">
@@ -283,20 +342,57 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-6 shadow-lg shadow-emerald-600/10 flex items-center justify-between group">
-          <div className="space-y-1">
-            <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest">
-              Avg Transaction Size
-            </p>
-            <h3 className="text-3xl font-black font-mono tracking-tight">
-              ৳{avgOrderValue?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] text-emerald-200 font-medium pt-1">
-              Derived from {stats.totalTransactions?.toLocaleString()} sales invoices
-            </p>
+        {/* Yearly Sales Card */}
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-6 shadow-lg shadow-emerald-600/10 flex flex-col justify-between group gap-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest">
+                Active Yearly Sales
+              </p>
+              <h3 className="text-3xl font-black font-mono tracking-tight">
+                ৳{stats.yearlySales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </h3>
+            </div>
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
+              <DollarSign size={22} className="text-white" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-            <DollarSign size={22} className="text-white animate-pulse" />
+          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-emerald-100">
+            <div className="space-y-0.5">
+              <span className="text-slate-200 block">🏪 Shop POS:</span>
+              <span className="text-white font-mono text-xs">৳{(stats.yearlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="space-y-0.5 text-right">
+              <span className="text-amber-200 block">🌐 Online:</span>
+              <span className="text-white font-mono text-xs">৳{(stats.yearlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Avg Order / Delivery Fees Card */}
+        <div className="bg-gradient-to-br from-amber-600 to-orange-850 text-white rounded-2xl p-6 shadow-lg shadow-amber-600/10 flex flex-col justify-between group gap-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-amber-100 text-xs font-bold uppercase tracking-widest">
+                Avg Transaction Size
+              </p>
+              <h3 className="text-3xl font-black font-mono tracking-tight">
+                ৳{avgOrderValue?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+            </div>
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
+              <DollarSign size={22} className="text-white" />
+            </div>
+          </div>
+          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-amber-100">
+            <div className="space-y-0.5">
+              <span className="text-slate-200 block">💳 Invoices Count:</span>
+              <span className="text-white font-mono text-xs">{stats.totalTransactions?.toLocaleString()} tx</span>
+            </div>
+            <div className="space-y-0.5 text-right">
+              <span className="text-slate-200 block">🚚 Delivery Fees:</span>
+              <span className="text-white font-mono text-xs">৳{(stats.totalDeliveryCharge || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -341,16 +437,7 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} stroke="#94a3b8" />
                 <YAxis fontSize={11} fontWeight={600} tickLine={false} axisLine={false} stroke="#94a3b8" tickFormatter={(v) => `৳${v}`} />
-                <RechartsTooltip
-                  contentStyle={{
-                    borderRadius: "16px",
-                    border: "none",
-                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)",
-                    fontFamily: "monospace",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value, name) => [`৳${value.toLocaleString()}`, name.toUpperCase()]}
-                />
+                <RechartsTooltip content={<CustomTooltip />} />
                 <Area type="monotone" name="Revenue" dataKey="sales" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                 <Bar name="Purchases" dataKey="purchase" fill="#f87171" radius={[4, 4, 0, 0]} barSize={20} opacity={0.8} />
                 <Line type="monotone" name="Net Profit" dataKey="profit" stroke="#10b981" strokeWidth={3} dot={{ r: 3, stroke: "#10b981", strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 5 }} />
@@ -601,7 +688,7 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                   {isLedgerLoading ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-12 text-center text-slate-400">
+                      <td colSpan={7} className="px-5 py-12 text-center text-slate-400">
                         <Loader2 className="animate-spin text-medical-blue-600 inline-block w-6 h-6 mr-2" />
                         Auditing daily journals...
                       </td>
@@ -613,7 +700,7 @@ export default function ReportsPage() {
                         const isFuture = selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() && dayVal > new Date().getDate();
                         
                         return (
-                          <tr
+                           <tr
                             key={row.id}
                             className={`hover:bg-slate-50/50 transition-colors ${
                               isFuture ? "opacity-35 bg-slate-50/10 cursor-not-allowed" : ""
@@ -643,6 +730,12 @@ export default function ReportsPage() {
                       {/* Grand Ledger Totals Row */}
                       <tr className="bg-slate-950 text-white font-extrabold border-t-2 border-slate-950">
                         <td className="px-5 py-4 font-black uppercase tracking-wider text-left">Ledger Totals</td>
+                        <td className="px-5 py-4 text-right font-mono text-xs text-sky-300">
+                          ৳{ledgerTotals.shopSales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-5 py-4 text-right font-mono text-xs text-amber-300">
+                          ৳{ledgerTotals.onlineSales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </td>
                         <td className="px-5 py-4 text-right font-mono text-sm tracking-tight text-sky-400">
                           ৳{ledgerTotals.sales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </td>
@@ -657,7 +750,7 @@ export default function ReportsPage() {
                     </>
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-5 py-12 text-center text-slate-400 italic">
+                      <td colSpan={7} className="px-5 py-12 text-center text-slate-400 italic">
                         No accounting logs found matching search filter.
                       </td>
                     </tr>

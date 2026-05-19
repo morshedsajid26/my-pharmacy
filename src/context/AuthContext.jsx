@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       queryClient.clear();
       toast.success("Logged out successfully");
-      router.replace("/");
+      router.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");

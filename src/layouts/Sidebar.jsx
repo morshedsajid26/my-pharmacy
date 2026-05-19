@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Pill,
   ShoppingCart,
+  ShoppingBag,
   Truck,
   AlertTriangle,
   BarChart3,
@@ -17,14 +19,18 @@ import {
   Users,
   CreditCard,
   Settings,
+  Heart,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 import { useAuth } from "../context/AuthContext";
+import { getPendingOrdersCountAction } from "@/lib/actions/online-admin.actions";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: ShoppingCart, label: "Sales (POS)", path: "/sales" },
+  { icon: ShoppingBag, label: "Online Orders", path: "/online-orders" },
+  { icon: Heart, label: "Customer Requests", path: "/customer-requests" },
   { icon: Truck, label: "Purchases", path: "/purchases" },
   { icon: Pill, label: "Medicines", path: "/medicines" },
   { icon: Users, label: "Customers", path: "/customers" },
@@ -42,6 +48,22 @@ export function Sidebar() {
   } = useUI();
   const { user, logout } = useAuth();
   const pathname = usePathname();
+
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchCount() {
+      try {
+        const count = await getPendingOrdersCountAction();
+        setPendingOrdersCount(count);
+      } catch (error) {
+        console.error("Sidebar pending orders count error:", error);
+      }
+    }
+    fetchCount();
+    const interval = setInterval(fetchCount, 8000); // Check every 8 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -109,6 +131,12 @@ export function Sidebar() {
                 {!isSidebarCollapsed && (
                   <span className="font-medium text-sm whitespace-nowrap">
                     {item.label}
+                  </span>
+                )}
+
+                {item.path === "/online-orders" && pendingOrdersCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center animate-pulse shadow-sm">
+                    {pendingOrdersCount}
                   </span>
                 )}
 
