@@ -34,6 +34,7 @@ model Medicine {
   sellingPrice  Float
   stock         Int        @default(0)
   expiryDate    DateTime?
+  image         String?
   status        String     @default("In Stock") // "In Stock", "Low", "Out of Stock"
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt

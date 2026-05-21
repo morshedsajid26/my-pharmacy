@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 import InputField from "@/components/InputField";
 import Dropdown from "@/components/Dropdown";
 import { useMedicines } from "@/hooks/useMedicines";
+import toast from "react-hot-toast";
 
 export default function MedicinesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,7 +39,7 @@ export default function MedicinesPage() {
       purchasePrice: 0,
       sellingPrice: 0,
       stock: 0,
-      expiryDate: ""
+      image: ""
     });
     setIsModalOpen(true);
   }, []);
@@ -106,9 +107,9 @@ export default function MedicinesPage() {
       <span className="font-medium text-slate-900">৳{row.sellingPrice?.toFixed(2)}</span>
     )},
     { key: "status", Title: "Status", width: "10%" , render: (row) => getStatusBadge(row.status || "In Stock") },
-    { key: "expiryDate", Title: "Expiry", width: "10%" , render: (row) => (
-      <span className="text-slate-500">
-        {row.expiryDate ? (row.expiryDate instanceof Date ? row.expiryDate.toLocaleDateString() : String(row.expiryDate)) : "N/A"}
+    { key: "image", Title: "Image", width: "10%" , render: (row) => (
+      <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.image ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+        {row.image ? "Yes" : "No"}
       </span>
     )},
     { key: "actions", Title: "Actions", width: "10%" , sortable: false, render: (row) => (
@@ -234,12 +235,69 @@ export default function MedicinesPage() {
               value={formData.stock || 0} 
               onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value)})}
             />
-            <InputField 
-              label="Expiry Date" 
-              type="date" 
-              value={formData.expiryDate || ''} 
-              onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
-            />
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                Medicine Image
+              </label>
+              {formData.image ? (
+                <div className="relative w-full h-13 rounded-lg overflow-hidden border border-slate-200 group bg-slate-50 flex items-center justify-between px-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img 
+                      src={formData.image} 
+                      alt="Preview" 
+                      className="w-8 h-8 object-cover rounded-lg border border-slate-100 shrink-0"
+                    />
+                    <span className="text-xs font-semibold text-slate-600 truncate">Image Selected</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('image-upload-input').click()}
+                      className="p-1.5 text-slate-400 hover:text-medical-blue-600 hover:bg-medical-blue-50 rounded-md transition-colors"
+                      title="Change Image"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image: "" })}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Remove Image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => document.getElementById('image-upload-input').click()}
+                  className="w-full h-13 rounded-lg border border-dashed border-slate-200 hover:border-medical-blue-400 bg-slate-50/50 hover:bg-medical-blue-50/10 flex items-center justify-center gap-2 cursor-pointer transition-all group px-4"
+                >
+                  <Plus size={16} className="text-slate-400 group-hover:text-medical-blue-600" />
+                  <span className="text-xs text-slate-500 font-medium">Upload Image from PC</span>
+                </div>
+              )}
+              <input 
+                id="image-upload-input"
+                type="file" 
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast.error("Image file size should be less than 2MB");
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setFormData({ ...formData, image: reader.result });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </Modal>

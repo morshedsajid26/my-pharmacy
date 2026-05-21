@@ -5,12 +5,14 @@ import Link from "next/link";
 import { 
   Search, 
   ShoppingBag, 
+  ShoppingCart,
   User, 
   Plus, 
   Minus, 
   Trash2, 
   X, 
   ChevronRight, 
+  ChevronLeft, 
   PlusCircle, 
   LogOut, 
   Clock, 
@@ -22,7 +24,18 @@ import {
   FileText,
   Loader2,
   Heart,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Pill,
+  Award,
+  Truck,
+  Thermometer,
+  PhoneCall,
+  Activity,
+  Sparkles,
+  Star,
+  Check,
+  ChevronDown,
+  ShieldCheck
 } from "lucide-react";
 import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
 import toast, { Toaster } from "react-hot-toast";
@@ -38,6 +51,14 @@ import {
   getCustomerWishlistAction
 } from "@/lib/actions/online-customer.actions";
 import OTPInput from "@/components/OTPInput";
+import StorefrontHeader from "./(landing)/StorefrontHeader";
+import StorefrontHero from "./(landing)/StorefrontHero";
+import TrustBadges from "./(landing)/TrustBadges";
+import MedicineCard from "./(landing)/MedicineCard";
+import StandardsBanner from "./(landing)/StandardsBanner";
+import Testimonials from "./(landing)/Testimonials";
+import FAQSection from "./(landing)/FAQSection";
+import StorefrontFooter from "./(landing)/StorefrontFooter";
 
 export default function StorefrontClient({ initialMedicines, initialCustomer, initialSettings }) {
   // Storefront & Customer State
@@ -63,6 +84,15 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState("All");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedCompany]);
   
   // Selected purchase quantity per medicine on the cards
   const [selectedQuantities, setSelectedQuantities] = useState({});
@@ -99,6 +129,9 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [newCheckoutAddress, setNewCheckoutAddress] = useState("");
   const [deliverToNew, setDeliverToNew] = useState(false);
+
+  // FAQ Accordion State
+  const [openFaq, setOpenFaq] = useState(null);
 
   // Load cart from localStorage upon mount
   useEffect(() => {
@@ -149,6 +182,13 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
     const matchesCompany = selectedCompany === "All" || med.company === selectedCompany;
     return matchesSearch && matchesCategory && matchesCompany;
   });
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredMedicines.length / ITEMS_PER_PAGE);
+  const paginatedMedicines = filteredMedicines.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Toggle Medicine Restock Request
   const handleRequestRestock = async (medId) => {
@@ -511,107 +551,67 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
     }
   };
 
+  // Mapping of category cards styling details
+  const categoryDetails = {
+    "All": { label: "All Medicines", icon: Package, gradient: "from-medical-blue-600 to-blue-750", bgLight: "bg-medical-blue-50 text-medical-blue-600" },
+    "Tablet": { label: "Tablets", icon: Pill, gradient: "from-emerald-500 to-teal-650", bgLight: "bg-emerald-50 text-emerald-600" },
+    "Capsule": { label: "Capsules", icon: Pill, gradient: "from-purple-500 to-pink-650", bgLight: "bg-purple-50 text-purple-600" },
+    "Suspension": { label: "Suspensions", icon: Activity, gradient: "from-amber-500 to-orange-650", bgLight: "bg-amber-50 text-amber-600" },
+    "Inhaler": { label: "Inhalers", icon: Sparkles, gradient: "from-sky-500 to-blue-650", bgLight: "bg-sky-50 text-sky-600" },
+    "Chewable Tablet": { label: "Chewables", icon: Star, gradient: "from-rose-500 to-red-650", bgLight: "bg-rose-50 text-rose-600" },
+  };
+
+  const totalItems = cart.length;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Toaster position="top-center" />
 
-      {/* TOP HEADER */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-[95%] xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-lg shadow-medical-blue-200">
-              <PlusCircle className="text-white w-6 h-6 sm:w-7 sm:h-7" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
-                S&S<span className="text-medical-blue-600">Pharmacy</span>
-              </h1>
-              <span className="text-[10px] sm:text-xs font-semibold text-slate-500 tracking-wide uppercase mt-1 block">
-                Online Storefront
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            {customer ? (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button 
-                  onClick={() => setIsOrdersModalOpen(true)}
-                  className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all"
-                >
-                  <Clock size={16} />
-                  <span>My Orders</span>
-                </button>
-                <Link 
-                  href="/profile"
-                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 py-1.5 px-3 rounded-2xl border border-slate-200 transition-all cursor-pointer group"
-                  title="Edit Profile Settings"
-                >
-                  <div className="w-8 h-8 rounded-full bg-medical-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-                    {customer.name[0].toUpperCase()}
-                  </div>
-                  <span className="hidden sm:inline text-sm font-bold text-slate-700 max-w-[120px] truncate group-hover:text-medical-blue-600 transition-colors">
-                    {customer.name}
-                  </span>
-                </Link>
-                <button 
-                  onClick={handleLogout}
-                  title="Logout"
-                  className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all border border-red-100 flex items-center gap-1.5 font-semibold text-sm"
-                >
-                  <LogOut size={16} />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
-                className="flex items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-medical-blue-600/20"
-              >
-                <User size={16} />
-                <span>Sign In</span>
-              </button>
-            )}
-
-            {/* CART BUTTON */}
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 sm:p-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all"
-            >
-              <ShoppingBag size={20} />
-              {cart.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-black w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                  {cart.length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* HERO SECTION */}
-      <section className="bg-gradient-to-br from-medical-blue-600 to-medical-blue-700 text-white py-12 sm:py-20 px-4 shadow-xl">
-        <div className="max-w-5xl mx-auto text-center">
-          <span className="inline-block bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 sm:mb-6 animate-pulse">
-            ⚡ Fast Home Delivery in Dhaka
+      {/* FLOATING CART WIDGET */}
+      <button 
+        onClick={() => setIsCartOpen(true)}
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-y border-l border-medical-blue-600/20 group active:scale-95 cursor-pointer"
+      >
+        {/* Top Segment: Cart Icon & Item Count */}
+        <div className="bg-medical-blue-600 group-hover:bg-medical-blue-700 text-white px-3.5 py-3 flex flex-col items-center justify-center gap-1 min-w-[80px] border-b border-white/15 transition-colors">
+          <ShoppingCart size={18} className="text-white group-hover:scale-110 transition-transform" />
+          <span className="text-[10px] font-black tracking-wide whitespace-nowrap">
+            {totalItems} {totalItems === 1 ? 'Item' : 'Items'}
           </span>
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-            Order Medicines Online, <br className="hidden sm:inline"/> Delivered To Your Doorstep
-          </h2>
-          <p className="text-white/80 max-w-2xl mx-auto mt-4 sm:mt-6 text-sm sm:text-lg leading-relaxed">
-            Search our comprehensive, genuine catalog of tablets, syrups, and healthcare supplies. Register instantly with your mobile number to checkout securely.
-          </p>
         </div>
-      </section>
+        
+        {/* Bottom Segment: Total Price */}
+        <div className="bg-emerald-500 group-hover:bg-emerald-600 text-white w-full px-2 py-2 flex items-center justify-center transition-colors">
+          <span className="text-xs font-black tracking-wide whitespace-nowrap">
+            ৳{getCartTotal()}
+          </span>
+        </div>
+      </button>
+
+      <StorefrontHeader 
+        customer={customer}
+        cartCount={cart.length}
+        onOrdersClick={() => setIsOrdersModalOpen(true)}
+        onLogout={handleLogout}
+        onAuthClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
+        onCartClick={() => setIsCartOpen(true)}
+      />
+
+
+      <StorefrontHero />
+
+      <TrustBadges />
+
 
       {/* CATALOG AREA */}
       <main className="max-w-[95%] xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        
         {/* MOBILE ORDER HISTORY TRIGGER */}
         {customer && (
           <div className="md:hidden mb-6">
             <button 
               onClick={() => setIsOrdersModalOpen(true)}
-              className="w-full flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-slate-700 font-bold"
+              className="w-full flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-slate-700 font-bold text-xs"
             >
               <span className="flex items-center gap-2"><Clock size={18} /> My Order History</span>
               <ChevronRight size={18} />
@@ -619,8 +619,8 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
           </div>
         )}
 
-        {/* UNIFIED SEARCH FIELD AT THE TOP (Full Width) */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-4 sm:p-5 shadow-lg shadow-slate-100/50 mb-8 -mt-10 sm:-mt-16 relative z-30 transition-all">
+        {/* UNIFIED SEARCH FIELD (Enhanced with Tags) */}
+        <div className="bg-white rounded-3xl border border-slate-100/80 p-5 sm:p-6 shadow-xl shadow-slate-100/40 mb-8 mt-6 sm:mt-10 relative z-30 transition-all">
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-medical-blue-600 transition-colors" />
             <input 
@@ -640,17 +640,32 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
               </button>
             )}
           </div>
+
+          {/* Popular searches tags list */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3.5 border-t border-slate-100/50">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Popular Searches:</span>
+            {["Napa Extend", "Sergel 20mg", "Fenadin", "Azmasol", "Ceevit"].map(tag => (
+              <button
+                key={tag}
+                onClick={() => setSearchQuery(tag)}
+                className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-medical-blue-50 hover:text-medical-blue-600 text-slate-500 hover:border-medical-blue-200/50 text-xs font-bold border border-slate-100 transition-all cursor-pointer"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 2-COLUMN SIDEBAR LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start relative">
+          
           {/* LEFT SIDEBAR: FILTERS */}
           <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 z-20">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-md shadow-slate-100/40 space-y-6 transition-all duration-300">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-md shadow-slate-100/30 space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <h3 className="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
                   <SlidersHorizontal size={18} className="text-slate-500" />
-                  <span>Filters</span>
+                  <span>Catalog Filters</span>
                 </h3>
                 {(selectedCategory !== "All" || selectedCompany !== "All") && (
                   <button 
@@ -658,9 +673,9 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                       setSelectedCategory("All");
                       setSelectedCompany("All");
                     }}
-                    className="text-xs font-extrabold text-medical-blue-600 hover:text-medical-blue-700 transition-colors"
+                    className="text-xs font-extrabold text-medical-blue-600 hover:text-medical-blue-700 transition-colors cursor-pointer"
                   >
-                    Clear All
+                    Reset Filter
                   </button>
                 )}
               </div>
@@ -671,7 +686,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   <Package size={12} className="text-slate-400" />
                   <span>Category</span>
                 </span>
-                <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto scrollbar-none pr-1">
+                <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto scrollbar-none pr-1">
                   {categories.map((cat) => {
                     const count = cat === "All" 
                       ? medicines.length 
@@ -681,9 +696,9 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between border transition-all duration-200 ${
+                        className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between border transition-all duration-200 cursor-pointer ${
                           isActive 
-                            ? "bg-medical-blue-600 text-white border-medical-blue-600 shadow-md shadow-medical-blue-600/15 scale-[1.02]" 
+                            ? "bg-medical-blue-600 text-white border-medical-blue-600 shadow-md shadow-medical-blue-600/10 scale-[1.01]" 
                             : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-transparent hover:border-slate-200"
                         }`}
                       >
@@ -705,7 +720,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   <User size={12} className="text-slate-400" />
                   <span>Pharmaceutical Brand</span>
                 </span>
-                <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto scrollbar-none pr-1">
+                <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto scrollbar-none pr-1">
                   {companies.map((comp) => {
                     const count = comp === "All" 
                       ? medicines.length 
@@ -715,9 +730,9 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                       <button
                         key={comp}
                         onClick={() => setSelectedCompany(comp)}
-                        className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between border transition-all duration-200 ${
+                        className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between border transition-all duration-200 cursor-pointer ${
                           isActive 
-                            ? "bg-medical-blue-600 text-white border-medical-blue-600 shadow-md shadow-medical-blue-600/15 scale-[1.02]" 
+                            ? "bg-medical-blue-600 text-white border-medical-blue-600 shadow-md shadow-medical-blue-600/10 scale-[1.01]" 
                             : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-transparent hover:border-slate-200"
                         }`}
                       >
@@ -735,146 +750,111 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
             </div>
           </div>
 
-          {/* RIGHT SIDE: MEDICINE CARDS GRID (Uses remaining 4 columns, full width) */}
+          {/* RIGHT SIDE: MEDICINE CARDS GRID */}
           <div className="lg:col-span-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredMedicines.length > 0 ? (
-                filteredMedicines.map((med) => {
-                  const cartItem = cart.find(item => item.id === med.id);
-                  const qtyInCart = cartItem ? cartItem.quantity : 0;
-                  const remainingStock = med.stock - qtyInCart;
-
-                  const isAvailable = med.stock >= 2;
-                  const isRequested = wishlist.includes(med.id);
-
-                  return (
-                    <div 
-                      key={med.id} 
-                      className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between"
-                    >
-                      <div className="p-6">
-                        {/* Category & Status tag */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="bg-medical-blue-50 text-medical-blue-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                            {med.category}
-                          </span>
-                          {isAvailable ? (
-                            <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                              Available
-                            </span>
-                          ) : (
-                            <span className="bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                              Not Available
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate" title={med.name}>
-                          {med.name}
-                        </h3>
-                        <p className="text-xs font-semibold text-slate-400 mt-1">{med.company}</p>
-
-                        <div className="mt-4 flex items-baseline gap-1">
-                          <span className="text-2xl font-black text-slate-900">৳{med.sellingPrice}</span>
-                          <span className="text-xs font-bold text-slate-400">/ unit</span>
-                        </div>
-                      </div>
-
-                      <div className="px-6 pb-6 pt-3 border-t border-slate-50 flex items-center justify-between gap-3 mt-auto">
-                        {isAvailable ? (
-                          <>
-                            {remainingStock > 0 ? (
-                              <div className="flex items-center bg-slate-50 border border-slate-200/60 rounded-xl p-1 shadow-inner shrink-0">
-                                <button
-                                  onClick={() => {
-                                    const current = selectedQuantities[med.id] || 1;
-                                    if (current > 1) {
-                                      setSelectedQuantities(prev => ({ ...prev, [med.id]: current - 1 }));
-                                    }
-                                  }}
-                                  disabled={(selectedQuantities[med.id] || 1) <= 1}
-                                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-black text-sm"
-                                  title="Decrease quantity"
-                                >
-                                  <Minus size={12} strokeWidth={3} />
-                                </button>
-                                <span className="w-8 text-center text-xs font-black text-slate-800">
-                                  {selectedQuantities[med.id] || 1}
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    const current = selectedQuantities[med.id] || 1;
-                                    if (current < remainingStock) {
-                                      setSelectedQuantities(prev => ({ ...prev, [med.id]: current + 1 }));
-                                    }
-                                  }}
-                                  disabled={(selectedQuantities[med.id] || 1) >= remainingStock}
-                                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-black text-sm"
-                                  title="Increase quantity"
-                                >
-                                  <Plus size={12} strokeWidth={3} />
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                <Package size={12} className="text-slate-300" />
-                                <span>Fast Delivery</span>
-                              </span>
-                            )}
-                            
-                            <button 
-                              onClick={() => {
-                                const qty = selectedQuantities[med.id] || 1;
-                                addToCart(med, qty);
-                                setSelectedQuantities(prev => ({ ...prev, [med.id]: 1 }));
-                              }}
-                              disabled={remainingStock < 1}
-                              className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-sm text-center ${
-                                remainingStock < 1 
-                                  ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-                                  : "bg-medical-blue-600 hover:bg-medical-blue-700 text-white hover:shadow-md hover:shadow-medical-blue-600/10"
-                              }`}
-                            >
-                              {remainingStock < 1 ? "In Cart Max" : "Add to Cart"}
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
-                              Out of stock
-                            </span>
-
-                            <button 
-                              onClick={() => handleRequestRestock(med.id)}
-                              disabled={wishlistLoading}
-                              className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
-                                isRequested 
-                                  ? "bg-medical-blue-50 text-medical-blue-700 border border-medical-blue-200" 
-                                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 animate-pulse"
-                              }`}
-                            >
-                              <Heart size={12} className={isRequested ? "fill-medical-blue-600 text-medical-blue-600" : ""} />
-                              <span>{isRequested ? "Requested ✔" : "Request Restock"}</span>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                paginatedMedicines.map((med) => (
+                  <MedicineCard 
+                    key={med.id}
+                    medicine={med}
+                    cart={cart}
+                    wishlist={wishlist}
+                    wishlistLoading={wishlistLoading}
+                    selectedQuantity={selectedQuantities[med.id] || 1}
+                    onIncreaseQuantity={() => {
+                      const current = selectedQuantities[med.id] || 1;
+                      const cartItem = cart.find(item => item.id === med.id);
+                      const qtyInCart = cartItem ? cartItem.quantity : 0;
+                      const remainingStock = med.stock - qtyInCart;
+                      if (current < remainingStock) {
+                        setSelectedQuantities(prev => ({ ...prev, [med.id]: current + 1 }));
+                      }
+                    }}
+                    onDecreaseQuantity={() => {
+                      const current = selectedQuantities[med.id] || 1;
+                      if (current > 1) {
+                        setSelectedQuantities(prev => ({ ...prev, [med.id]: current - 1 }));
+                      }
+                    }}
+                    onAddToCart={() => {
+                      const qty = selectedQuantities[med.id] || 1;
+                      addToCart(med, qty);
+                      setSelectedQuantities(prev => ({ ...prev, [med.id]: 1 }));
+                    }}
+                    onRequestRestock={() => handleRequestRestock(med.id)}
+                  />
+                ))
               ) : (
-                <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-slate-100">
+                <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-slate-100">
                   <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-slate-800">No medicines found</h3>
-                  <p className="text-slate-400 text-sm mt-1">Try resetting your search query or choosing another category.</p>
+                  <p className="text-slate-400 text-xs mt-1">Try resetting your search query or choosing another category.</p>
                 </div>
               )}
             </div>
+
+            {/* PAGINATION CONTROLS */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-6 border-t border-slate-100">
+                <span className="text-xs font-bold text-slate-500">
+                  Showing <span className="text-slate-800">{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredMedicines.length)}</span> to <span className="text-slate-800">{Math.min(currentPage * ITEMS_PER_PAGE, filteredMedicines.length)}</span> of <span className="text-slate-800">{filteredMedicines.length}</span> medicines
+                </span>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-650 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-slate-100 transition-all cursor-pointer flex items-center justify-center min-w-10 min-h-10"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  {/* Render page numbers */}
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    const isActive = pageNum === currentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-10 h-10 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center ${
+                          isActive
+                            ? "bg-medical-blue-600 hover:bg-medical-blue-700 text-white shadow-md shadow-medical-blue-600/10"
+                            : "bg-white border border-slate-100 hover:border-slate-350 text-slate-600"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-650 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-slate-100 transition-all cursor-pointer flex items-center justify-center min-w-10 min-h-10"
+                    title="Next Page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
+
+      <StandardsBanner />
+
+      <Testimonials />
+
+      <FAQSection 
+        openFaq={openFaq}
+        onToggleFaq={setOpenFaq}
+      />
+
+      <StorefrontFooter />
 
       {/* SLIDE OUT CART DRAWER */}
       {isCartOpen && (
@@ -895,7 +875,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                 </div>
                 <button 
                   onClick={() => setIsCartOpen(false)}
-                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 >
                   <X size={20} />
                 </button>
@@ -918,14 +898,14 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                             <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                               <button 
                                 onClick={() => updateCartQty(item.id, -1, item.stock)}
-                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors"
+                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
                               >
                                 <Minus size={14} />
                               </button>
                               <span className="w-8 text-center text-xs font-extrabold text-slate-800">{item.quantity}</span>
                               <button 
                                 onClick={() => updateCartQty(item.id, 1, item.stock)}
-                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors"
+                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
                               >
                                 <Plus size={14} />
                               </button>
@@ -933,7 +913,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
 
                             <button 
                               onClick={() => removeFromCart(item.id)}
-                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
+                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer"
                               title="Delete"
                             >
                               <Trash2 size={14} />
@@ -1020,7 +1000,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                     <button 
                       onClick={handleCheckout}
                       disabled={checkoutLoading}
-                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/20 disabled:opacity-50 transition-all text-base"
+                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/20 disabled:opacity-50 transition-all text-base cursor-pointer"
                     >
                       {checkoutLoading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -1031,7 +1011,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   ) : (
                     <button 
                       onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
-                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-base"
+                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-base cursor-pointer"
                     >
                       Sign In to Place Order
                     </button>
@@ -1058,7 +1038,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   </div>
                   <button 
                     onClick={() => { setOtpStep(false); setGeneratedOtp(""); }} 
-                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
+                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors cursor-pointer"
                   >
                     <X size={20} />
                   </button>
@@ -1091,7 +1071,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                         setGeneratedOtp(newCode);
                         toast.success(`🔑 New OTP Sent! Use code: ${newCode} to verify your phone number.`, { duration: 10000 });
                       }}
-                      className="font-bold text-medical-blue-600 hover:underline"
+                      className="font-bold text-medical-blue-600 hover:underline cursor-pointer"
                     >
                       Resend OTP
                     </button>
@@ -1099,7 +1079,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   
                   <button 
                     onClick={() => { setOtpStep(false); setGeneratedOtp(""); }}
-                    className="mt-4 text-xs font-bold text-slate-400 hover:text-slate-600 transition-all"
+                    className="mt-4 text-xs font-bold text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
                   >
                     Back to Edit Details
                   </button>
@@ -1112,7 +1092,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                     <PlusCircle className="text-medical-blue-600 w-6 h-6" />
                     <span className="font-black text-slate-900 text-lg">Customer Portal</span>
                   </div>
-                  <button onClick={() => setIsAuthModalOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
+                  <button onClick={() => setIsAuthModalOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer">
                     <X size={20} />
                   </button>
                 </div>
@@ -1170,7 +1150,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                   <button 
                     type="submit" 
                     disabled={authSubmitting}
-                    className="w-full h-12 bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/10 disabled:opacity-50 transition-all text-sm mt-6"
+                    className="w-full h-12 bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/10 disabled:opacity-50 transition-all text-sm mt-6 cursor-pointer"
                   >
                     {authSubmitting ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -1186,7 +1166,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                       Don't have an account?{" "}
                       <button 
                         onClick={() => setAuthMode("signup")}
-                        className="font-bold text-medical-blue-600 hover:text-medical-blue-700"
+                        className="font-bold text-medical-blue-600 hover:text-medical-blue-700 cursor-pointer"
                       >
                         Register Now
                       </button>
@@ -1196,7 +1176,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
                       Already have an account?{" "}
                       <button 
                         onClick={() => setAuthMode("login")}
-                        className="font-bold text-medical-blue-600 hover:text-medical-blue-700"
+                        className="font-bold text-medical-blue-600 hover:text-medical-blue-700 cursor-pointer"
                       >
                         Sign In
                       </button>
@@ -1223,7 +1203,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
               </div>
               <button 
                 onClick={() => setIsOrdersModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -1313,7 +1293,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
             <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
               <button 
                 onClick={() => setIsOrdersModalOpen(false)}
-                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-all"
+                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-all cursor-pointer"
               >
                 Close Portal
               </button>
@@ -1385,7 +1365,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
 
               <button 
                 onClick={() => { setOrderSuccess(null); setIsOrdersModalOpen(true); }}
-                className="w-full h-12 bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/15 transition-all text-sm"
+                className="w-full h-12 bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/15 transition-all text-sm cursor-pointer"
               >
                 <span>Track Order Live</span>
                 <ChevronRight size={16} />
