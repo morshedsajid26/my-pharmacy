@@ -51,14 +51,14 @@ import {
   getCustomerWishlistAction
 } from "@/lib/actions/online-customer.actions";
 import OTPInput from "@/components/OTPInput";
-import StorefrontHeader from "./(landing)/StorefrontHeader";
-import StorefrontHero from "./(landing)/StorefrontHero";
-import TrustBadges from "./(landing)/TrustBadges";
-import MedicineCard from "./(landing)/MedicineCard";
-import StandardsBanner from "./(landing)/StandardsBanner";
-import Testimonials from "./(landing)/Testimonials";
-import FAQSection from "./(landing)/FAQSection";
-import StorefrontFooter from "./(landing)/StorefrontFooter";
+import StorefrontHeader from "../app/(landing)/StorefrontHeader";
+import StorefrontHero from "../app/(landing)/StorefrontHero";
+import TrustBadges from "../app/(landing)/TrustBadges";
+import MedicineCard from "../app/(landing)/MedicineCard";
+import StandardsBanner from "../app/(landing)/StandardsBanner";
+import Testimonials from "../app/(landing)/Testimonials";
+import FAQSection from "../app/(landing)/FAQSection";
+import StorefrontFooter from "../app/(landing)/StorefrontFooter";
 
 export default function StorefrontClient({ initialMedicines, initialCustomer, initialSettings }) {
   // Storefront & Customer State

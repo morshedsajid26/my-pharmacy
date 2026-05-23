@@ -30,9 +30,7 @@ export default function StorefrontHeader({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
             </div>
-            <span className="text-[10px] sm:text-xs font-bold text-slate-400 tracking-wider uppercase mt-1 block">
-              DGDA Approved Model Store
-            </span>
+            
           </div>
         </div>
 
