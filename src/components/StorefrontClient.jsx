@@ -84,6 +84,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState("All");
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -595,12 +596,17 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
         onLogout={handleLogout}
         onAuthClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
         onCartClick={() => setIsCartOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
 
-      <StorefrontHero />
-
-      <TrustBadges />
+      {!searchQuery.trim() && (
+        <>
+          <StorefrontHero />
+          <TrustBadges />
+        </>
+      )}
 
 
       {/* CATALOG AREA */}
@@ -619,66 +625,47 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
           </div>
         )}
 
-        {/* UNIFIED SEARCH FIELD (Enhanced with Tags) */}
-        <div className="bg-white rounded-3xl border border-slate-100/80 p-5 sm:p-6 shadow-xl shadow-slate-100/40 mb-8 mt-6 sm:mt-10 relative z-30 transition-all">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-medical-blue-600 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search medicines, categories, brands, or manufacturers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-12 rounded-2xl bg-slate-50 text-slate-800 placeholder-slate-400 font-semibold text-sm sm:text-base border border-slate-100 focus:border-medical-blue-400 focus:bg-white focus:ring-4 focus:ring-medical-blue-500/10 transition-all outline-none"
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                title="Clear Search"
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
 
-          {/* Popular searches tags list */}
-          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3.5 border-t border-slate-100/50">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Popular Searches:</span>
-            {["Napa Extend", "Sergel 20mg", "Fenadin", "Azmasol", "Ceevit"].map(tag => (
-              <button
-                key={tag}
-                onClick={() => setSearchQuery(tag)}
-                className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-medical-blue-50 hover:text-medical-blue-600 text-slate-500 hover:border-medical-blue-200/50 text-xs font-bold border border-slate-100 transition-all cursor-pointer"
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* 2-COLUMN SIDEBAR LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start relative">
           
           {/* LEFT SIDEBAR: FILTERS */}
           <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 z-20">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-md shadow-slate-100/30 space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-md shadow-slate-100/30">
+              <div 
+                className={`flex items-center justify-between cursor-pointer transition-all ${isFiltersOpen ? 'pb-4 border-b border-slate-100 mb-6' : ''}`}
+                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+              >
                 <h3 className="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
                   <SlidersHorizontal size={18} className="text-slate-500" />
                   <span>Catalog Filters</span>
                 </h3>
-                {(selectedCategory !== "All" || selectedCompany !== "All") && (
-                  <button 
-                    onClick={() => {
-                      setSelectedCategory("All");
-                      setSelectedCompany("All");
-                    }}
-                    className="text-xs font-extrabold text-medical-blue-600 hover:text-medical-blue-700 transition-colors cursor-pointer"
+                
+                <div className="flex items-center gap-3">
+                  {(selectedCategory !== "All" || selectedCompany !== "All") && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCategory("All");
+                        setSelectedCompany("All");
+                      }}
+                      className="text-xs font-extrabold text-medical-blue-600 hover:text-medical-blue-700 transition-colors cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
+                  {/* Dropdown Icon */}
+                  <div 
+                    className={`text-slate-500 transition-transform duration-300 ${isFiltersOpen ? 'rotate-180' : ''}`}
                   >
-                    Reset Filter
-                  </button>
-                )}
+                    <ChevronDown size={20} />
+                  </div>
+                </div>
               </div>
+
+              {/* Filter Content (Collapsible) */}
+              <div className={`${isFiltersOpen ? 'block' : 'hidden'} space-y-6`}>
 
               {/* Category Filter */}
               <div className="space-y-3">
@@ -749,8 +736,9 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
               </div>
             </div>
           </div>
+        </div>
 
-          {/* RIGHT SIDE: MEDICINE CARDS GRID */}
+        {/* RIGHT SIDE: MEDICINE CARDS GRID */}
           <div className="lg:col-span-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredMedicines.length > 0 ? (
@@ -845,14 +833,16 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
         </div>
       </main>
 
-      <StandardsBanner />
-
-      <Testimonials />
-
-      <FAQSection 
-        openFaq={openFaq}
-        onToggleFaq={setOpenFaq}
-      />
+      {!searchQuery.trim() && (
+        <>
+          <StandardsBanner />
+          <Testimonials />
+          <FAQSection 
+            openFaq={openFaq}
+            onToggleFaq={setOpenFaq}
+          />
+        </>
+      )}
 
       <StorefrontFooter />
 
