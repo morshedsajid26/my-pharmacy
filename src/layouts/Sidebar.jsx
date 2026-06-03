@@ -92,7 +92,7 @@ export function Sidebar() {
             </div>
             {!isSidebarCollapsed && (
               <span className="font-black text-[16px] text-white tracking-tight whitespace-nowrap">
-                SNS <span className="text-medical-blue-400">PHARMACY</span>
+                S&S <span className="text-medical-blue-400">PHARMACY</span>
               </span>
             )}
           </div>
