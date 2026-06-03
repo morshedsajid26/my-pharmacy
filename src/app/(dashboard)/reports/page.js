@@ -200,9 +200,12 @@ export default function ReportsPage() {
     [selectedMonth]
   );
 
+  // Stable fallback to prevent TanStack Table infinite loop on refetch
+  const fallbackData = useMemo(() => [], []);
+
   // 2. Instantiate TanStack Table
   const table = useReactTable({
-    data: ledger || [],
+    data: ledger || fallbackData,
     columns,
     state: {
       sorting,
