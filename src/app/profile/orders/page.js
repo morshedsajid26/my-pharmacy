@@ -157,6 +157,14 @@ export default function CustomerOrdersPage() {
               <ShoppingBag size={16} />
               <span>My Orders History</span>
             </Link>
+
+            <Link 
+              href="/profile/prescriptions"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all border border-transparent"
+            >
+              <FileText size={16} />
+              <span>Prescription Orders</span>
+            </Link>
           </div>
         </aside>
 

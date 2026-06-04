@@ -20,6 +20,7 @@ import {
   CreditCard,
   Settings,
   Heart,
+  FileText,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: ShoppingCart, label: "Sales (POS)", path: "/sales" },
   { icon: ShoppingBag, label: "Online Orders", path: "/online-orders" },
+  { icon: FileText, label: "Prescription Orders", path: "/prescription-orders" },
   { icon: Heart, label: "Customer Requests", path: "/customer-requests" },
   { icon: Truck, label: "Purchases", path: "/purchases" },
   { icon: Pill, label: "Medicines", path: "/medicines" },
