@@ -191,3 +191,21 @@ model MedicineRequest {
 
   @@unique([customerId, medicineId])
 }
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  sessionId String        @unique
+  title     String        @default("New Chat")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id            String      @id @default(cuid())
+  session       ChatSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  sessionId     String
+  role          String
+  content       String      @db.Text
+  createdAt     DateTime    @default(now())
+}

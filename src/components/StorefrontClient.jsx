@@ -59,6 +59,7 @@ import StandardsBanner from "../app/(landing)/StandardsBanner";
 import Testimonials from "../app/(landing)/Testimonials";
 import FAQSection from "../app/(landing)/FAQSection";
 import StorefrontFooter from "../app/(landing)/StorefrontFooter";
+import ChatWidget from "./ChatWidget";
 
 export default function StorefrontClient({ initialMedicines, initialCustomer, initialSettings }) {
   // Storefront & Customer State
@@ -567,6 +568,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Toaster position="top-center" />
+      <ChatWidget />
 
       {/* FLOATING CART WIDGET */}
       <button 
