@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Bot, User, Loader2, X, MessageSquare, Maximize2 } from "lucide-react";
+import { Send, Bot, User, Loader2, X, MessageSquare, Maximize2, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export default function ChatWidget() {
@@ -10,6 +10,7 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -96,6 +97,18 @@ export default function ChatWidget() {
     }
   };
 
+  const clearChat = () => {
+    // Legacy function, using confirmClearChat instead
+  };
+
+  const confirmClearChat = () => {
+    const newSessionId = "session_" + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem("pharmacy_chat_session", newSessionId);
+    setSessionId(newSessionId);
+    setMessages([]);
+    setIsClearModalOpen(false);
+  };
+
   const suggestions = [
     "Available painkillers?",
     "আমার জ্বর, কি ওষুধ আছে?"
@@ -104,9 +117,35 @@ export default function ChatWidget() {
   return (
     <>
       {/* Widget Container */}
-      <div className={`fixed bottom-6 right-6 z-50 flex flex-col items-end transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100 visible' : 'translate-y-10 opacity-0 invisible'}`}>
-        <div className="bg-white w-[350px] max-w-[calc(100vw-3rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-6rem)] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden mb-4 transform transition-all duration-300">
+      <div className={`fixed bottom-6 right-6 z-[60] flex flex-col items-end transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100 visible' : 'translate-y-10 opacity-0 invisible'}`}>
+        <div className="bg-white w-[350px] max-w-[calc(100vw-3rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-6rem)] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden mb-4 transform transition-all duration-300 relative">
           
+          {/* Clear Chat Modal Overlay */}
+          {isClearModalOpen && (
+            <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Clear Chat History?</h3>
+              <p className="text-sm text-slate-500 mb-6">Are you sure you want to delete this conversation? This action cannot be undone.</p>
+              
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setIsClearModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmClearChat}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors shadow-sm"
+                >
+                  Clear Chat
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className="bg-medical-blue-600 text-white p-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -122,6 +161,15 @@ export default function ChatWidget() {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              {messages.length > 0 && (
+                <button 
+                  onClick={() => setIsClearModalOpen(true)}
+                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Clear Chat"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
               <button 
                 onClick={() => setIsOpen(false)}
                 className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
@@ -216,7 +264,7 @@ export default function ChatWidget() {
       {/* Floating Action Button (Always Visible) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-40 w-14 h-14 bg-medical-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 ${isOpen ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}
+        className={`fixed bottom-6 right-6 z-[50] w-14 h-14 bg-medical-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 ${isOpen ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}
       >
         <MessageSquare size={28} />
       </button>

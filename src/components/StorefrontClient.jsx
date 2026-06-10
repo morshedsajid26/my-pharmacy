@@ -573,7 +573,7 @@ export default function StorefrontClient({ initialMedicines, initialCustomer, in
       {/* FLOATING CART WIDGET */}
       <button 
         onClick={() => setIsCartOpen(true)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-y border-l border-medical-blue-600/20 group active:scale-95 cursor-pointer"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-y border-l border-medical-blue-600/20 group active:scale-95 cursor-pointer"
       >
         {/* Top Segment: Cart Icon & Item Count */}
         <div className="bg-medical-blue-600 group-hover:bg-medical-blue-700 text-white px-3.5 py-3 flex flex-col items-center justify-center gap-1 min-w-[80px] border-b border-white/15 transition-colors">
