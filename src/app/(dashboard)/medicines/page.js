@@ -34,6 +34,7 @@ export default function MedicinesPage() {
     setEditingMedicine(null);
     setFormData({
       name: "",
+      genericName: "",
       company: "",
       category: "Tablet",
       purchasePrice: 0,
@@ -90,7 +91,12 @@ export default function MedicinesPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "name", Title: "Medicine Name", width: "16%" },
+    { key: "name", Title: "Medicine Name", width: "16%", render: (row) => (
+      <div className="font-bold text-slate-900">{row.name}</div>
+    )},
+    { key: "genericName", Title: "Generic Name", width: "14%", render: (row) => (
+      <div className="text-slate-500 font-medium">{row.genericName || "-"}</div>
+    )},
     { key: "company", Title: "Company", width: "15%" },
     { key: "category", Title: "Category", width: "10%" , render: (row) => (
       <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">{row.category}</span>
@@ -100,19 +106,19 @@ export default function MedicinesPage() {
         {row.stock}
       </span>
     )},
-    { key: "purchasePrice", Title: "Purchase Price", width: "11%" , render: (row) => (
+    { key: "purchasePrice", Title: "Purchase Price", width: "12%" , render: (row) => (
       <span className="text-slate-500">৳{row.purchasePrice?.toFixed(2)}</span>
     )},
     { key: "sellingPrice", Title: "Selling Price", width: "11%" , render: (row) => (
       <span className="font-medium text-slate-900">৳{row.sellingPrice?.toFixed(2)}</span>
     )},
     { key: "status", Title: "Status", width: "10%" , render: (row) => getStatusBadge(row.status || "In Stock") },
-    { key: "image", Title: "Image", width: "10%" , render: (row) => (
+    { key: "image", Title: "Image", width: "8%" , render: (row) => (
       <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.image ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
         {row.image ? "Yes" : "No"}
       </span>
     )},
-    { key: "actions", Title: "Actions", width: "10%" , sortable: false, render: (row) => (
+    { key: "actions", Title: "Actions", width: "8%" , sortable: false, render: (row) => (
       <div className="flex items-center justify-center gap-2">
         <button 
           onClick={() => openEditModal(row)} 
@@ -192,12 +198,20 @@ export default function MedicinesPage() {
         }
       >
         <div className="space-y-4">
-          <InputField 
-            label="Medicine Name" 
-            placeholder="e.g. Napa Extend" 
-            value={formData.name || ''} 
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="Medicine Name" 
+              placeholder="e.g. Napa Extend" 
+              value={formData.name || ''} 
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+            />
+            <InputField 
+              label="Generic Name" 
+              placeholder="e.g. Paracetamol" 
+              value={formData.genericName || ''} 
+              onChange={(e) => setFormData({...formData, genericName: e.target.value})}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <InputField 
               label="Company" 

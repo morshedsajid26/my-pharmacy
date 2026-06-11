@@ -85,7 +85,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
 
   if (children) {
     return (
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-visible rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className={`w-full border-collapse ${tableClass}`}>
           {headers && (
             <thead>
@@ -109,7 +109,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
       {/* ==== GLOBAL FILTER (SEARCH) ==== */}
       {/* ... omitted for brevity ... */}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-visible rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className={`w-full border-collapse ${tableClass}`}>
           {/* ==== TABLE HEADER ==== */}
           <thead>

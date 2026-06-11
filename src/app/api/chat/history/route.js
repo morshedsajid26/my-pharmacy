@@ -7,6 +7,15 @@ export async function GET(req) {
     const sessionId = searchParams.get("sessionId");
     const chatId = searchParams.get("chatId"); // session ID (the cuid from DB)
 
+    // Check if user is logged in
+    const nextCookies = req.cookies;
+    const sessionCookie = nextCookies.get("session")?.value || nextCookies.get("customer_session")?.value;
+    const isLoggedIn = !!sessionCookie;
+
+    if (!isLoggedIn) {
+       return NextResponse.json([]); // Return empty for guests
+    }
+
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
     }

@@ -11,6 +11,7 @@ export async function getMedicines(params = {}) {
       where: search ? {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
+          { genericName: { contains: search, mode: 'insensitive' } },
           { company: { contains: search, mode: 'insensitive' } },
         ]
       } : {},

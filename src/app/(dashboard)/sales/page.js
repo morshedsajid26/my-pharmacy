@@ -265,6 +265,9 @@ export default function SalesPage() {
                     <span className="text-sm font-black text-medical-blue-600">৳{med.sellingPrice?.toFixed(2)}</span>
                   </div>
                   <h4 className="font-bold text-slate-900 line-clamp-1">{med.name}</h4>
+                  {med.genericName && (
+                    <p className="text-[10px] font-medium text-slate-500 mt-1 line-clamp-1">{med.genericName}</p>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-auto">
                   <span className="text-xs text-slate-400 font-medium">Stock: <span className={med.stock <= 10 ? "text-amber-600 font-bold" : "text-slate-600"}>{med.stock}</span></span>

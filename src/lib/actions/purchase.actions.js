@@ -35,6 +35,7 @@ export async function recordPurchase(purchaseData) {
                 const newMedicine = await tx.medicine.create({
                   data: {
                     name: item.name,
+                    genericName: item.genericName || "",
                     company: item.company || company,
                     category: item.category || "Tablet",
                     purchasePrice: item.unitPrice,
@@ -138,6 +139,7 @@ export async function updatePurchase(id, purchaseData) {
                 const newMedicine = await tx.medicine.create({
                   data: {
                     name: item.name,
+                    genericName: item.genericName || "",
                     company: item.company || company,
                     category: item.category || "Tablet",
                     purchasePrice: item.unitPrice,

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Bot, User, Loader2, X, MessageSquare, Maximize2, Trash2 } from "lucide-react";
+import { Send, Bot, User, Loader2, X, MessageSquare, Maximize2, Trash2, Camera } from "lucide-react";
 import Link from "next/link";
+import Script from "next/script";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,8 +12,11 @@ export default function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Initialize sessionId
   useEffect(() => {
@@ -47,26 +51,147 @@ export default function ChatWidget() {
           const chatRes = await fetch(`/api/chat/history?sessionId=${sid}&chatId=${latestChatId}`);
           if (chatRes.ok) {
             const chatData = await chatRes.json();
-            setMessages(chatData.messages.map(m => ({ role: m.role, content: m.content })));
+            setMessages(chatData.messages.map(m => ({ role: m.role, content: m.content, image: m.image })));
+            return; // Exit here, loaded from DB successfully
           }
-        } else {
-           // No history, start with empty
-           setMessages([]);
         }
       }
     } catch (error) {
-      console.error("Failed to load history", error);
+      console.error("Failed to load history from DB", error);
+    }
+
+    // Fallback: If DB is empty (guest) or fetch failed, load from local storage
+    const localHistory = localStorage.getItem("pharmacy_chat_history");
+    if (localHistory) {
+      try {
+        setMessages(JSON.parse(localHistory));
+      } catch (e) {
+        setMessages([]);
+      }
+    } else {
+      setMessages([]);
+    }
+  };
+
+  // Save messages to local storage for guests
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem("pharmacy_chat_history", JSON.stringify(messages));
+      } catch (e) {
+        console.warn("localStorage quota exceeded (likely due to image size), stripping images...");
+        const safeMessages = messages.map(m => ({ ...m, image: null }));
+        localStorage.setItem("pharmacy_chat_history", JSON.stringify(safeMessages));
+      }
+    }
+  }, [messages]);
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB");
+      return;
+    }
+
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    if (isPdf) {
+      if (!window.pdfjsLib) {
+        alert("PDF reader is still loading. Please try again in a moment.");
+        return;
+      }
+      try {
+        const pdfjsLib = window.pdfjsLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        
+        const fileReader = new FileReader();
+        fileReader.onload = async function() {
+          try {
+            const typedarray = new Uint8Array(this.result);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            const page = await pdf.getPage(1);
+            
+            const scale = 2.0;
+            const viewport = page.getViewport({ scale });
+            
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            const base64Img = canvas.toDataURL("image/jpeg", 0.9);
+            setSelectedImage(base64Img);
+          } catch (err) {
+            console.error("PDF extraction error", err);
+            alert("Failed to extract image from PDF.");
+          }
+        };
+        fileReader.readAsArrayBuffer(file);
+      } catch (err) {
+        console.error("PDF processing error", err);
+      }
+      return;
+    }
+
+    const isImage = file.type.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|heic|bmp)$/i.test(file.name);
+    if (isImage) {
+      // Force conversion of ALL images via Canvas to ensure valid JPEG encoding
+      // This prevents errors where files have fake extensions (e.g. .heic renamed to .jpg)
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Optional: Scale down if the image is too large (e.g., > 2000px)
+        let width = img.width;
+        let height = img.height;
+        const maxDimension = 2000;
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height);
+          width = width * ratio;
+          height = height * ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Export as guaranteed valid JPEG
+        const base64Img = canvas.toDataURL("image/jpeg", 0.85);
+        setSelectedImage(base64Img);
+        URL.revokeObjectURL(objUrl);
+      };
+      img.onerror = () => {
+        alert("Unsupported or corrupted image format. Could not load the image.");
+        URL.revokeObjectURL(objUrl);
+      };
+      img.src = objUrl;
+      return;
+    }
+
+    alert("Unsupported file type. Please upload an image or a PDF.");
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   const sendMessage = async (e, text = input) => {
     if (e) e.preventDefault();
-    if (!text.trim() || isLoading) return;
+    if ((!text.trim() && !selectedImage) || isLoading) return;
 
-    const userMessage = { role: "user", content: text };
+    const userMessage = { role: "user", content: text, image: selectedImage };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
+    setSelectedImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    
     setIsLoading(true);
 
     try {
@@ -116,6 +241,25 @@ export default function ChatWidget() {
 
   return (
     <>
+      <Script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js" strategy="lazyOnload" />
+      
+      {/* Full Screen Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <button 
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+          >
+            <X size={24} />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Full screen preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+          />
+        </div>
+      )}
+
       {/* Widget Container */}
       <div className={`fixed bottom-6 right-6 z-[60] flex flex-col items-end transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100 visible' : 'translate-y-10 opacity-0 invisible'}`}>
         <div className="bg-white w-[350px] max-w-[calc(100vw-3rem)] sm:w-[380px] h-[550px] max-h-[calc(100vh-6rem)] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden mb-4 transform transition-all duration-300 relative">
@@ -226,6 +370,14 @@ export default function ChatWidget() {
                          </div>
                       ) : (
                         <div className="whitespace-pre-wrap leading-relaxed break-words [word-break:break-word]">
+                          {msg.image && (
+                            <img 
+                              src={msg.image} 
+                              alt="Uploaded" 
+                              onClick={() => setPreviewImage(msg.image)}
+                              className="max-w-full rounded-lg mb-2 border border-white/20 cursor-zoom-in hover:opacity-90 transition-opacity" 
+                            />
+                          )}
                           {msg.content}
                         </div>
                       )}
@@ -239,23 +391,55 @@ export default function ChatWidget() {
 
           {/* Input Area */}
           <div className="p-3 bg-white border-t border-slate-200 shrink-0">
-            <form onSubmit={sendMessage} className="relative flex items-center">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask something..."
-                disabled={isLoading}
-                className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-blue-500 focus:border-transparent transition-all disabled:opacity-50"
+            {selectedImage && (
+              <div className="relative inline-block mb-3">
+                <img src={selectedImage} alt="Preview" className="h-20 w-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            <form onSubmit={sendMessage} className="relative flex items-center gap-2">
+              <input 
+                type="file" 
+                accept="image/*,application/pdf" 
+                capture="environment"
+                ref={fileInputRef} 
+                onChange={handleImageSelect} 
+                className="hidden" 
               />
               <button
-                type="submit"
-                disabled={!input.trim() || isLoading}
-                className="absolute right-1.5 p-2 bg-medical-blue-600 text-white rounded-lg hover:bg-medical-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="p-2.5 text-slate-500 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 hover:text-medical-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                title="Upload Prescription"
               >
-                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                <Camera size={20} />
               </button>
+              
+              <div className="relative flex-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask or upload prescription..."
+                  disabled={isLoading}
+                  className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-blue-500 focus:border-transparent transition-all disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={(!input.trim() && !selectedImage) || isLoading}
+                  className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-medical-blue-600 text-white rounded-lg hover:bg-medical-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                >
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+              </div>
             </form>
           </div>
         </div>

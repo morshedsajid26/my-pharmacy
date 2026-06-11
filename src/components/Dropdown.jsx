@@ -25,10 +25,19 @@ const Dropdown = ({
   const [show, setShow] = useState(false);
   const dropdownRef = useRef(null);
 
-  const handleSelect = (value) => {
-    setSelected(value);
+  const handleSelect = (val) => {
+    setSelected(val);
     setShow(false);
-    if (onSelect) onSelect(value);
+    if (onSelect) onSelect(val);
+  };
+
+  const getDisplayValue = () => {
+    if (!selected) return "";
+    const option = options.find(opt => (typeof opt === 'object' ? opt.value : opt) === selected);
+    if (option) {
+      return typeof option === 'object' ? option.label : option;
+    }
+    return selected;
   };
 
   useEffect(() => {
@@ -58,8 +67,8 @@ const Dropdown = ({
         <div onClick={() => setShow(!show)} className="relative">
           <input
             readOnly
-            value={selected || ""}
-            className={`w-full bg-white border border-slate-200 outline-none p-3 text-slate-900 rounded-lg placeholder:text-slate-400 cursor-pointer transition-all focus:border-medical-blue-500 focus:ring-2 focus:ring-medical-blue-500/20 ${inputClass}`}
+            value={getDisplayValue()}
+            className={`w-full bg-white border border-slate-200 outline-none px-3 h-10 text-sm text-slate-900 rounded-lg placeholder:text-slate-400 cursor-pointer transition-all focus:border-medical-blue-500 focus:ring-2 focus:ring-medical-blue-500/20 ${inputClass}`}
             placeholder={placeholder}
           />
 
@@ -78,15 +87,19 @@ const Dropdown = ({
           }`}
         >
           <div className="max-h-60 overflow-y-auto hide-scrollbar">
-            {options.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => handleSelect(item)}
-                className={`py-2.5 px-4 hover:bg-medical-blue-50 hover:text-medical-blue-600 cursor-pointer transition-colors text-sm ${selected === item ? 'bg-medical-blue-50 text-medical-blue-600 font-semibold' : ''}`}
-              >
-                {item}
-              </div>
-            ))}
+            {options.map((item, index) => {
+              const itemLabel = typeof item === 'object' ? item.label : item;
+              const itemValue = typeof item === 'object' ? item.value : item;
+              return (
+                <div
+                  key={index}
+                  onClick={() => handleSelect(itemValue)}
+                  className={`py-2.5 px-4 hover:bg-medical-blue-50 hover:text-medical-blue-600 cursor-pointer transition-colors text-sm ${selected === itemValue ? 'bg-medical-blue-50 text-medical-blue-600 font-semibold' : ''}`}
+                >
+                  {itemLabel}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

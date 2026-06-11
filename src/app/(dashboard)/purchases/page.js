@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Input, Select } from "@/components/FormElements";
 import { Table, TableRow, TableCell } from "@/components/Table";
 import { Modal } from "@/components/Modal";
+import Dropdown from "@/components/Dropdown";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useMedicines } from "@/hooks/useMedicines";
 import toast from "react-hot-toast";
@@ -104,7 +105,7 @@ export default function PurchasesPage() {
   };
 
   const addPurchaseItem = () => {
-    setPurchaseItems([...purchaseItems, { medicineId: "", name: "", category: "Tablet", isNew: false, quantity: 1, price: 0, sellingPrice: 0 }]);
+    setPurchaseItems([...purchaseItems, { medicineId: "", name: "", genericName: "", category: "Tablet", isNew: false, quantity: 1, price: 0, sellingPrice: 0 }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -140,6 +141,7 @@ export default function PurchasesPage() {
         items: purchaseItems.map(item => ({
           medicineId: item.isNew || item.medicineId === "new" ? null : item.medicineId,
           name: item.name,
+          genericName: item.genericName || "",
           category: item.category || "Tablet",
           quantity: parseInt(item.quantity),
           unitPrice: parseFloat(item.price),
@@ -186,17 +188,17 @@ export default function PurchasesPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-4">
-                <Select 
+                <Dropdown 
                   label="Supplier Company" 
                   value={selectedCompany}
-                  onChange={(e) => {
-                    setSelectedCompany(e.target.value);
-                    if (e.target.value !== "new") {
+                  onSelect={(val) => {
+                    setSelectedCompany(val);
+                    if (val !== "new") {
                       setNewCompanyText("");
                     }
                   }}
+                  placeholder="Select Company"
                   options={[
-                    { label: "Select Company", value: "" },
                     { label: "+ Add New Company", value: "new" },
                     ...companies.map(comp => ({ label: comp, value: comp }))
                   ]}
@@ -214,21 +216,28 @@ export default function PurchasesPage() {
               <Input label="Invoice Number" placeholder="e.g. INV-2024-001" />
             </div>
 
-            <div className="border border-slate-100 rounded-xl overflow-hidden bg-white">
+            <div className="border border-slate-100 rounded-xl overflow-visible bg-white">
                <Table headers={["Medicine", "Quantity", "Purchase Price", "Selling Price", "Total", "Action"]}>
                   {purchaseItems.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="min-w-[250px]">
+                      <TableCell className="min-w-[450px]">
                         {item.isNew ? (
-                          <div className="relative flex gap-2">
+                          <div className="relative flex items-center gap-2">
                              <div className="flex-1">
                                <Input 
-                                  placeholder="Medicine Name" 
+                                  placeholder="Brand Name" 
                                   value={item.name}
                                   onChange={(e) => updateItem(index, "name", e.target.value)}
                                />
                              </div>
-                             <div className="w-[105px]">
+                             <div className="flex-1">
+                               <Input 
+                                  placeholder="Generic Name" 
+                                  value={item.genericName || ""}
+                                  onChange={(e) => updateItem(index, "genericName", e.target.value)}
+                               />
+                             </div>
+                             <div className="w-[100px]">
                                <Select 
                                  value={item.category || "Tablet"}
                                  onChange={(e) => updateItem(index, "category", e.target.value)}
@@ -243,24 +252,24 @@ export default function PurchasesPage() {
                              </div>
                              <button 
                                onClick={() => updateItem(index, "isNew", false)}
-                               className="absolute -bottom-4 left-2 text-[10px] text-medical-blue-600 font-bold hover:underline"
+                               className="absolute top-full left-1 mt-0.5 text-[10px] text-red-500 font-bold hover:underline whitespace-nowrap"
                              >
-                               Back to selection
+                               Cancel New Medicine
                              </button>
                           </div>
                         ) : (
                           <div>
-                            <Select 
+                            <Dropdown 
                               value={item.medicineId}
-                              onChange={(e) => {
-                                if (e.target.value === "new") {
+                              onSelect={(val) => {
+                                if (val === "new") {
                                   updateItem(index, "isNew", true);
                                 } else {
-                                  updateItem(index, "medicineId", e.target.value);
+                                  updateItem(index, "medicineId", val);
                                 }
                               }}
+                              placeholder="Select Medicine"
                               options={[
-                                { label: "Select Medicine", value: "" },
                                 { label: "+ Add New Medicine", value: "new" },
                                 ...(medicines || []).map(m => ({ label: m.name, value: m.id.toString() }))
                               ]} 
