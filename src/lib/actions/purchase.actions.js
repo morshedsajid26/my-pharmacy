@@ -88,6 +88,9 @@ export async function recordPurchase(purchaseData) {
       revalidatePath("/reports");
       
       return purchase;
+    }, {
+      maxWait: 5000,
+      timeout: 15000
     });
   } catch (error) {
     console.error("Purchase record error:", error);
@@ -190,6 +193,9 @@ export async function updatePurchase(id, purchaseData) {
       revalidatePath("/reports");
       
       return purchase;
+    }, {
+      maxWait: 5000,
+      timeout: 15000
     });
   } catch (error) {
     console.error("Purchase update error:", error);
@@ -235,6 +241,9 @@ export async function deletePurchase(id) {
       revalidatePath("/reports");
 
       return { success: true };
+    }, {
+      maxWait: 5000,
+      timeout: 15000
     });
   } catch (error) {
     console.error("Purchase delete error:", error);

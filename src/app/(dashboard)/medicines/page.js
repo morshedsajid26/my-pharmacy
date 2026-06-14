@@ -165,7 +165,13 @@ export default function MedicinesPage() {
              <Dropdown 
                 className="w-48"
                 placeholder="All Categories"
-                options={["All Categories", "Tablet", "Capsule", "Syrup", "Suspension", "Inhaler"]}
+                options={[
+                  "All Categories", "Tablet", "Capsule", "Syrup", "Suspension (Susp)", 
+                  "Drops", "Injection", "IV Infusion / Saline", "Cream", "Ointment", 
+                  "Gel", "Lotion", "Powder", "Oral Powder / Sachet", "Inhaler", 
+                  "Nebulizer Solution", "Nasal Drop", "Nasal Spray", "Eye Drop", 
+                  "Eye Ointment", "Ear Drop", "Mouthwash", "Suppository", "Pessary"
+                ]}
              />
              <Button variant="outline" className="h-13 gap-2 rounded-xl">
                 <Filter size={16} />
@@ -221,7 +227,13 @@ export default function MedicinesPage() {
             />
             <Dropdown 
               label="Category" 
-              options={["Tablet", "Capsule", "Syrup", "Suspension", "Inhaler"]}
+              options={[
+                "Tablet", "Capsule", "Syrup", "Suspension (Susp)", "Drops", 
+                "Injection", "IV Infusion / Saline", "Cream", "Ointment", "Gel", 
+                "Lotion", "Powder", "Oral Powder / Sachet", "Inhaler", 
+                "Nebulizer Solution", "Nasal Drop", "Nasal Spray", "Eye Drop", 
+                "Eye Ointment", "Ear Drop", "Mouthwash", "Suppository", "Pessary"
+              ]}
               value={formData.category || 'Tablet'}
               onSelect={(val) => setFormData({...formData, category: val})}
             />

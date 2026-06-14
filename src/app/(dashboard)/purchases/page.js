@@ -143,9 +143,9 @@ export default function PurchasesPage() {
           name: item.name,
           genericName: item.genericName || "",
           category: item.category || "Tablet",
-          quantity: parseInt(item.quantity),
-          unitPrice: parseFloat(item.price),
-          sellingPrice: parseFloat(item.sellingPrice || 0)
+          quantity: parseInt(item.quantity) || 0,
+          unitPrice: parseFloat(item.price) || 0,
+          sellingPrice: parseFloat(item.sellingPrice) || 0
         })),
         totalAmount: Math.max(0, grandTotal - purchaseDiscount)
       };
@@ -237,16 +237,34 @@ export default function PurchasesPage() {
                                   onChange={(e) => updateItem(index, "genericName", e.target.value)}
                                />
                              </div>
-                             <div className="w-[100px]">
-                               <Select 
+                             <div className="w-[180px]">
+                               <Dropdown 
                                  value={item.category || "Tablet"}
-                                 onChange={(e) => updateItem(index, "category", e.target.value)}
+                                 onSelect={(val) => updateItem(index, "category", val)}
                                  options={[
-                                   { label: "Tablet", value: "Tablet" },
-                                   { label: "Capsule", value: "Capsule" },
-                                   { label: "Syrup", value: "Syrup" },
-                                   { label: "Susp", value: "Suspension" },
-                                   { label: "Inhaler", value: "Inhaler" }
+                                   "Tablet",
+                                   "Capsule",
+                                   "Syrup",
+                                   "Suspension (Susp)",
+                                   "Drops",
+                                   "Injection",
+                                   "IV Infusion / Saline",
+                                   "Cream",
+                                   "Ointment",
+                                   "Gel",
+                                   "Lotion",
+                                   "Powder",
+                                   "Oral Powder / Sachet",
+                                   "Inhaler",
+                                   "Nebulizer Solution",
+                                   "Nasal Drop",
+                                   "Nasal Spray",
+                                   "Eye Drop",
+                                   "Eye Ointment",
+                                   "Ear Drop",
+                                   "Mouthwash",
+                                   "Suppository",
+                                   "Pessary"
                                  ]}
                                />
                              </div>
