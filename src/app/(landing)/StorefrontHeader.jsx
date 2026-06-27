@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { PlusCircle, Clock, User, LogOut, ShoppingBag, Search, X } from "lucide-react";
+import { PlusCircle, Clock, User, LogOut, ShoppingBag, Search, X, LayoutDashboard } from "lucide-react";
 
 export default function StorefrontHeader({ 
   customer, 
@@ -60,6 +60,15 @@ export default function StorefrontHeader({
 
         {/* Header Controls */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <Link
+            href="/login"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-blue-600 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+            title="Dashboard Login"
+          >
+            <LayoutDashboard size={16} className="w-4 h-4" />
+            <span className="hidden lg:inline">Dashboard</span>
+          </Link>
+
           {customer ? (
             <div className="flex items-center gap-2 sm:gap-3">
               <button 
