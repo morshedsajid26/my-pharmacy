@@ -4,7 +4,7 @@ import StorefrontClient from "@/components/StorefrontClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function StorefrontPage() {
+export default async function ShopPage() {
   // Pre-fetch active medicines to provide instant initial load
   const medicines = await prisma.medicine.findMany({
     orderBy: { name: "asc" }
@@ -28,7 +28,7 @@ export default async function StorefrontPage() {
       initialMedicines={medicines} 
       initialCustomer={customer} 
       initialSettings={settings}
-      mode="landing"
+      mode="shop"
     />
   );
 }

@@ -61,6 +61,15 @@ export default function StorefrontHeader({
         {/* Header Controls */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <Link
+            href="/shop"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-blue-600 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+            title="Shop Medicines"
+          >
+            <ShoppingBag size={16} className="w-4 h-4" />
+            <span className="hidden lg:inline">Shop</span>
+          </Link>
+
+          <Link
             href="/login"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-blue-600 font-bold text-xs sm:text-sm transition-all cursor-pointer"
             title="Dashboard Login"
@@ -71,13 +80,7 @@ export default function StorefrontHeader({
 
           {customer ? (
             <div className="flex items-center gap-2 sm:gap-3">
-              <button 
-                onClick={onOrdersClick}
-                className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer"
-              >
-                <Clock size={16} />
-                <span>My Orders</span>
-              </button>
+
               <Link 
                 href="/profile"
                 className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 py-1.5 px-3 rounded-2xl border border-slate-200/50 transition-all cursor-pointer group"
@@ -90,14 +93,6 @@ export default function StorefrontHeader({
                   {customer.name}
                 </span>
               </Link>
-              <button 
-                onClick={onLogout}
-                title="Logout"
-                className="p-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-red-50 hover:bg-red-100/80 text-red-600 transition-all border border-red-100/40 flex items-center gap-1.5 font-bold text-sm cursor-pointer"
-              >
-                <LogOut size={16} />
-                <span className="hidden lg:inline">Sign Out</span>
-              </button>
             </div>
           ) : (
             <button 
