@@ -17,16 +17,20 @@ import {
   XCircle,
   Image as ImageIcon,
   Clock,
-  X
+  X,
+  Eye,
+  Trash2
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { Table } from "@/components/Table";
 import { 
   getCurrentCustomer, 
   logoutCustomerAction 
 } from "@/lib/actions/online-customer.actions";
 import { 
   createPrescriptionOrder, 
-  getCustomerPrescriptionOrders 
+  getCustomerPrescriptionOrders,
+  deletePrescriptionOrder
 } from "@/lib/actions/prescription.actions";
 
 export default function CustomerPrescriptionsPage() {
@@ -148,8 +152,99 @@ export default function CustomerPrescriptionsPage() {
       toast.error(error.message || "Failed to upload prescription");
     } finally {
       setIsUploading(false);
+      setIsUploading(false);
     }
   };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this prescription?")) return;
+    try {
+      const result = await deletePrescriptionOrder(id);
+      if (result.success) {
+        toast.success("Prescription deleted successfully");
+        setOrders(orders.filter(order => order.id !== id));
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to delete prescription");
+    }
+  };
+
+  const tableHeads = [
+    { 
+      key: "id", 
+      Title: "ID", 
+      render: (row) => <span className="text-xs font-black text-slate-700 bg-slate-100 px-2 py-1 rounded-md">#{row.id.slice(-6).toUpperCase()}</span>
+    },
+    { 
+      key: "createdAt", 
+      Title: "Date", 
+      render: (row) => (
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 justify-center">
+          <Calendar size={14} className="text-slate-400" />
+          {new Date(row.createdAt).toLocaleDateString()}
+        </div>
+      )
+    },
+    { 
+      key: "durationDays", 
+      Title: "Duration", 
+      render: (row) => <span className="text-xs font-bold text-slate-800">{row.durationDays}</span>
+    },
+    { 
+      key: "notes", 
+      Title: "Notes", 
+      render: (row) => (
+        <div className="text-xs text-slate-500 max-w-[200px] truncate mx-auto" title={row.notes || "None"}>
+          {row.notes || <span className="text-slate-300 italic">None</span>}
+        </div>
+      )
+    },
+    { 
+      key: "status", 
+      Title: "Status", 
+      render: (row) => (
+        row.status === "PENDING" ? (
+          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+            Reviewing
+          </span>
+        ) : row.status === "APPROVED" ? (
+          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <CheckCircle size={12} className="text-emerald-500" />
+            Approved
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
+            <XCircle size={12} className="text-red-500" />
+            Rejected
+          </span>
+        )
+      )
+    },
+    { 
+      key: "actions", 
+      Title: "Actions", 
+      sortable: false,
+      render: (row) => (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setViewingFile(row.prescriptionFile)}
+            className="p-2 rounded-xl bg-medical-blue-50 hover:bg-medical-blue-100 text-medical-blue-600 transition-colors shadow-sm cursor-pointer"
+            title="View Prescription"
+          >
+            <Eye size={16} />
+          </button>
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-colors shadow-sm cursor-pointer"
+            title="Delete Prescription"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      )
+    }
+  ];
 
   if (loadingCustomer) {
     return (
@@ -161,87 +256,11 @@ export default function CustomerPrescriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
+    <div className=" mx-auto w-full">
       <Toaster position="top-center" />
-
-      {/* HEADER SECTION */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
-              <PlusCircle className="text-white w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">
-                S&S<span className="text-medical-blue-600">Pharmacy</span>
-              </h1>
-              <span className="text-[10px] font-semibold text-slate-500 tracking-wide uppercase mt-1 block">
-                Prescription Upload Portal
-              </span>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Shop</span>
-            </Link>
-
-            <button 
-              onClick={handleSignOut}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all border border-red-100 flex items-center gap-1.5 font-bold text-xs sm:text-sm"
-            >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN GRID LAYOUT */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        {/* LEFT COLUMN: NAVIGATION SIDEBAR */}
-        <aside className="lg:col-span-1 space-y-3">
-          <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm space-y-1">
-            <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-              Account Menu
-            </div>
-            
-            <Link 
-              href="/profile"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all border border-transparent"
-            >
-              <User size={16} />
-              <span>Personal Details</span>
-            </Link>
-
-            <Link 
-              href="/profile/orders"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all border border-transparent"
-            >
-              <ShoppingBag size={16} />
-              <span>My Orders History</span>
-            </Link>
-
-            <Link 
-              href="/profile/prescriptions"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold bg-medical-blue-50 text-medical-blue-700 transition-all border border-medical-blue-100/50"
-            >
-              <FileText size={16} />
-              <span>Prescription Orders</span>
-            </Link>
-          </div>
-        </aside>
-
-        {/* RIGHT COLUMN: PRESCRIPTION UPLOAD AND HISTORY */}
-        <section className="lg:col-span-3 space-y-6">
-          
-          <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-6">
+      <div className="space-y-6">
+          <div className="rounded-3xl  p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="w-12 h-12 rounded-2xl bg-medical-blue-50 text-medical-blue-600 flex items-center justify-center">
                   <FileText size={24} />
@@ -364,74 +383,11 @@ export default function CustomerPrescriptionsPage() {
                 <span className="text-slate-400 text-xs font-bold">Retrieving prescription history...</span>
               </div>
             ) : orders.length > 0 ? (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div 
-                    key={order.id} 
-                    className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 hover:border-slate-300 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      
-                      {/* Left Info */}
-                      <div className="flex items-start gap-3">
-                        <div 
-                          onClick={() => setViewingFile(order.prescriptionFile)}
-                          className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 cursor-pointer overflow-hidden group relative"
-                        >
-                          {order.prescriptionFile.includes("application/pdf") ? (
-                            <FileText size={24} className="text-slate-400 group-hover:text-medical-blue-500 transition-colors" />
-                          ) : (
-                            <img src={order.prescriptionFile} alt="Prescription" className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" />
-                          )}
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[9px] font-bold text-white uppercase tracking-wider">View</span>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-1.5">
-                          <h3 className="font-extrabold text-slate-800 text-sm">Prescription Request</h3>
-                          
-                          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
-                            <Calendar size={12} />
-                            <span>{new Date(order.createdAt).toLocaleString()}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
-                            <Clock size={12} />
-                            <span>Duration: <strong className="text-slate-700">{order.durationDays}</strong></span>
-                          </div>
-
-                          {order.notes && (
-                            <p className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg mt-1 border border-slate-100">
-                              <span className="font-bold">Note:</span> {order.notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Status */}
-                      <div className="flex-shrink-0">
-                        {order.status === "PENDING" ? (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-yellow-600 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
-                            Reviewing
-                          </span>
-                        ) : order.status === "APPROVED" ? (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-                            <CheckCircle size={12} className="text-emerald-500" />
-                            Approved
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-red-600 bg-red-50 px-3 py-1.5 rounded-full border border-red-200">
-                            <XCircle size={12} className="text-red-500" />
-                            Rejected
-                          </span>
-                        )}
-                      </div>
-
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-6">
+                <Table 
+                  TableHeads={tableHeads} 
+                  TableRows={orders} 
+                />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center py-16 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
@@ -443,8 +399,6 @@ export default function CustomerPrescriptionsPage() {
               </div>
             )}
           </div>
-        </section>
-      </main>
 
       {/* VIEW FILE MODAL */}
       {viewingFile && (
@@ -472,7 +426,7 @@ export default function CustomerPrescriptionsPage() {
           </div>
         </div>
       )}
-
+      </div>
     </div>
   );
 }

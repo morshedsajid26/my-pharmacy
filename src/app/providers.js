@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { UIProvider } from "@/context/UIContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
+import CartDrawer from "@/components/CartDrawer";
 
 export function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -19,10 +21,13 @@ export function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <UIProvider>
-          <Toaster position="top-center" reverseOrder={false} />
-          {children}
-        </UIProvider>
+        <CartProvider>
+          <UIProvider>
+            <Toaster position="top-center" reverseOrder={false} />
+            <CartDrawer />
+            {children}
+          </UIProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

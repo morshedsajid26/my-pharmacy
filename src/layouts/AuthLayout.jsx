@@ -32,7 +32,7 @@ export function AuthLayout() {
 
         {/* Footer */}
         <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          &copy; {new Date().getFullYear()} PharmaPro Dashboard. All rights
+          &copy; {new Date().getFullYear()} S&S Pharmacy. All rights
           reserved.
         </p>
       </div>

@@ -37,19 +37,20 @@ import {
   ChevronDown,
   ShieldCheck,
 } from "lucide-react";
-import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
-import toast, { Toaster } from "react-hot-toast";
+import { useCart } from "@/context/CartContext";
 import {
   registerCustomerAction,
   loginCustomerAction,
   logoutCustomerAction,
-  createOnlineOrderAction,
-  getCustomerOrdersAction,
   updateCustomerProfileAction,
+  getCustomerOrdersAction,
+  createOnlineOrderAction,
+  getCustomerWishlistAction,
   addMedicineRequestAction,
   removeMedicineRequestAction,
-  getCustomerWishlistAction,
 } from "@/lib/actions/online-customer.actions";
+import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
+import toast, { Toaster } from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import StorefrontHeader from "../app/(landing)/StorefrontHeader";
 import StorefrontHero from "../app/(landing)/StorefrontHero";
@@ -113,18 +114,14 @@ export default function StorefrontClient({
   const [selectedQuantities, setSelectedQuantities] = useState({});
 
   // Interactive UI drawers & modals
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { cart, isCartOpen, setIsCartOpen, addToCart, getCartTotal } = useCart();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
 
   // Orders & Checkout State
   const [customerOrders, setCustomerOrders] = useState([]);
-  const [notes, setNotes] = useState("");
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(null);
 
   // Wishlist requests state
   const [wishlist, setWishlist] = useState([]);
@@ -137,28 +134,13 @@ export default function StorefrontClient({
   const [authAddress, setAuthAddress] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
 
-  // OTP & Enforced Address State
+  // OTP State
   const [otpStep, setOtpStep] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [otpVerifying, setOtpVerifying] = useState(false);
-  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [newCheckoutAddress, setNewCheckoutAddress] = useState("");
-  const [deliverToNew, setDeliverToNew] = useState(false);
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null);
-
-  // Load cart from localStorage upon mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem("pharmacy_cart");
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Failed to parse cart:", e);
-      }
-    }
-  }, []);
 
   // Load customer wishlist requests
   useEffect(() => {
@@ -176,12 +158,6 @@ export default function StorefrontClient({
     }
     loadWishlist();
   }, [customer]);
-
-  // Sync cart to localStorage whenever it changes
-  const saveCart = (newCart) => {
-    setCart(newCart);
-    localStorage.setItem("pharmacy_cart", JSON.stringify(newCart));
-  };
 
   // Get unique categories list
   const categories = ["All", ...new Set(medicines.map((m) => m.category))];
@@ -239,95 +215,6 @@ export default function StorefrontClient({
     } finally {
       setWishlistLoading(false);
     }
-  };
-
-  const addToCart = (med, qty = 1) => {
-    if (med.stock < 2) {
-      return toast.error(`${med.name} is currently out of stock!`);
-    }
-
-    const existingIndex = cart.findIndex((item) => item.id === med.id);
-    if (existingIndex > -1) {
-      const currentQty = cart[existingIndex].quantity;
-      const targetQty = currentQty + qty;
-      if (targetQty > med.stock) {
-        return toast.error(
-          `Cannot add ${qty} more. Only ${med.stock - currentQty} more units available in stock.`,
-        );
-      }
-      const updatedCart = [...cart];
-      updatedCart[existingIndex].quantity = targetQty;
-      saveCart(updatedCart);
-    } else {
-      if (qty > med.stock) {
-        return toast.error(
-          `Cannot add ${qty} units. Only ${med.stock} units available in stock.`,
-        );
-      }
-      saveCart([...cart, { ...med, quantity: qty }]);
-    }
-    toast.success(`Added ${qty} unit(s) of ${med.name} to cart!`);
-  };
-
-  const updateCartQty = (id, change, maxStock) => {
-    const updatedCart = cart
-      .map((item) => {
-        if (item.id === id) {
-          const newQty = item.quantity + change;
-          if (newQty > maxStock) {
-            toast.error(`Only ${maxStock} units available in stock.`);
-            return item;
-          }
-          if (newQty <= 0) return null;
-          return { ...item, quantity: newQty };
-        }
-        return item;
-      })
-      .filter(Boolean);
-    saveCart(updatedCart);
-  };
-
-  const removeFromCart = (id) => {
-    saveCart(cart.filter((item) => item.id !== id));
-    toast.success("Item removed from cart");
-  };
-
-  const getCartTotal = () => {
-    return cart.reduce(
-      (total, item) => total + item.sellingPrice * item.quantity,
-      0,
-    );
-  };
-
-  const getCartDeliveryCharge = () => {
-    const subtotal = getCartTotal();
-    if (subtotal === 0) return 0;
-    return subtotal >= settings.minOrderForFreeDelivery
-      ? 0
-      : settings.deliveryCharge;
-  };
-
-  const getCartDiscount = () => {
-    const subtotal = getCartTotal();
-    // If no tiers defined, no discount
-    if (!settings.discountTiers || settings.discountTiers.length === 0)
-      return 0;
-    // Find applicable tiers where subtotal meets threshold
-    const applicableTiers = settings.discountTiers.filter(
-      (t) => subtotal >= t.threshold,
-    );
-    if (applicableTiers.length === 0) return 0;
-    // Choose the tier with the highest discount percent
-    const bestTier = applicableTiers.reduce((prev, curr) =>
-      curr.percent > prev.percent ? curr : prev,
-    );
-    return (subtotal * bestTier.percent) / 100;
-  };
-
-  const getCartGrandTotal = () => {
-    const subtotal = getCartTotal();
-    if (subtotal === 0) return 0;
-    return subtotal + getCartDeliveryCharge() - getCartDiscount();
   };
 
   // Customer Auth Functions
@@ -450,164 +337,6 @@ export default function StorefrontClient({
       loadOrders();
     }
   }, [isOrdersModalOpen, customer]);
-
-  // Render delivery address selection section in cart drawer
-  const renderAddressSection = () => {
-    if (!customer) {
-      return (
-        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-xs text-amber-800">
-          Please sign in or register to set your delivery address.
-        </div>
-      );
-    }
-
-    const savedAddresses = [];
-    if (customer.address) {
-      try {
-        const parsed = JSON.parse(customer.address);
-        if (Array.isArray(parsed)) {
-          savedAddresses.push(...parsed);
-        } else {
-          savedAddresses.push(customer.address);
-        }
-      } catch (e) {
-        savedAddresses.push(customer.address);
-      }
-    }
-
-    return (
-      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-          <span>Deliver to:</span>
-          <span className="text-slate-800 font-extrabold">{customer.name}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-600">
-          <Phone size={12} className="text-slate-400" />
-          <span>{customer.phone}</span>
-        </div>
-
-        {/* Saved Address list only (No editing, no additions) */}
-        {savedAddresses.length > 0 ? (
-          <div className="border-t border-slate-200/50 pt-3 space-y-2">
-            <span className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-              <MapPin size={12} className="text-slate-400" />
-              <span>Select Delivery Address:</span>
-            </span>
-
-            <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-              {savedAddresses.map((addr, idx) => (
-                <label
-                  key={idx}
-                  className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                    selectedAddressIndex === idx
-                      ? "bg-medical-blue-50/50 border-medical-blue-300 text-medical-blue-900 font-bold"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="checkout_address"
-                    checked={selectedAddressIndex === idx}
-                    onChange={() => {
-                      setSelectedAddressIndex(idx);
-                    }}
-                    className="mt-0.5 text-medical-blue-600 focus:ring-medical-blue-500"
-                  />
-                  <span className="leading-tight break-words max-w-[210px]">
-                    {addr}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="border-t border-slate-200/50 pt-3 space-y-2.5">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 font-semibold space-y-1">
-              <span className="block font-bold">
-                ⚠️ No saved address found!
-              </span>
-              <p className="leading-relaxed">
-                You must register at least one delivery address in your profile
-                to checkout.
-              </p>
-            </div>
-
-            <Link
-              href="/profile"
-              onClick={() => setIsCartOpen(false)}
-              className="w-full py-2.5 px-3 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold text-xs text-center transition-all shadow-sm flex items-center justify-center gap-1.5"
-            >
-              <User size={12} />
-              <span>Go to Profile to Add Address</span>
-            </Link>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Handle Checkout & Place Order
-  const handleCheckout = async () => {
-    if (!customer) {
-      setAuthMode("login");
-      setIsAuthModalOpen(true);
-      return toast.error("Please Sign In to complete your order");
-    }
-
-    if (cart.length === 0) {
-      return toast.error("Your cart is empty!");
-    }
-
-    // Parse existing addresses
-    let savedAddresses = [];
-    if (customer.address) {
-      try {
-        const parsed = JSON.parse(customer.address);
-        if (Array.isArray(parsed)) {
-          savedAddresses.push(...parsed);
-        } else {
-          savedAddresses.push(customer.address);
-        }
-      } catch (e) {
-        savedAddresses.push(customer.address);
-      }
-    }
-
-    // Since address input/edit is removed from the cart, they MUST have at least one saved address
-    if (savedAddresses.length === 0) {
-      return toast.error(
-        "Please add a delivery address in your profile settings before placing an order!",
-      );
-    }
-
-    const finalAddress = savedAddresses[selectedAddressIndex];
-    if (!finalAddress) {
-      return toast.error("Please select a delivery address!");
-    }
-
-    setCheckoutLoading(true);
-    try {
-      const result = await createOnlineOrderAction(cart, notes, finalAddress);
-      if (result.success) {
-        setOrderSuccess({
-          orderNo: result.orderNo,
-          totalAmount: result.totalAmount,
-          items: [...cart],
-          deliveryAddress: finalAddress,
-        });
-        // Clear Cart
-        saveCart([]);
-        setNotes("");
-        setNewCheckoutAddress("");
-        setIsCartOpen(false);
-        toast.success("Order placed successfully!");
-      }
-    } catch (error) {
-      toast.error(error.message || "Checkout failed");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
 
   const totalItems = cart.length;
 
@@ -1018,216 +747,7 @@ export default function StorefrontClient({
 
       <StorefrontFooter />
 
-      {/* SLIDE OUT CART DRAWER */}
-      {isCartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          {/* Backdrop overlay */}
-          <div
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsCartOpen(false)}
-          />
-
-          <div className="absolute inset-y-0 right-0 max-w-full flex">
-            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between h-full animate-in slide-in-from-right duration-300">
-              {/* Header */}
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="text-medical-blue-600 w-5 h-5" />
-                  <h3 className="text-lg font-extrabold text-slate-900">
-                    Your Shopping Cart
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setIsCartOpen(false)}
-                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* Cart Content Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {cart.length > 0 ? (
-                  <>
-                    <div className="space-y-4">
-                      {cart.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-extrabold text-slate-800 text-sm truncate">
-                              {item.name}
-                            </h4>
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              {item.company}
-                            </p>
-                            <span className="text-xs font-black text-medical-blue-600 mt-1 block">
-                              ৳{item.sellingPrice} each
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                              <button
-                                onClick={() =>
-                                  updateCartQty(item.id, -1, item.stock)
-                                }
-                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
-                              >
-                                <Minus size={14} />
-                              </button>
-                              <span className="w-8 text-center text-xs font-extrabold text-slate-800">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  updateCartQty(item.id, 1, item.stock)
-                                }
-                                className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* DELIVERY DETAILS PANEL */}
-                    <div className="pt-6 border-t border-slate-100 space-y-4">
-                      <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                        <MapPin size={16} className="text-slate-400" />
-                        <span>Delivery & Order Notes</span>
-                      </h4>
-
-                      {renderAddressSection()}
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-1">
-                          Add special instructions (optional):
-                        </label>
-                        <textarea
-                          placeholder="E.g., Please ring the bell. Cash on delivery. Leave it at reception."
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          className="w-full border border-slate-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-medical-blue-500 outline-none h-20 resize-none font-medium text-slate-700"
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-16">
-                    <ShoppingBag className="w-12 h-12 text-slate-200 mb-4" />
-                    <h4 className="font-bold text-slate-700">
-                      Your cart is empty
-                    </h4>
-                    <p className="text-slate-400 text-xs mt-1">
-                      Browse our store and add some medicines to checkout.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer Summary / Place Order */}
-              {cart.length > 0 && (
-                <div className="p-6 border-t border-slate-100 bg-slate-50 space-y-4">
-                  <div className="space-y-2.5 border-b border-slate-200/60 pb-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-slate-500">
-                        Subtotal:
-                      </span>
-                      <span className="font-bold text-slate-800 font-mono">
-                        ৳{getCartTotal().toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-slate-500">
-                        Delivery Charge:
-                      </span>
-                      {getCartDeliveryCharge() === 0 ? (
-                        <span className="text-xs font-black text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
-                          FREE
-                        </span>
-                      ) : (
-                        <span className="font-bold text-slate-800 font-mono">
-                          ৳{getCartDeliveryCharge().toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-
-                    {getCartDeliveryCharge() > 0 && (
-                      <p className="text-[10px] text-amber-600 font-semibold leading-none">
-                        💡 Add ৳
-                        {(
-                          settings.minOrderForFreeDelivery - getCartTotal()
-                        ).toFixed(2)}{" "}
-                        more for free delivery!
-                      </p>
-                    )}
-
-                    {getCartDiscount() > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-slate-500 flex items-center gap-1">
-                          <span>Discount:</span>
-                          <span className="text-[9px] font-black bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
-                            {settings.discountPercent}% OFF
-                          </span>
-                        </span>
-                        <span className="font-bold text-emerald-600 font-mono">
-                          -৳{getCartDiscount().toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-slate-700 text-base">
-                      Grand Total:
-                    </span>
-                    <span className="text-2xl font-black text-slate-900 font-mono">
-                      ৳{getCartGrandTotal().toFixed(2)}
-                    </span>
-                  </div>
-
-                  {customer ? (
-                    <button
-                      onClick={handleCheckout}
-                      disabled={checkoutLoading}
-                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/20 disabled:opacity-50 transition-all text-base cursor-pointer"
-                    >
-                      {checkoutLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>Place Cash-On-Delivery Order</>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setAuthMode("login");
-                        setIsAuthModalOpen(true);
-                      }}
-                      className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg transition-all text-base cursor-pointer"
-                    >
-                      Sign In to Place Order
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <StorefrontFooter />
 
       {/* LOGIN / SIGNUP INLINE DRAWER MODAL */}
       {isAuthModalOpen && (
@@ -1581,121 +1101,7 @@ export default function StorefrontClient({
         </div>
       )}
 
-      {/* ORDER SUCCESS POPUP MODAL */}
-      {orderSuccess && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
 
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden z-10 text-center animate-in zoom-in-95 duration-300">
-            <div className="p-8 space-y-6">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-                <CheckCircle size={32} />
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 leading-tight">
-                  Order Placed Successfully!
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Your order is now sync'd to the admin dashboard.
-                </p>
-              </div>
-
-              {(() => {
-                const subtotal = orderSuccess.items.reduce(
-                  (total, item) => total + item.sellingPrice * item.quantity,
-                  0,
-                );
-                const deliveryCharge =
-                  subtotal >= settings.minOrderForFreeDelivery
-                    ? 0
-                    : settings.deliveryCharge;
-                const discount =
-                  subtotal >= settings.discountThreshold
-                    ? (subtotal * settings.discountPercent) / 100
-                    : 0;
-
-                return (
-                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-2.5 text-left">
-                    <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                      <span className="text-xs font-bold text-slate-400">
-                        Order Number:
-                      </span>
-                      <span className="font-extrabold text-medical-blue-600 text-sm tracking-wide">
-                        {orderSuccess.orderNo}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-500">
-                        Subtotal:
-                      </span>
-                      <span className="font-bold text-slate-800 font-mono">
-                        ৳{subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-500">
-                        Delivery Charge:
-                      </span>
-                      {deliveryCharge === 0 ? (
-                        <span className="text-[10px] font-black text-emerald-600 px-1.5 py-0.2 bg-emerald-50 border border-emerald-100 rounded">
-                          FREE
-                        </span>
-                      ) : (
-                        <span className="font-bold text-slate-800 font-mono">
-                          ৳{deliveryCharge.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                    {discount > 0 && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-500">
-                          Discount:
-                        </span>
-                        <span className="font-bold text-emerald-600 font-mono">
-                          -৳{discount.toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 text-sm">
-                      <span className="font-extrabold text-slate-700">
-                        Total Amount:
-                      </span>
-                      <span className="font-black text-slate-900 font-mono">
-                        ৳{orderSuccess.totalAmount.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="space-y-1 border-t border-slate-200/60 pt-2">
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-                        Deliver to:
-                      </span>
-                      <span className="text-[11px] font-semibold text-slate-600 leading-tight block">
-                        {orderSuccess.deliveryAddress}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <p className="text-xs text-slate-400 leading-normal">
-                Pharmacy administrators will review your order. You can track
-                its live status anytime under the **My Orders** portal.
-              </p>
-
-              <button
-                onClick={() => {
-                  setOrderSuccess(null);
-                  setIsOrdersModalOpen(true);
-                }}
-                className="w-full h-12 bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/15 transition-all text-sm cursor-pointer"
-              >
-                <span>Track Order Live</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

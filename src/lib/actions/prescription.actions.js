@@ -84,3 +84,19 @@ export async function updatePrescriptionOrderStatus(id, status) {
     throw new Error("Failed to update status");
   }
 }
+
+export async function deletePrescriptionOrder(id) {
+  try {
+    const order = await prisma.prescriptionOrder.delete({
+      where: { id }
+    });
+    
+    revalidatePath("/prescription-orders");
+    revalidatePath("/profile/prescriptions");
+    
+    return { success: true, order };
+  } catch (error) {
+    console.error("Error deleting prescription order:", error);
+    throw new Error("Failed to delete prescription");
+  }
+}

@@ -69,20 +69,13 @@ export default function StorefrontHeader({
             <span className="hidden lg:inline">Shop</span>
           </Link>
 
-          <Link
-            href="/login"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-blue-600 font-bold text-xs sm:text-sm transition-all cursor-pointer"
-            title="Dashboard Login"
-          >
-            <LayoutDashboard size={16} className="w-4 h-4" />
-            <span className="hidden lg:inline">Dashboard</span>
-          </Link>
+
 
           {customer ? (
             <div className="flex items-center gap-2 sm:gap-3">
 
               <Link 
-                href="/profile"
+                href="/profile/overview"
                 className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 py-1.5 px-3 rounded-2xl border border-slate-200/50 transition-all cursor-pointer group"
                 title="Edit Profile Settings"
               >
@@ -95,14 +88,14 @@ export default function StorefrontHeader({
               </Link>
             </div>
           ) : (
-            <button 
-              onClick={onAuthClick}
+            <Link 
+              href="/login"
               className="flex items-center gap-1.5 px-3 sm:px-4.5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-extrabold text-xs sm:text-sm transition-all shadow-md shadow-medical-blue-600/10 cursor-pointer"
             >
               <User size={14} className="sm:w-4 sm:h-4" />
               <span className="">Sign In</span>
               
-            </button>
+            </Link>
           )}
         </div>
       </div>

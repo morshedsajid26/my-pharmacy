@@ -9,9 +9,11 @@ import { Button } from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import Password from "@/components/Password";
 import { useEffect } from "react";
+import { loginCustomerAction } from "@/lib/actions/online-customer.actions";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, user } = useAuth();
@@ -29,12 +31,24 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const success = await login(email, password);
-      if (success) {
-        router.push("/dashboard");
+      const isPhone = /^[0-9+\s-]{8,}$/.test(identifier.trim());
+
+      if (isPhone) {
+        const result = await loginCustomerAction(identifier.trim(), password);
+        if (result.success) {
+          toast.success("Successfully logged in!");
+          router.push("/profile/overview");
+        }
+      } else {
+        const success = await login(identifier.trim(), password);
+        if (success) {
+          toast.success("Successfully logged in!");
+          router.push("/dashboard");
+        }
       }
     } catch (error) {
       console.error("Login component error:", error);
+      toast.error(error.message || "Login failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -62,11 +76,11 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <InputField 
-                label="Email Address"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                label="Email or Phone"
+                type="text"
+                placeholder="Enter your Email or Phone Number"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
               />
 
@@ -104,20 +118,20 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* <div className="mt-8 pt-8 border-t border-slate-50 text-center">
+            <div className="mt-8 pt-8 border-t border-slate-50 text-center">
               <p className="text-sm text-slate-500">
                 Don't have an account?{" "}
                 <Link href="/signup" className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">
-                  Create account
+                  Register
                 </Link>
               </p>
-            </div> */}
+            </div>
           </div>
         </div>
 
         {/* Footer */}
         <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          &copy; {new Date().getFullYear()} PharmaPro Dashboard. All rights reserved.
+          &copy; {new Date().getFullYear()} PharmaPro. All rights reserved.
         </p>
       </div>
     </div>

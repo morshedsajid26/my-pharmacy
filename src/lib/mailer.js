@@ -67,11 +67,11 @@ export async function sendOtpEmail(toEmail, otpCode) {
   }
 
   try {
-    const fromName = process.env.SMTP_FROM || "PharmaPro <noreply@pharmapro.com>";
+    const fromName = process.env.SMTP_FROM || "S&S Pharmacy <noreply@pharmapro.com>";
     await transporter.sendMail({
       from: fromName,
       to: toEmail,
-      subject: `🔑 [PharmaPro] Password Reset Verification Code: ${otpCode}`,
+      subject: `🔑 [S&S Pharmacy] Password Reset Verification Code: ${otpCode}`,
       html: htmlContent,
     });
     console.log(`📬 Real OTP email successfully sent to: ${toEmail}`);

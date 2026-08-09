@@ -8,25 +8,20 @@ import {
   MapPin, 
   Phone, 
   Lock, 
-  ArrowLeft, 
-  PlusCircle, 
-  LogOut, 
   Loader2, 
   ShieldCheck,
   Save,
-  ShoppingBag,
   Plus,
   Trash2,
   Edit2,
   Check,
-  X,
-  FileText
+  X
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { 
   getCurrentCustomer, 
   updateCustomerProfileAction, 
-  logoutCustomerAction 
+  logoutCustomerAction
 } from "@/lib/actions/online-customer.actions";
 
 export default function ProfilePage() {
@@ -123,16 +118,25 @@ export default function ProfilePage() {
     }
   };
 
-  // Add a new address to the local state list
-  const handleAddNewAddress = () => {
+  // Add a new address and save to DB
+  const handleAddNewAddress = async () => {
     if (!newAddressText || !newAddressText.trim()) {
       return toast.error("Please type a valid delivery address");
     }
     const newList = [...addresses, newAddressText.trim()];
-    setAddresses(newList);
-    setNewAddressText("");
-    setIsAddingNew(false);
-    toast.success("Address added to your list! Remember to save changes.");
+    
+    try {
+      const result = await updateCustomerProfileAction(name, newList);
+      if (result.success) {
+        setAddresses(newList);
+        setCustomer(result.customer);
+        setNewAddressText("");
+        setIsAddingNew(false);
+        toast.success("Address added and saved successfully!");
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to save address");
+    }
   };
 
   // Start editing an address
@@ -141,24 +145,42 @@ export default function ProfilePage() {
     setEditingContent(addresses[index]);
   };
 
-  // Save the modified address inline
-  const saveEditedAddress = (index) => {
+  // Save the modified address inline and to DB
+  const saveEditedAddress = async (index) => {
     if (!editingContent || !editingContent.trim()) {
       return toast.error("Address content cannot be empty");
     }
     const newList = [...addresses];
     newList[index] = editingContent.trim();
-    setAddresses(newList);
-    setEditingIndex(null);
-    setEditingContent("");
-    toast.success("Address modified! Remember to save changes.");
+    
+    try {
+      const result = await updateCustomerProfileAction(name, newList);
+      if (result.success) {
+        setAddresses(newList);
+        setCustomer(result.customer);
+        setEditingIndex(null);
+        setEditingContent("");
+        toast.success("Address modified and saved!");
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to save address");
+    }
   };
 
-  // Delete an address from the local state list
-  const handleDeleteAddress = (index) => {
+  // Delete an address and update DB
+  const handleDeleteAddress = async (index) => {
     const newList = addresses.filter((_, i) => i !== index);
-    setAddresses(newList);
-    toast.success("Address removed from your list! Remember to save changes.");
+    
+    try {
+      const result = await updateCustomerProfileAction(name, newList);
+      if (result.success) {
+        setAddresses(newList);
+        setCustomer(result.customer);
+        toast.success("Address removed successfully!");
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to remove address");
+    }
   };
 
   const handleSignOut = async () => {
@@ -181,94 +203,20 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
+    <div className=" mx-auto w-full">
       <Toaster position="top-center" />
+      <div className="space-y-6">
 
-      {/* HEADER SECTION */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-md group-hover:scale-105 transition-all">
-              <PlusCircle className="text-white w-6 h-6" />
+        <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-6 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-medical-blue-50 text-medical-blue-600 flex items-center justify-center">
+              <User size={24} />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">
-                S&S<span className="text-medical-blue-600">Pharmacy</span>
-              </h1>
-              <span className="text-[10px] font-semibold text-slate-500 tracking-wide uppercase mt-1 block">
-                Customer Profile Settings
-              </span>
+              <h2 className="text-xl font-extrabold text-slate-900 leading-tight">Personal Details</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Manage your profile credentials and delivery locations.</p>
             </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Shop</span>
-            </Link>
-
-            <button 
-              onClick={handleSignOut}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all border border-red-100 flex items-center gap-1.5 font-bold text-xs sm:text-sm"
-            >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
           </div>
-        </div>
-      </header>
-
-      {/* PROFILE SIDEBAR & DETAILS GRID LAYOUT */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        {/* LEFT COLUMN: NAVIGATION SIDEBAR */}
-        <aside className="lg:col-span-1 space-y-3">
-          <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm space-y-1">
-            <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-              Account Menu
-            </div>
-            
-            <Link 
-              href="/profile"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold bg-medical-blue-50 text-medical-blue-700 transition-all border border-medical-blue-100/50"
-            >
-              <User size={16} />
-              <span>Personal Details</span>
-            </Link>
-
-            <Link 
-              href="/profile/orders"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all border border-transparent"
-            >
-              <ShoppingBag size={16} />
-              <span>My Orders History</span>
-            </Link>
-
-            <Link 
-              href="/profile/prescriptions"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all border border-transparent"
-            >
-              <FileText size={16} />
-              <span>Prescription Orders</span>
-            </Link>
-          </div>
-        </aside>
-
-        {/* RIGHT COLUMN: EDIT FORM & ADDRESS MANAGER */}
-        <section className="lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-6 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-medical-blue-50 text-medical-blue-600 flex items-center justify-center">
-                <User size={24} />
-              </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900 leading-tight">Personal Details</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Manage your profile credentials and delivery locations.</p>
-              </div>
-            </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-6">
               
@@ -465,9 +413,8 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
-          </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

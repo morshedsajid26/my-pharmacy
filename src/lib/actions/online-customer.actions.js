@@ -8,6 +8,18 @@ import { encrypt, decrypt } from "@/lib/session";
 // Secret session age is 7 days for online customers
 const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; 
 
+export async function checkCustomerExistsAction(phone) {
+  try {
+    const existing = await prisma.onlineCustomer.findUnique({
+      where: { phone }
+    });
+    return !!existing;
+  } catch (error) {
+    console.error("Error checking customer existence:", error);
+    return false;
+  }
+}
+
 export async function registerCustomerAction(name, phone, password, address = null) {
   try {
     const existing = await prisma.onlineCustomer.findUnique({
@@ -196,9 +208,9 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
         discountTiers: [],
       };
 
-      // 2. Generate sequential order number (ORD-1001, ORD-1002...)
-      const count = await tx.onlineOrder.count();
-      const orderNo = `ORD-${1000 + count + 1}`;
+      // 2. Generate robust unique order number to prevent collision if orders are deleted
+      const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const orderNo = `ORD-${Date.now().toString().slice(-6)}-${randomStr}`;
 
       let subtotal = 0;
       const orderItemsToCreate = [];
@@ -408,5 +420,40 @@ export async function getMedicineRequestsAdminAction() {
     return requests;
   } catch (error) {
     throw new Error(error.message || "Failed to fetch customer requests");
+  }
+}
+
+export async function getCustomerOverviewStatsAction() {
+  try {
+    const customer = await getCurrentCustomer();
+    if (!customer) throw new Error("Unauthorized");
+
+    const orders = await prisma.onlineOrder.findMany({
+      where: { customerId: customer.id }
+    });
+
+    const totalOrders = orders.length;
+    const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const pendingOrders = orders.filter(o => ['PENDING', 'PROCESSING'].includes(o.status)).length;
+    
+    // Also include prescription orders
+    const prescriptions = await prisma.prescriptionOrder.count({
+      where: { customerId: customer.id }
+    });
+
+    return {
+      totalOrders,
+      totalSpent,
+      pendingOrders,
+      totalPrescriptions: prescriptions
+    };
+  } catch (error) {
+    console.error("Stats error:", error);
+    return {
+      totalOrders: 0,
+      totalSpent: 0,
+      pendingOrders: 0,
+      totalPrescriptions: 0
+    };
   }
 }
