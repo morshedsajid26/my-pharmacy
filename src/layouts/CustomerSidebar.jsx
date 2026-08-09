@@ -2,14 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, ShoppingBag, FileText, ChevronLeft, ChevronRight, PlusCircle, X, LayoutDashboard } from "lucide-react";
+import {
+  User,
+  ShoppingBag,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  PlusCircle,
+  X,
+  LayoutDashboard,
+} from "lucide-react";
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard Overview", path: "/profile/overview" },
-  { icon: ShoppingBag, label: "My Orders History", path: "/profile/orders" },
-  { icon: FileText, label: "Prescription Orders", path: "/profile/prescriptions" },
+  { icon: LayoutDashboard, label: "Dashboard Overview", path: "/overview" },
+  { icon: ShoppingBag, label: "My Orders History", path: "/orders" },
+  {
+    icon: FileText,
+    label: "Prescription Orders",
+    path: "/prescriptions",
+  },
   { icon: User, label: "Personal Details", path: "/profile" },
 ];
 

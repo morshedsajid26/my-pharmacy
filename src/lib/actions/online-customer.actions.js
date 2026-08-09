@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
@@ -6,12 +6,12 @@ import { revalidatePath } from "next/cache";
 import { encrypt, decrypt } from "@/lib/session";
 
 // Secret session age is 7 days for online customers
-const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; 
+const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function checkCustomerExistsAction(phone) {
   try {
     const existing = await prisma.onlineCustomer.findUnique({
-      where: { phone }
+      where: { phone },
     });
     return !!existing;
   } catch (error) {
@@ -20,10 +20,15 @@ export async function checkCustomerExistsAction(phone) {
   }
 }
 
-export async function registerCustomerAction(name, phone, password, address = null) {
+export async function registerCustomerAction(
+  name,
+  phone,
+  password,
+  address = null,
+) {
   try {
     const existing = await prisma.onlineCustomer.findUnique({
-      where: { phone }
+      where: { phone },
     });
 
     if (existing) {
@@ -35,8 +40,8 @@ export async function registerCustomerAction(name, phone, password, address = nu
         name,
         phone,
         password, // In a real app, use bcrypt or hashing
-        address
-      }
+        address,
+      },
     });
 
     // Auto-login after registration
@@ -49,7 +54,7 @@ export async function registerCustomerAction(name, phone, password, address = nu
 export async function loginCustomerAction(phone, password) {
   try {
     const customer = await prisma.onlineCustomer.findUnique({
-      where: { phone }
+      where: { phone },
     });
 
     if (!customer || customer.password !== password) {
@@ -61,14 +66,14 @@ export async function loginCustomerAction(phone, password) {
       id: customer.id,
       name: customer.name,
       phone: customer.phone,
-      type: "customer"
+      type: "customer",
     });
 
     const expires = new Date(Date.now() + SESSION_EXPIRY_MS);
-    (await cookies()).set("customer_session", session, { 
-      expires, 
+    (await cookies()).set("customer_session", session, {
+      expires,
       httpOnly: true,
-      path: "/" 
+      path: "/",
     });
 
     return {
@@ -77,8 +82,8 @@ export async function loginCustomerAction(phone, password) {
         id: customer.id,
         name: customer.name,
         phone: customer.phone,
-        address: customer.address
-      }
+        address: customer.address,
+      },
     };
   } catch (error) {
     throw new Error(error.message || "Login failed");
@@ -86,9 +91,9 @@ export async function loginCustomerAction(phone, password) {
 }
 
 export async function logoutCustomerAction() {
-  (await cookies()).set("customer_session", "", { 
+  (await cookies()).set("customer_session", "", {
     expires: new Date(0),
-    path: "/"
+    path: "/",
   });
   return { success: true };
 }
@@ -107,7 +112,9 @@ export async function updateCustomerProfileAction(name, address) {
     let serializedAddress = null;
     if (address) {
       if (Array.isArray(address)) {
-        serializedAddress = JSON.stringify(address.map(a => a.trim()).filter(Boolean));
+        serializedAddress = JSON.stringify(
+          address.map((a) => a.trim()).filter(Boolean),
+        );
       } else {
         serializedAddress = JSON.stringify([address.trim()]);
       }
@@ -119,8 +126,8 @@ export async function updateCustomerProfileAction(name, address) {
       where: { id: current.id },
       data: {
         name: name.trim(),
-        address: serializedAddress
-      }
+        address: serializedAddress,
+      },
     });
 
     // Re-encrypt the customer session cookie with the new profile data
@@ -128,18 +135,18 @@ export async function updateCustomerProfileAction(name, address) {
       id: updated.id,
       name: updated.name,
       phone: updated.phone,
-      type: "customer"
+      type: "customer",
     });
 
     const expires = new Date(Date.now() + SESSION_EXPIRY_MS);
-    (await cookies()).set("customer_session", session, { 
-      expires, 
+    (await cookies()).set("customer_session", session, {
+      expires,
       httpOnly: true,
-      path: "/" 
+      path: "/",
     });
 
     revalidatePath("/profile");
-    revalidatePath("/profile/orders");
+    revalidatePath("/orders");
     revalidatePath("/");
 
     return {
@@ -148,8 +155,8 @@ export async function updateCustomerProfileAction(name, address) {
         id: updated.id,
         name: updated.name,
         phone: updated.phone,
-        address: updated.address
-      }
+        address: updated.address,
+      },
     };
   } catch (error) {
     throw new Error(error.message || "Failed to update profile");
@@ -170,8 +177,8 @@ export async function getCurrentCustomer() {
         id: true,
         name: true,
         phone: true,
-        address: true
-      }
+        address: true,
+      },
     });
 
     return customer;
@@ -199,17 +206,20 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
     // Execute order creation in a database transaction to prevent concurrency issues
     const result = await prisma.$transaction(async (tx) => {
       // 1. Fetch storefront settings
-      const settings = await tx.storefrontSetting.findUnique({
+      const settings = (await tx.storefrontSetting.findUnique({
         where: { id: "settings" },
         include: { discountTiers: true },
-      }) || {
+      })) || {
         minOrderForFreeDelivery: 500,
         deliveryCharge: 20,
         discountTiers: [],
       };
 
       // 2. Generate robust unique order number to prevent collision if orders are deleted
-      const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const randomStr = Math.random()
+        .toString(36)
+        .substring(2, 6)
+        .toUpperCase();
       const orderNo = `ORD-${Date.now().toString().slice(-6)}-${randomStr}`;
 
       let subtotal = 0;
@@ -218,7 +228,7 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
       // 3. Validate stock and get exact selling prices from DB to avoid price injection
       for (const cartItem of items) {
         const medicine = await tx.medicine.findUnique({
-          where: { id: cartItem.id }
+          where: { id: cartItem.id },
         });
 
         if (!medicine) {
@@ -226,7 +236,9 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
         }
 
         if (medicine.stock < cartItem.quantity) {
-          throw new Error(`Insufficient stock for ${medicine.name}. Only ${medicine.stock} left.`);
+          throw new Error(
+            `Insufficient stock for ${medicine.name}. Only ${medicine.stock} left.`,
+          );
         }
 
         const itemTotal = medicine.sellingPrice * cartItem.quantity;
@@ -236,17 +248,24 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
           medicineId: medicine.id,
           quantity: cartItem.quantity,
           unitPrice: medicine.sellingPrice,
-          totalPrice: itemTotal
+          totalPrice: itemTotal,
         });
       }
 
       // 4. Calculate dynamic delivery charges and discounts
-      const deliveryCharge = subtotal >= settings.minOrderForFreeDelivery ? 0 : settings.deliveryCharge;
+      const deliveryCharge =
+        subtotal >= settings.minOrderForFreeDelivery
+          ? 0
+          : settings.deliveryCharge;
       let discount = 0;
       if (settings.discountTiers && settings.discountTiers.length > 0) {
-        const applicable = settings.discountTiers.filter(t => subtotal >= t.threshold);
+        const applicable = settings.discountTiers.filter(
+          (t) => subtotal >= t.threshold,
+        );
         if (applicable.length > 0) {
-          const best = applicable.reduce((prev, cur) => (cur.percent > prev.percent ? cur : prev));
+          const best = applicable.reduce((prev, cur) =>
+            cur.percent > prev.percent ? cur : prev,
+          );
           discount = (subtotal * best.percent) / 100;
         }
       }
@@ -267,19 +286,19 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
           totalAmount,
           status: "PENDING",
           items: {
-            create: orderItemsToCreate
-          }
-        }
+            create: orderItemsToCreate,
+          },
+        },
       });
 
       return {
         success: true,
         orderNo: order.orderNo,
-        totalAmount: order.totalAmount
+        totalAmount: order.totalAmount,
       };
     });
 
-    revalidatePath("/profile/orders");
+    revalidatePath("/orders");
     return result;
   } catch (error) {
     throw new Error(error.message || "Failed to place order");
@@ -301,15 +320,15 @@ export async function getCustomerOrdersAction() {
             medicine: {
               select: {
                 name: true,
-                company: true
-              }
-            }
-          }
-        }
+                company: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        createdAt: "desc"
-      }
+        createdAt: "desc",
+      },
     });
 
     return orders;
@@ -333,14 +352,14 @@ export async function addMedicineRequestAction(medicineId) {
       where: {
         customerId_medicineId: {
           customerId: customer.id,
-          medicineId: medicineId
-        }
+          medicineId: medicineId,
+        },
       },
       create: {
         customerId: customer.id,
-        medicineId: medicineId
+        medicineId: medicineId,
       },
-      update: {}
+      update: {},
     });
 
     revalidatePath("/");
@@ -361,8 +380,8 @@ export async function removeMedicineRequestAction(medicineId) {
     await prisma.medicineRequest.deleteMany({
       where: {
         customerId: customer.id,
-        medicineId: medicineId
-      }
+        medicineId: medicineId,
+      },
     });
 
     revalidatePath("/");
@@ -381,11 +400,11 @@ export async function getCustomerWishlistAction() {
     const requests = await prisma.medicineRequest.findMany({
       where: { customerId: customer.id },
       select: {
-        medicineId: true
-      }
+        medicineId: true,
+      },
     });
 
-    return requests.map(r => r.medicineId);
+    return requests.map((r) => r.medicineId);
   } catch (error) {
     console.error("Error fetching wishlist requests:", error);
     return [];
@@ -399,8 +418,8 @@ export async function getMedicineRequestsAdminAction() {
         customer: {
           select: {
             name: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         medicine: {
           select: {
@@ -408,13 +427,13 @@ export async function getMedicineRequestsAdminAction() {
             company: true,
             stock: true,
             category: true,
-            sellingPrice: true
-          }
-        }
+            sellingPrice: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: "desc"
-      }
+        createdAt: "desc",
+      },
     });
 
     return requests;
@@ -429,23 +448,28 @@ export async function getCustomerOverviewStatsAction() {
     if (!customer) throw new Error("Unauthorized");
 
     const orders = await prisma.onlineOrder.findMany({
-      where: { customerId: customer.id }
+      where: { customerId: customer.id },
     });
 
     const totalOrders = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const pendingOrders = orders.filter(o => ['PENDING', 'PROCESSING'].includes(o.status)).length;
-    
+    const totalSpent = orders.reduce(
+      (sum, order) => sum + order.totalAmount,
+      0,
+    );
+    const pendingOrders = orders.filter((o) =>
+      ["PENDING", "PROCESSING"].includes(o.status),
+    ).length;
+
     // Also include prescription orders
     const prescriptions = await prisma.prescriptionOrder.count({
-      where: { customerId: customer.id }
+      where: { customerId: customer.id },
     });
 
     return {
       totalOrders,
       totalSpent,
       pendingOrders,
-      totalPrescriptions: prescriptions
+      totalPrescriptions: prescriptions,
     };
   } catch (error) {
     console.error("Stats error:", error);
@@ -453,7 +477,7 @@ export async function getCustomerOverviewStatsAction() {
       totalOrders: 0,
       totalSpent: 0,
       pendingOrders: 0,
-      totalPrescriptions: 0
+      totalPrescriptions: 0,
     };
   }
 }

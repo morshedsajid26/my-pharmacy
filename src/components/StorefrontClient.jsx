@@ -52,20 +52,20 @@ import {
 import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
 import toast, { Toaster } from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
-import StorefrontHeader from "../app/(landing)/StorefrontHeader";
-import StorefrontHero from "../app/(landing)/StorefrontHero";
-import TrustBadges from "../app/(landing)/TrustBadges";
-import MedicineCard from "../app/(landing)/MedicineCard";
-import StandardsBanner from "../app/(landing)/StandardsBanner";
-import Testimonials from "../app/(landing)/Testimonials";
-import FAQSection from "../app/(landing)/FAQSection";
-import StorefrontFooter from "../app/(landing)/StorefrontFooter";
-import PremiumHero from "../app/(landing)/PremiumHero";
-import PremiumFeatures from "../app/(landing)/PremiumFeatures";
-import PremiumCategories from "../app/(landing)/PremiumCategories";
-import PremiumBrands from "../app/(landing)/PremiumBrands";
-import PremiumProductRow from "../app/(landing)/PremiumProductRow";
-import PremiumCTA from "../app/(landing)/PremiumCTA";
+import StorefrontHeader from "../app/(pages)/(landing)/StorefrontHeader";
+import StorefrontHero from "../app/(pages)/(landing)/StorefrontHero";
+import TrustBadges from "../app/(pages)/(landing)/TrustBadges";
+import MedicineCard from "../app/(pages)/(landing)/MedicineCard";
+import StandardsBanner from "../app/(pages)/(landing)/StandardsBanner";
+import Testimonials from "../app/(pages)/(landing)/Testimonials";
+import FAQSection from "../app/(pages)/(landing)/FAQSection";
+import StorefrontFooter from "../app/(pages)/(landing)/StorefrontFooter";
+import PremiumHero from "../app/(pages)/(landing)/PremiumHero";
+import PremiumFeatures from "../app/(pages)/(landing)/PremiumFeatures";
+import PremiumCategories from "../app/(pages)/(landing)/PremiumCategories";
+import PremiumBrands from "../app/(pages)/(landing)/PremiumBrands";
+import PremiumProductRow from "../app/(pages)/(landing)/PremiumProductRow";
+import PremiumCTA from "../app/(pages)/(landing)/PremiumCTA";
 import ChatWidget from "./ChatWidget";
 
 export default function StorefrontClient({

@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -11,13 +11,13 @@ export async function createPrescriptionOrder(data) {
         prescriptionFile: data.prescriptionFile,
         durationDays: data.durationDays,
         notes: data.notes || null,
-        status: "PENDING"
-      }
+        status: "PENDING",
+      },
     });
-    
-    revalidatePath("/profile/prescriptions");
+
+    revalidatePath("/prescriptions");
     revalidatePath("/prescription-orders");
-    
+
     return { success: true, order };
   } catch (error) {
     console.error("Error creating prescription order:", error);
@@ -29,7 +29,7 @@ export async function getCustomerPrescriptionOrders(customerId) {
   try {
     const orders = await prisma.prescriptionOrder.findMany({
       where: { customerId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
     return orders;
   } catch (error) {
@@ -41,12 +41,12 @@ export async function getCustomerPrescriptionOrders(customerId) {
 export async function getAllPrescriptionOrders(params = {}) {
   try {
     const { status } = params;
-    
+
     const whereClause = {};
     if (status && status !== "ALL") {
       whereClause.status = status;
     }
-    
+
     const orders = await prisma.prescriptionOrder.findMany({
       where: whereClause,
       include: {
@@ -54,13 +54,13 @@ export async function getAllPrescriptionOrders(params = {}) {
           select: {
             name: true,
             phone: true,
-            address: true
-          }
-        }
+            address: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
-    
+
     return orders;
   } catch (error) {
     console.error("Error fetching all prescription orders:", error);
@@ -72,12 +72,12 @@ export async function updatePrescriptionOrderStatus(id, status) {
   try {
     const order = await prisma.prescriptionOrder.update({
       where: { id },
-      data: { status }
+      data: { status },
     });
-    
+
     revalidatePath("/prescription-orders");
-    revalidatePath("/profile/prescriptions");
-    
+    revalidatePath("/prescriptions");
+
     return { success: true, order };
   } catch (error) {
     console.error("Error updating prescription order status:", error);
@@ -88,12 +88,12 @@ export async function updatePrescriptionOrderStatus(id, status) {
 export async function deletePrescriptionOrder(id) {
   try {
     const order = await prisma.prescriptionOrder.delete({
-      where: { id }
+      where: { id },
     });
-    
+
     revalidatePath("/prescription-orders");
-    revalidatePath("/profile/prescriptions");
-    
+    revalidatePath("/prescriptions");
+
     return { success: true, order };
   } catch (error) {
     console.error("Error deleting prescription order:", error);

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -37,7 +37,7 @@ export default function LoginPage() {
         const result = await loginCustomerAction(identifier.trim(), password);
         if (result.success) {
           toast.success("Successfully logged in!");
-          router.push("/profile/overview");
+          router.push("/overview");
         }
       } else {
         const success = await login(identifier.trim(), password);
@@ -62,20 +62,28 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-lg shadow-medical-blue-200 mb-4 animate-in zoom-in-50 duration-500">
             <PlusCircle className="text-white w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">S&S<span className="text-medical-blue-600">Pharmacy</span></h1>
-          <p className="text-slate-500 text-sm mt-1">Smart Pharmacy Management System</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            S&S<span className="text-medical-blue-600">Pharmacy</span>
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Smart Pharmacy Management System
+          </p>
         </div>
 
         {/* Auth Card Content */}
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="p-8">
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-slate-900">Welcome back!</h2>
-              <p className="text-sm text-slate-500 mt-1">Please enter your details to sign in.</p>
+              <h2 className="text-xl font-bold text-slate-900">
+                Welcome back!
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Please enter your details to sign in.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <InputField 
+              <InputField
                 label="Email or Phone"
                 type="text"
                 placeholder="Enter your Email or Phone Number"
@@ -93,18 +101,29 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full"
               />
-              
+
               <div className="flex items-center justify-between text-xs sm:text-sm">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-medical-blue-600 focus:ring-medical-blue-500 transition-colors" />
-                  <span className="text-slate-500 group-hover:text-slate-700 transition-colors">Remember me</span>
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-medical-blue-600 focus:ring-medical-blue-500 transition-colors"
+                  />
+                  <span className="text-slate-500 group-hover:text-slate-700 transition-colors">
+                    Remember me
+                  </span>
                 </label>
-                <Link href="/forgot-password" title="Click here to reset your password" className="font-semibold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">Forgot password?</Link>
+                <Link
+                  href="/forgot-password"
+                  title="Click here to reset your password"
+                  className="font-semibold text-medical-blue-600 hover:text-medical-blue-700 transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-12 text-base gap-2 shadow-lg shadow-medical-blue-600/20" 
+              <Button
+                type="submit"
+                className="w-full h-12 text-base gap-2 shadow-lg shadow-medical-blue-600/20"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -121,7 +140,10 @@ export default function LoginPage() {
             <div className="mt-8 pt-8 border-t border-slate-50 text-center">
               <p className="text-sm text-slate-500">
                 Don't have an account?{" "}
-                <Link href="/signup" className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">
+                <Link
+                  href="/signup"
+                  className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors"
+                >
                   Register
                 </Link>
               </p>

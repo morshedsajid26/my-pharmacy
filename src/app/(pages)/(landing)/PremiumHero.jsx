@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
@@ -14,7 +14,6 @@ export default function PremiumHero({ customer, onAuthClick }) {
       </div>
 
       <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex flex-col items-center text-center">
-        
         {/* Top Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-white/80 shadow-sm mb-8 animate-fade-in-up">
           <Sparkles className="w-4 h-4 text-medical-blue-600" />
@@ -33,40 +32,48 @@ export default function PremiumHero({ customer, onAuthClick }) {
 
         {/* Subtitle */}
         <p className="text-lg sm:text-2xl font-medium text-slate-500 max-w-2xl mb-10 leading-relaxed">
-          Experience premium pharmacy services right at your fingertips. 100% genuine medicines, superfast delivery, and unparalleled customer care.
+          Experience premium pharmacy services right at your fingertips. 100%
+          genuine medicines, superfast delivery, and unparalleled customer care.
         </p>
 
         {/* Call to Actions */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <Link 
-            href="/shop" 
+          <Link
+            href="/shop"
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-slate-900/20 hover:scale-105"
           >
             Shop Medicines <ArrowRight className="w-5 h-5" />
           </Link>
-          
+
           {customer ? (
-            <Link 
-              href="/profile/prescriptions" 
+            <Link
+              href="/prescriptions"
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
             >
-              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload Prescription
+              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload
+              Prescription
             </Link>
           ) : (
-            <button 
+            <button
               onClick={onAuthClick}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
             >
-              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload Prescription
+              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload
+              Prescription
             </button>
           )}
         </div>
-
       </div>
 
       {/* Decorative Floating Elements (Visible on larger screens) */}
-      <div className="hidden lg:block absolute left-10 top-1/4 w-24 h-24 bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl rotate-12 animate-float" style={{ animationDuration: '6s' }} />
-      <div className="hidden lg:block absolute right-20 bottom-1/4 w-32 h-32 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] shadow-2xl -rotate-12 animate-float" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+      <div
+        className="hidden lg:block absolute left-10 top-1/4 w-24 h-24 bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl rotate-12 animate-float"
+        style={{ animationDuration: "6s" }}
+      />
+      <div
+        className="hidden lg:block absolute right-20 bottom-1/4 w-32 h-32 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] shadow-2xl -rotate-12 animate-float"
+        style={{ animationDuration: "8s", animationDelay: "1s" }}
+      />
     </section>
   );
 }

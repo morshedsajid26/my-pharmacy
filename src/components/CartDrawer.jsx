@@ -1,26 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShoppingBag, X, Minus, Plus, Trash2, MapPin, Loader2, User } from "lucide-react";
+import {
+  ShoppingBag,
+  X,
+  Minus,
+  Plus,
+  Trash2,
+  MapPin,
+  Loader2,
+  User,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { getCurrentCustomer, createOnlineOrderAction } from "@/lib/actions/online-customer.actions";
+import {
+  getCurrentCustomer,
+  createOnlineOrderAction,
+} from "@/lib/actions/online-customer.actions";
 import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
-  const { 
-    cart, 
-    isCartOpen, 
-    setIsCartOpen, 
-    updateCartQty, 
-    removeFromCart, 
-    getCartTotal, 
-    getCartDeliveryCharge, 
-    getCartDiscount, 
-    getCartGrandTotal, 
-    saveCart, 
-    settings 
+  const {
+    cart,
+    isCartOpen,
+    setIsCartOpen,
+    updateCartQty,
+    removeFromCart,
+    getCartTotal,
+    getCartDeliveryCharge,
+    getCartDiscount,
+    getCartGrandTotal,
+    saveCart,
+    settings,
   } = useCart();
 
   const [customer, setCustomer] = useState(null);
@@ -31,7 +43,9 @@ export default function CartDrawer() {
 
   useEffect(() => {
     if (isCartOpen) {
-      getCurrentCustomer().then(setCustomer).catch(() => {});
+      getCurrentCustomer()
+        .then(setCustomer)
+        .catch(() => {});
     }
   }, [isCartOpen]);
 
@@ -101,9 +115,12 @@ export default function CartDrawer() {
         ) : (
           <div className="border-t border-slate-200/50 pt-3 space-y-2.5">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 font-semibold space-y-1">
-              <span className="block font-bold">⚠️ No saved address found!</span>
+              <span className="block font-bold">
+                ⚠️ No saved address found!
+              </span>
               <p className="leading-relaxed">
-                You must register at least one delivery address in your profile to checkout.
+                You must register at least one delivery address in your profile
+                to checkout.
               </p>
             </div>
             <Link
@@ -146,7 +163,9 @@ export default function CartDrawer() {
     }
 
     if (savedAddresses.length === 0) {
-      return toast.error("Please add a delivery address in your profile settings before placing an order!");
+      return toast.error(
+        "Please add a delivery address in your profile settings before placing an order!",
+      );
     }
 
     const finalAddress = savedAddresses[selectedAddressIndex];
@@ -162,7 +181,7 @@ export default function CartDrawer() {
         setNotes("");
         setIsCartOpen(false);
         toast.success("Order placed successfully!");
-        router.push("/profile/orders");
+        router.push("/orders");
       }
     } catch (error) {
       toast.error(error.message || "Checkout failed");
@@ -183,7 +202,9 @@ export default function CartDrawer() {
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingBag className="text-medical-blue-600 w-5 h-5" />
-              <h3 className="text-lg font-extrabold text-slate-900">Your Shopping Cart</h3>
+              <h3 className="text-lg font-extrabold text-slate-900">
+                Your Shopping Cart
+              </h3>
             </div>
             <button
               onClick={() => setIsCartOpen(false)}
@@ -203,8 +224,12 @@ export default function CartDrawer() {
                       className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100"
                     >
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-extrabold text-slate-800 text-sm truncate">{item.name}</h4>
-                        <p className="text-xs text-slate-400 mt-0.5">{item.company}</p>
+                        <h4 className="font-extrabold text-slate-800 text-sm truncate">
+                          {item.name}
+                        </h4>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {item.company}
+                        </p>
                         <span className="text-xs font-black text-medical-blue-600 mt-1 block">
                           ৳{item.sellingPrice} each
                         </span>
@@ -213,7 +238,9 @@ export default function CartDrawer() {
                       <div className="flex items-center gap-2">
                         <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                           <button
-                            onClick={() => updateCartQty(item.id, -1, item.stock)}
+                            onClick={() =>
+                              updateCartQty(item.id, -1, item.stock)
+                            }
                             className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
                           >
                             <Minus size={14} />
@@ -222,7 +249,9 @@ export default function CartDrawer() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateCartQty(item.id, 1, item.stock)}
+                            onClick={() =>
+                              updateCartQty(item.id, 1, item.stock)
+                            }
                             className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
                           >
                             <Plus size={14} />
@@ -281,7 +310,9 @@ export default function CartDrawer() {
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-slate-500">Delivery Charge:</span>
+                  <span className="font-bold text-slate-500">
+                    Delivery Charge:
+                  </span>
                   {getCartDeliveryCharge() === 0 ? (
                     <span className="text-xs font-black text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
                       FREE
@@ -295,7 +326,11 @@ export default function CartDrawer() {
 
                 {getCartDeliveryCharge() > 0 && (
                   <p className="text-[10px] text-amber-600 font-semibold leading-none">
-                    💡 Add ৳{(settings.minOrderForFreeDelivery - getCartTotal()).toFixed(2)} more for free delivery!
+                    💡 Add ৳
+                    {(
+                      settings.minOrderForFreeDelivery - getCartTotal()
+                    ).toFixed(2)}{" "}
+                    more for free delivery!
                   </p>
                 )}
 
@@ -317,7 +352,9 @@ export default function CartDrawer() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="font-extrabold text-slate-700 text-base">Grand Total:</span>
+                <span className="font-extrabold text-slate-700 text-base">
+                  Grand Total:
+                </span>
                 <span className="text-2xl font-black text-slate-900 font-mono">
                   ৳{getCartGrandTotal().toFixed(2)}
                 </span>
@@ -329,7 +366,11 @@ export default function CartDrawer() {
                   disabled={checkoutLoading}
                   className="w-full h-12 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-medical-blue-600/20 disabled:opacity-50 transition-all text-base cursor-pointer"
                 >
-                  {checkoutLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Place Cash-On-Delivery Order</>}
+                  {checkoutLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>Place Cash-On-Delivery Order</>
+                  )}
                 </button>
               ) : (
                 <button
