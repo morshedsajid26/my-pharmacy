@@ -747,8 +747,6 @@ export default function StorefrontClient({
 
       <StorefrontFooter />
 
-      <StorefrontFooter />
-
       {/* LOGIN / SIGNUP INLINE DRAWER MODAL */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4">
