@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Settings, Menu, X, LogOut } from "lucide-react";
+import { Settings, Menu, X, LogOut, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useUI } from "../context/UIContext";
 import { useAuth } from "../context/AuthContext";
 
 export function Navbar() {
-  const { toggleSidebar, isSidebarOpen } = useUI();
+  const { toggleSidebar, isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useUI();
   const { user, logout } = useAuth();
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -28,20 +28,31 @@ export function Navbar() {
 
   return (
     <header className="h-16 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-40">
-      {/* Mobile Menu Toggle */}
-      <button 
-        className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
-        onClick={toggleSidebar}
-      >
-        {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      <div className="flex items-center gap-2">
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+          onClick={toggleSidebar}
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
 
-      {/* Brand Logo for Mobile */}
-      <div className="lg:hidden flex items-center gap-2 ml-2">
-         <div className="w-8 h-8 rounded-lg bg-medical-blue-600 flex items-center justify-center">
-            <span className="text-white font-black text-xs">P</span>
-         </div>
-         <span className="font-black text-lg text-slate-900 tracking-tight">PHARMA</span>
+        {/* Desktop Sidebar Toggle */}
+        <button
+          className="hidden lg:flex p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+          onClick={toggleCollapse}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
+        </button>
+
+        {/* Brand Logo for Mobile */}
+        <div className="lg:hidden flex items-center gap-2 ml-2">
+           <div className="w-8 h-8 rounded-lg bg-medical-blue-600 flex items-center justify-center">
+              <span className="text-white font-black text-xs">P</span>
+           </div>
+           <span className="font-black text-lg text-slate-900 tracking-tight">PHARMA</span>
+        </div>
       </div>
 
       {/* spacer to push profile details to the far right */}

@@ -86,7 +86,8 @@ export function CustomerSidebar({ customer }) {
                 href={item.path}
                 onClick={() => setIsSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
+                  "flex items-center py-2.5 rounded-xl transition-all duration-200 group relative",
+                  isSidebarCollapsed ? "justify-center" : "gap-3 px-3",
                   isActive
                     ? "bg-medical-blue-600 text-white shadow-lg shadow-medical-blue-900/20"
                     : "hover:bg-slate-800 hover:text-white",
@@ -115,17 +116,6 @@ export function CustomerSidebar({ customer }) {
           })}
         </nav>
 
-        {/* Desktop Collapse Toggle */}
-        <button
-          onClick={toggleCollapse}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-medical-blue-600 text-white rounded-full items-center justify-center shadow-lg hover:bg-medical-blue-700 transition-colors z-[60]"
-        >
-          {isSidebarCollapsed ? (
-            <ChevronRight size={14} />
-          ) : (
-            <ChevronLeft size={14} />
-          )}
-        </button>
 
         {/* Footer / User Status */}
         <div className="p-4 mt-auto border-t border-slate-800 overflow-hidden">
