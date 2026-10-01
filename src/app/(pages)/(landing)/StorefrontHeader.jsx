@@ -14,6 +14,7 @@ import {
 
 export default function StorefrontHeader({
   customer,
+  staffUser,
   cartCount,
   onOrdersClick,
   onLogout,
@@ -80,19 +81,52 @@ export default function StorefrontHeader({
             <span className="hidden lg:inline">Shop</span>
           </Link>
 
-          {customer ? (
+          {staffUser ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-3 rounded-2xl border border-indigo-200/50 transition-all cursor-pointer group"
+                title="Go to Dashboard"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                  {staffUser.profilePicture ? (
+                    <img src={staffUser.profilePicture} alt={staffUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    staffUser.name ? staffUser.name[0].toUpperCase() : "A"
+                  )}
+                </div>
+                <div className="hidden md:flex flex-col items-start leading-none">
+                  <span className="text-xs font-bold text-indigo-700 max-w-[100px] lg:max-w-[120px] truncate group-hover:text-indigo-800 transition-colors">
+                    {staffUser.name}
+                  </span>
+                  <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider">
+                    {staffUser.role}
+                  </span>
+                </div>
+              </Link>
+            </div>
+          ) : customer ? (
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/overview"
                 className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 py-1.5 px-3 rounded-2xl border border-slate-200/50 transition-all cursor-pointer group"
                 title="Edit Profile Settings"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-medical-blue-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform">
-                  {customer.name[0].toUpperCase()}
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-medical-blue-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                  {customer.profilePicture ? (
+                    <img src={customer.profilePicture} alt={customer.name} className="w-full h-full object-cover" />
+                  ) : (
+                    customer.name[0].toUpperCase()
+                  )}
                 </div>
-                <span className="hidden md:inline text-sm font-bold text-slate-700 max-w-[100px] lg:max-w-[120px] truncate group-hover:text-medical-blue-600 transition-colors">
-                  {customer.name}
-                </span>
+                <div className="hidden md:flex flex-col items-start leading-none">
+                  <span className="text-xs font-bold text-slate-700 max-w-[100px] lg:max-w-[120px] truncate group-hover:text-medical-blue-600 transition-colors">
+                    {customer.name}
+                  </span>
+                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                    Customer
+                  </span>
+                </div>
               </Link>
             </div>
           ) : (

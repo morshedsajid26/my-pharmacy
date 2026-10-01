@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getCurrentCustomer } from "@/lib/actions/online-customer.actions";
 import StorefrontClient from "@/components/StorefrontClient";
+import { getCurrentUser } from "@/lib/actions/auth.actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function StorefrontPage() {
 
   // Pre-fetch current customer session from HTTP-only secure cookie
   const customer = await getCurrentCustomer();
+  const staffUser = await getCurrentUser();
 
   // Pre-fetch e-commerce storefront delivery & discount settings
   const settings = await prisma.storefrontSetting.findUnique({
@@ -27,6 +29,7 @@ export default async function StorefrontPage() {
     <StorefrontClient 
       initialMedicines={medicines} 
       initialCustomer={customer} 
+      initialStaffUser={staffUser}
       initialSettings={settings}
       mode="landing"
     />

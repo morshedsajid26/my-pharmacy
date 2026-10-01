@@ -4,61 +4,79 @@ import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { encrypt, decrypt } from "@/lib/session";
+import { sendOtpEmail } from "@/lib/mailer";
 
 // Secret session age is 7 days for online customers
 const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
-export async function checkCustomerExistsAction(phone) {
+export async function checkCustomerExistsAction(phone, email) {
   try {
-    const existing = await prisma.onlineCustomer.findUnique({
+    const existingPhone = await prisma.onlineCustomer.findUnique({
       where: { phone },
     });
-    return !!existing;
+    if (existingPhone) return { exists: true, field: "phone" };
+    
+    if (email) {
+      const existingEmail = await prisma.onlineCustomer.findUnique({
+        where: { email },
+      });
+      if (existingEmail) return { exists: true, field: "email" };
+    }
+    return { exists: false };
   } catch (error) {
     console.error("Error checking customer existence:", error);
-    return false;
+    return { exists: false };
   }
 }
 
 export async function registerCustomerAction(
   name,
   phone,
+  email,
   password,
   address = null,
 ) {
   try {
-    const existing = await prisma.onlineCustomer.findUnique({
-      where: { phone },
-    });
-
-    if (existing) {
-      throw new Error("Mobile number is already registered!");
+    const check = await checkCustomerExistsAction(phone, email);
+    if (check.exists) {
+      throw new Error(`${check.field === 'phone' ? 'Mobile number' : 'Email'} is already registered!`);
     }
 
     const customer = await prisma.onlineCustomer.create({
       data: {
         name,
         phone,
+        email,
         password, // In a real app, use bcrypt or hashing
         address,
       },
     });
 
     // Auto-login after registration
-    return await loginCustomerAction(phone, password);
+    return await loginCustomerAction(email, password);
   } catch (error) {
     throw new Error(error.message || "Registration failed");
   }
 }
 
-export async function loginCustomerAction(phone, password) {
+export async function sendVerificationEmailAction(email, otp) {
+  try {
+    const success = await sendOtpEmail(email, otp);
+    return { success };
+  } catch (error) {
+    console.error("Failed to send verification email:", error);
+    return { success: false, error: "Failed to send email" };
+  }
+}
+
+export async function loginCustomerAction(email, password) {
   try {
     const customer = await prisma.onlineCustomer.findUnique({
-      where: { phone },
+      where: { email },
     });
 
     if (!customer || customer.password !== password) {
-      throw new Error("Invalid mobile number or password");
+      throw new Error("Invalid email or password");
     }
 
     // Encrypt customer session payload

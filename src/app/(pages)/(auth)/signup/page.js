@@ -7,7 +7,7 @@ import { UserPlus, Loader2, PlusCircle, CheckCircle } from "lucide-react";
 import InputField from "@/components/InputField";
 import Password from "@/components/Password";
 import { Button } from "@/components/Button";
-import { registerCustomerAction, checkCustomerExistsAction } from "@/lib/actions/online-customer.actions";
+import { registerCustomerAction, checkCustomerExistsAction, sendVerificationEmailAction } from "@/lib/actions/online-customer.actions";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import { useEffect, useRef } from "react";
@@ -16,6 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [otpStep, setOtpStep] = useState(false);
@@ -41,22 +42,31 @@ export default function SignupPage() {
     if (!/^01[3-9]\d{8}$/.test(phone)) {
       return toast.error("Please enter a valid 11-digit mobile number (starts with 01)");
     }
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+      return toast.error("Please enter a valid email address");
+    }
 
     setIsSubmitting(true);
     
     try {
-      // Check if number is already registered before generating OTP
-      const isExisting = await checkCustomerExistsAction(phone);
-      if (isExisting) {
+      // Check if number or email is already registered before generating OTP
+      const check = await checkCustomerExistsAction(phone, email);
+      if (check.exists) {
         setIsSubmitting(false);
-        return toast.error("Mobile number is already registered!");
+        return toast.error(`${check.field === 'phone' ? 'Mobile number' : 'Email address'} is already registered!`);
       }
 
       // Generate OTP
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       generatedOtpRef.current = code;
+      
+      // Send real email
+      await sendVerificationEmailAction(email, code);
+      
       setOtpStep(true);
-      toast.success(`🔑 Verification OTP Sent! Code: ${code}`, { duration: 12000 });
+      toast.success(`Verification code sent to your email!`, { duration: 6000 });
+      // Keep showing it in dev so it's easy to test without opening email
+      
     } catch (error) { 
       toast.error(error.message || "Failed to send OTP. Please try again.");
     } finally {
@@ -73,7 +83,7 @@ export default function SignupPage() {
 
     setOtpVerifying(true);
     try {
-      const result = await registerCustomerAction(name, phone, password);
+      const result = await registerCustomerAction(name, phone, email, password);
       console.log("Registration result:", result);
       if (result.success) {
         toast.success(`Welcome, ${result.customer.name}! Account registered successfully.`);
@@ -88,23 +98,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Branding */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-lg shadow-medical-blue-200 mb-4 animate-in zoom-in-50 duration-500">
-            <PlusCircle className="text-white w-7 h-7" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">S&S<span className="text-medical-blue-600">Pharmacy</span></h1>
-          <p className="text-slate-500 text-sm mt-1">Smart Pharmacy Management System</p>
-        </div>
-
-        {/* Auth Card Content */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="p-8">
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-slate-900">Create customer account</h2>
-              <p className="text-sm text-slate-500 mt-1">Join PharmaPro and manage your medicines like a pro.</p>
+    <div className="p-5">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 text-center">Create Customer Account</h2>
             </div>
 
             {!otpStep ? (
@@ -117,14 +113,25 @@ export default function SignupPage() {
                   required
                 />
 
-                <InputField 
-                  label="Phone Number"
-                  type="tel"
-                  placeholder="01xxxxxxxxx"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField 
+                    label="Phone"
+                    type="tel"
+                    placeholder="01xxxxxxxxx"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                  />
+
+                  <InputField 
+                    label="Email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
                 <Password 
                   label="Password"
@@ -162,10 +169,10 @@ export default function SignupPage() {
                   <div className="w-12 h-12 bg-medical-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <CheckCircle className="w-6 h-6 text-medical-blue-600" />
                   </div>
-                  <h3 className="font-bold text-slate-800">Verify your number</h3>
+                  <h3 className="font-bold text-slate-800">Verify your email</h3>
                   <p className="text-sm text-slate-500 mt-1">
                     We've sent a 6-digit code to <br/>
-                    <span className="font-bold text-slate-700">{phone}</span>
+                    <span className="font-bold text-slate-700">{email}</span>
                   </p>
                 </div>
                 
@@ -189,13 +196,13 @@ export default function SignupPage() {
                     onClick={() => setOtpStep(false)}
                     className="text-sm text-slate-400 hover:text-medical-blue-600 transition-colors underline"
                   >
-                    Change phone number
+                    Change email address
                   </button>
                 </div>
               </div>
             )}
 
-            <div className="mt-8 pt-8 border-t border-slate-50 text-center">
+            <div className="mt-6 pt-6 border-t border-slate-100 text-center">
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
                 <Link href="/login" className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors">
@@ -203,14 +210,6 @@ export default function SignupPage() {
                 </Link>
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          &copy; {new Date().getFullYear()} PharmaPro. All rights reserved.
-        </p>
-      </div>
     </div>
   );
 }

@@ -110,16 +110,21 @@ model PurchaseItem {
 }
 
 model OnlineCustomer {
-  id            String         @id @default(cuid())
-  name          String
-  phone         String         @unique
-  password      String
-  address       String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  orders        OnlineOrder[]
-  requests      MedicineRequest[]
-  prescriptions PrescriptionOrder[]
+  id                  String              @id @default(cuid())
+  name                String
+  phone               String              @unique
+  email               String              @unique
+  password            String
+  address             String?
+  resetOtp            String?
+  resetOtpExpiresAt   DateTime?
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  orders              OnlineOrder[]
+  requests            MedicineRequest[]
+  prescriptions       PrescriptionOrder[]
 }
 
 model PrescriptionOrder {

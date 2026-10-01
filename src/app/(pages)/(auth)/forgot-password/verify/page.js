@@ -32,6 +32,8 @@ export default function VerifyOTPPage() {
       const result = await sendResetOtpAction(email);
       if (result.success) {
         toast.success("OTP resent to your email!");
+      } else {
+        toast.error(result.error || "Failed to resend OTP");
       }
     } catch (error) {
       toast.error(error.message || "Failed to resend OTP");
@@ -48,6 +50,8 @@ export default function VerifyOTPPage() {
         toast.success("Identity verified!");
         // Route to reset-password passing verified email and token
         router.push(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(result.resetToken)}`);
+      } else {
+        toast.error(result.error || "Invalid or expired OTP");
       }
     } catch (error) {
       toast.error(error.message || "Invalid or expired OTP");
@@ -59,20 +63,7 @@ export default function VerifyOTPPage() {
   if (user || !email) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Branding */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-lg shadow-medical-blue-200 mb-4 animate-in zoom-in-50 duration-500">
-            <PlusCircle className="text-white w-7 h-7" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">S&S<span className="text-medical-blue-600">Pharmacy</span></h1>
-          <p className="text-slate-500 text-sm mt-1">Smart Pharmacy Management System</p>
-        </div>
-
-        {/* Auth Card Content */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
-          <div className="p-8">
+    <div className="py-2">
             <div className="mb-8 text-center">
               <div className="w-16 h-16 bg-medical-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <ShieldCheck className="text-medical-blue-600 w-10 h-10" />
@@ -108,14 +99,6 @@ export default function VerifyOTPPage() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          &copy; {new Date().getFullYear()} PharmaPro Dashboard. All rights reserved.
-        </p>
-      </div>
     </div>
   );
 }

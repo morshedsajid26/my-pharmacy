@@ -71,12 +71,14 @@ import ChatWidget from "./ChatWidget";
 export default function StorefrontClient({
   initialMedicines,
   initialCustomer,
+  initialStaffUser,
   initialSettings,
   mode = "landing",
 }) {
   // Storefront & Customer State
   const [medicines] = useState(initialMedicines || []);
   const [customer, setCustomer] = useState(initialCustomer);
+  const [staffUser, setStaffUser] = useState(initialStaffUser);
   const [settings, setSettings] = useState(
     initialSettings || {
       minOrderForFreeDelivery: 500,
@@ -343,7 +345,7 @@ export default function StorefrontClient({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Toaster position="top-center" />
-      <ChatWidget />
+      {/* <ChatWidget /> */}
 
       {/* FLOATING CART WIDGET */}
       <button
@@ -371,6 +373,7 @@ export default function StorefrontClient({
 
       <StorefrontHeader
         customer={customer}
+        staffUser={staffUser}
         cartCount={cart.length}
         onOrdersClick={() => setIsOrdersModalOpen(true)}
         onLogout={handleLogout}

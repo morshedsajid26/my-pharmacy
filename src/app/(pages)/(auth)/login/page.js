@@ -31,19 +31,25 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const isPhone = /^[0-9+\s-]{8,}$/.test(identifier.trim());
-
-      if (isPhone) {
+      let loggedIn = false;
+      try {
         const result = await loginCustomerAction(identifier.trim(), password);
         if (result.success) {
           toast.success("Successfully logged in!");
           router.push("/overview");
+          loggedIn = true;
         }
-      } else {
+      } catch (err) {
+        // Ignored, fallback to staff login
+      }
+
+      if (!loggedIn) {
         const success = await login(identifier.trim(), password);
         if (success) {
           toast.success("Successfully logged in!");
           router.push("/dashboard");
+        } else {
+          toast.error("Invalid email or password");
         }
       }
     } catch (error) {
@@ -55,25 +61,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Branding */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-medical-blue-600 flex items-center justify-center shadow-lg shadow-medical-blue-200 mb-4 animate-in zoom-in-50 duration-500">
-            <PlusCircle className="text-white w-7 h-7" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            S&S<span className="text-medical-blue-600">Pharmacy</span>
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Smart Pharmacy Management System
-          </p>
-        </div>
-
-        {/* Auth Card Content */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="p-8">
-            <div className="mb-8">
+    <div className="p-5">
+            <div className="mb-8 text-center">
               <h2 className="text-xl font-bold text-slate-900">
                 Welcome back!
               </h2>
@@ -84,9 +73,9 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <InputField
-                label="Email or Phone"
-                type="text"
-                placeholder="Enter your Email or Phone Number"
+                label="Email Address"
+                type="email"
+                placeholder="Enter your Email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
@@ -148,14 +137,6 @@ export default function LoginPage() {
                 </Link>
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          &copy; {new Date().getFullYear()} PharmaPro. All rights reserved.
-        </p>
-      </div>
     </div>
   );
 }

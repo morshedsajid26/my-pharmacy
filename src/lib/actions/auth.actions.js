@@ -128,12 +128,16 @@ export async function updateUserAction(data) {
 
 export async function sendResetOtpAction(email) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
+    let user = await prisma.user.findUnique({ where: { email } });
+    let isCustomer = false;
 
     if (!user) {
-      throw new Error("No user found with this email address");
+      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      isCustomer = true;
+    }
+
+    if (!user) {
+      return { success: false, error: "No user found with this email address" };
     }
 
     // Generate a secure 6-digit OTP code
@@ -141,39 +145,48 @@ export async function sendResetOtpAction(email) {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     // Save to the database
-    await prisma.user.update({
-      where: { email },
-      data: {
-        resetOtp: otp,
-        resetOtpExpiresAt: expiresAt
-      }
-    });
+    if (isCustomer) {
+      await prisma.onlineCustomer.update({
+        where: { email },
+        data: { resetOtp: otp, resetOtpExpiresAt: expiresAt }
+      });
+    } else {
+      await prisma.user.update({
+        where: { email },
+        data: { resetOtp: otp, resetOtpExpiresAt: expiresAt }
+      });
+    }
 
     // Send actual SMTP email containing the OTP
     await sendOtpEmail(email, otp);
 
     return { success: true };
   } catch (error) {
-    throw new Error(error.message || "Failed to send reset OTP");
+    console.error(error);
+    return { success: false, error: error.message || "Failed to send reset OTP" };
   }
 }
 
 export async function verifyResetOtpAction(email, otp) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
+    let user = await prisma.user.findUnique({ where: { email } });
+    let isCustomer = false;
 
     if (!user) {
-      throw new Error("User not found");
+      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      isCustomer = true;
+    }
+
+    if (!user) {
+      return { success: false, error: "User not found" };
     }
 
     if (!user.resetOtp || user.resetOtp !== otp) {
-      throw new Error("Invalid verification code");
+      return { success: false, error: "Invalid verification code" };
     }
 
     if (user.resetOtpExpiresAt && user.resetOtpExpiresAt < new Date()) {
-      throw new Error("Verification code has expired");
+      return { success: false, error: "Verification code has expired" };
     }
 
     // OTP is valid! Generate a secure one-time reset token
@@ -181,55 +194,67 @@ export async function verifyResetOtpAction(email, otp) {
     const tokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
 
     // Save token and clear OTP so it can't be reused
-    await prisma.user.update({
-      where: { email },
-      data: {
-        resetToken,
-        resetTokenExpiresAt: tokenExpiresAt,
-        resetOtp: null,
-        resetOtpExpiresAt: null
-      }
-    });
+    const updateData = {
+      resetToken,
+      resetTokenExpiresAt: tokenExpiresAt,
+      resetOtp: null,
+      resetOtpExpiresAt: null
+    };
+
+    if (isCustomer) {
+      await prisma.onlineCustomer.update({ where: { email }, data: updateData });
+    } else {
+      await prisma.user.update({ where: { email }, data: updateData });
+    }
 
     return { success: true, resetToken };
   } catch (error) {
-    throw new Error(error.message || "OTP verification failed");
+    console.error(error);
+    return { success: false, error: error.message || "OTP verification failed" };
   }
 }
 
 export async function resetPasswordAction(email, token, newPassword) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
+    let user = await prisma.user.findUnique({ where: { email } });
+    let isCustomer = false;
 
     if (!user) {
-      throw new Error("User not found");
+      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      isCustomer = true;
+    }
+
+    if (!user) {
+      return { success: false, error: "User not found" };
     }
 
     if (!user.resetToken || user.resetToken !== token) {
-      throw new Error("Invalid reset session");
+      return { success: false, error: "Invalid reset session" };
     }
 
     if (user.resetTokenExpiresAt && user.resetTokenExpiresAt < new Date()) {
-      throw new Error("Reset session has expired. Please request a new OTP");
+      return { success: false, error: "Reset session has expired. Please request a new OTP" };
     }
 
     // Reset password, and clear all reset metadata
-    await prisma.user.update({
-      where: { email },
-      data: {
-        password: newPassword,
-        resetToken: null,
-        resetTokenExpiresAt: null,
-        resetOtp: null,
-        resetOtpExpiresAt: null
-      }
-    });
+    const updateData = {
+      password: newPassword,
+      resetToken: null,
+      resetTokenExpiresAt: null,
+      resetOtp: null,
+      resetOtpExpiresAt: null
+    };
+
+    if (isCustomer) {
+      await prisma.onlineCustomer.update({ where: { email }, data: updateData });
+    } else {
+      await prisma.user.update({ where: { email }, data: updateData });
+    }
 
     return { success: true };
   } catch (error) {
-    throw new Error(error.message || "Failed to reset password");
+    console.error(error);
+    return { success: false, error: error.message || "Failed to reset password" };
   }
 }
 
