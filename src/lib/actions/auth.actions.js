@@ -132,7 +132,7 @@ export async function sendResetOtpAction(email) {
     let isCustomer = false;
 
     if (!user) {
-      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      user = await prisma.customer.findUnique({ where: { email } });
       isCustomer = true;
     }
 
@@ -146,7 +146,7 @@ export async function sendResetOtpAction(email) {
 
     // Save to the database
     if (isCustomer) {
-      await prisma.onlineCustomer.update({
+      await prisma.customer.update({
         where: { email },
         data: { resetOtp: otp, resetOtpExpiresAt: expiresAt }
       });
@@ -173,7 +173,7 @@ export async function verifyResetOtpAction(email, otp) {
     let isCustomer = false;
 
     if (!user) {
-      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      user = await prisma.customer.findUnique({ where: { email } });
       isCustomer = true;
     }
 
@@ -202,7 +202,7 @@ export async function verifyResetOtpAction(email, otp) {
     };
 
     if (isCustomer) {
-      await prisma.onlineCustomer.update({ where: { email }, data: updateData });
+      await prisma.customer.update({ where: { email }, data: updateData });
     } else {
       await prisma.user.update({ where: { email }, data: updateData });
     }
@@ -220,7 +220,7 @@ export async function resetPasswordAction(email, token, newPassword) {
     let isCustomer = false;
 
     if (!user) {
-      user = await prisma.onlineCustomer.findUnique({ where: { email } });
+      user = await prisma.customer.findUnique({ where: { email } });
       isCustomer = true;
     }
 
@@ -246,7 +246,7 @@ export async function resetPasswordAction(email, token, newPassword) {
     };
 
     if (isCustomer) {
-      await prisma.onlineCustomer.update({ where: { email }, data: updateData });
+      await prisma.customer.update({ where: { email }, data: updateData });
     } else {
       await prisma.user.update({ where: { email }, data: updateData });
     }

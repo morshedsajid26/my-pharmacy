@@ -22,7 +22,7 @@ export const TableCell = ({ children, className = "", ...props }) => (
   </td>
 );
 
-export function Table({ TableHeads, TableRows, headClass, tableClass, children, headers }) {
+export function Table({ TableHeads, TableRows, headClass, tableClass, wrapperClass = "overflow-x-auto", children, headers }) {
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState([]);
@@ -85,7 +85,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
 
   if (children) {
     return (
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm hide-scrollbar">
+      <div className={`${wrapperClass} rounded-xl border border-slate-200 bg-white shadow-sm hide-scrollbar`}>
         <table className={`w-full min-w-[800px] border-collapse ${tableClass}`}>
           {headers && (
             <thead>
@@ -109,7 +109,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
       {/* ==== GLOBAL FILTER (SEARCH) ==== */}
       {/* ... omitted for brevity ... */}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm hide-scrollbar">
+      <div className={`${wrapperClass} rounded-xl border border-slate-200 bg-white shadow-sm hide-scrollbar`}>
         <table className={`w-full min-w-[800px] border-collapse ${tableClass}`}>
           {/* ==== TABLE HEADER ==== */}
           <thead>

@@ -63,16 +63,25 @@ model Sale {
 }
 
 model Customer {
-  id          String   @id @default(cuid())
-  name        String
-  phone       String   @unique
-  email       String?
-  dueAmount   Float    @default(0)
-  totalSpent  Float    @default(0)
-  status      String   @default("Regular") // "Regular", "VIP", "Credit"
-  sales       Sale[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String              @id @default(cuid())
+  name                String
+  phone               String              @unique
+  email               String?             @unique
+  password            String?
+  address             String?
+  dueAmount           Float               @default(0)
+  totalSpent          Float               @default(0)
+  status              String              @default("Regular") // "Regular", "VIP", "Credit"
+  resetOtp            String?
+  resetOtpExpiresAt   DateTime?
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  sales               Sale[]
+  orders              OnlineOrder[]
+  requests            MedicineRequest[]
+  prescriptions       PrescriptionOrder[]
 }
 
 model SaleItem {
@@ -109,27 +118,11 @@ model PurchaseItem {
   createdAt   DateTime @default(now())
 }
 
-model OnlineCustomer {
-  id                  String              @id @default(cuid())
-  name                String
-  phone               String              @unique
-  email               String              @unique
-  password            String
-  address             String?
-  resetOtp            String?
-  resetOtpExpiresAt   DateTime?
-  resetToken          String?
-  resetTokenExpiresAt DateTime?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  orders              OnlineOrder[]
-  requests            MedicineRequest[]
-  prescriptions       PrescriptionOrder[]
-}
+
 
 model PrescriptionOrder {
   id               String         @id @default(cuid())
-  customer         OnlineCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId       String
   prescriptionFile String         @db.Text
   durationDays     String
@@ -142,7 +135,7 @@ model PrescriptionOrder {
 model OnlineOrder {
   id                  String            @id @default(cuid())
   orderNo             String            @unique
-  customer            OnlineCustomer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer            Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId          String
   customerName        String
   customerPhone       String
@@ -188,7 +181,7 @@ model OnlineOrderItem {
 
 model MedicineRequest {
   id          String         @id @default(cuid())
-  customer    OnlineCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId  String
   medicine    Medicine       @relation(fields: [medicineId], references: [id], onDelete: Cascade)
   medicineId  String

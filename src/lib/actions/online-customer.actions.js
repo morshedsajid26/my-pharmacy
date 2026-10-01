@@ -11,13 +11,13 @@ const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function checkCustomerExistsAction(phone, email) {
   try {
-    const existingPhone = await prisma.onlineCustomer.findUnique({
+    const existingPhone = await prisma.customer.findUnique({
       where: { phone },
     });
     if (existingPhone) return { exists: true, field: "phone" };
     
     if (email) {
-      const existingEmail = await prisma.onlineCustomer.findUnique({
+      const existingEmail = await prisma.customer.findUnique({
         where: { email },
       });
       if (existingEmail) return { exists: true, field: "email" };
@@ -42,7 +42,7 @@ export async function registerCustomerAction(
       throw new Error(`${check.field === 'phone' ? 'Mobile number' : 'Email'} is already registered!`);
     }
 
-    const customer = await prisma.onlineCustomer.create({
+    const customer = await prisma.customer.create({
       data: {
         name,
         phone,
@@ -71,7 +71,7 @@ export async function sendVerificationEmailAction(email, otp) {
 
 export async function loginCustomerAction(email, password) {
   try {
-    const customer = await prisma.onlineCustomer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { email },
     });
 
@@ -140,7 +140,7 @@ export async function updateCustomerProfileAction(name, address) {
       serializedAddress = JSON.stringify([]);
     }
 
-    const updated = await prisma.onlineCustomer.update({
+    const updated = await prisma.customer.update({
       where: { id: current.id },
       data: {
         name: name.trim(),
@@ -189,7 +189,7 @@ export async function getCurrentCustomer() {
     const decrypted = await decrypt(session);
     if (!decrypted || !decrypted.id) return null;
 
-    const customer = await prisma.onlineCustomer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { id: decrypted.id },
       select: {
         id: true,

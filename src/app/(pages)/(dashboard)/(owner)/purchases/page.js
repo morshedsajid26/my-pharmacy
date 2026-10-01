@@ -217,7 +217,7 @@ export default function PurchasesPage() {
             </div>
 
             <div className="border border-slate-100 rounded-xl overflow-visible bg-white">
-               <Table headers={["Medicine", "Quantity", "Purchase Price", "Selling Price", "Total", "Action"]}>
+               <Table headers={["Medicine", "Quantity", "Purchase Price", "Selling Price", "Total", "Action"]} wrapperClass="overflow-visible">
                   {purchaseItems.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="min-w-[450px]">
