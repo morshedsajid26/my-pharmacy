@@ -206,7 +206,9 @@ export async function getCurrentCustomer() {
   }
 }
 
-export async function createOnlineOrderAction(items, notes, deliveryAddress) {
+import { getSslCommerz } from "@/lib/sslcommerz";
+
+export async function createOnlineOrderAction(items, notes, deliveryAddress, paymentMethod = "COD") {
   try {
     const customer = await getCurrentCustomer();
     if (!customer) {
@@ -239,6 +241,7 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
         .substring(2, 6)
         .toUpperCase();
       const orderNo = `ORD-${Date.now().toString().slice(-6)}-${randomStr}`;
+      const transactionId = paymentMethod === "SSLCOMMERZ" ? `TXN-${Date.now()}-${randomStr}` : null;
 
       let subtotal = 0;
       const orderItemsToCreate = [];
@@ -303,6 +306,9 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
           discount,
           totalAmount,
           status: "PENDING",
+          paymentMethod,
+          paymentStatus: "UNPAID",
+          transactionId,
           items: {
             create: orderItemsToCreate,
           },
@@ -313,12 +319,65 @@ export async function createOnlineOrderAction(items, notes, deliveryAddress) {
         success: true,
         orderNo: order.orderNo,
         totalAmount: order.totalAmount,
+        transactionId: order.transactionId,
+        customerName: order.customerName,
+        customerEmail: customer.email || "test@test.com",
+        customerPhone: order.customerPhone,
+        customerAddress: order.address
       };
+    },
+    {
+      maxWait: 5000, // 5 seconds max wait to connect to prisma
+      timeout: 10000, // 10 seconds max transaction execution time
     });
+
+    if (paymentMethod === "SSLCOMMERZ") {
+      const data = {
+        total_amount: result.totalAmount,
+        currency: 'BDT',
+        tran_id: result.transactionId, // use unique tran_id for each api call
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payment/success`,
+        fail_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payment/fail`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payment/cancel`,
+        ipn_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payment/ipn`,
+        shipping_method: 'Courier',
+        product_name: 'Medicines',
+        product_category: 'Health',
+        product_profile: 'general',
+        cus_name: result.customerName,
+        cus_email: result.customerEmail,
+        cus_add1: result.customerAddress,
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: result.customerPhone,
+        ship_name: result.customerName,
+        ship_add1: result.customerAddress,
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
+      };
+      
+      const ssl = getSslCommerz();
+      const apiResponse = await ssl.init(data);
+      if (apiResponse?.GatewayPageURL) {
+         return {
+           success: true,
+           gatewayUrl: apiResponse.GatewayPageURL,
+           orderNo: result.orderNo
+         };
+      } else {
+         console.error("SSLCommerz Init Failed:", apiResponse);
+         throw new Error("Failed to initialize SSLCommerz gateway. Check credentials or try again.");
+      }
+    }
 
     revalidatePath("/orders");
     return result;
   } catch (error) {
+    console.error("Order Action Error:", error);
     throw new Error(error.message || "Failed to place order");
   }
 }

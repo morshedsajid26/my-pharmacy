@@ -164,6 +164,7 @@ export default function OnlineOrdersPage() {
                   <th className="px-6 py-4">Delivery Address</th>
                   <th className="px-6 py-4">Date & Time</th>
                   <th className="px-6 py-4">Total Amount</th>
+                  <th className="px-6 py-4">Payment</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -194,6 +195,14 @@ export default function OnlineOrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4.5 font-black text-slate-800">৳{order.totalAmount}</td>
+                    <td className="px-6 py-4.5">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{order.paymentMethod || "COD"}</span>
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${order.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : order.paymentStatus === 'FAILED' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                          {order.paymentStatus || "UNPAID"}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4.5">
                       {order.status === "PENDING" ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-150">
@@ -328,6 +337,16 @@ export default function OnlineOrdersPage() {
 
               {/* Order Calculations Breakdown */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                <div className="flex justify-between items-center text-xs text-slate-600 mb-2 pb-2 border-b border-slate-200/60">
+                  <span className="font-bold">Payment Details:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-slate-700 text-[11px] uppercase">{selectedOrder.paymentMethod === 'SSLCOMMERZ' ? 'SSLCOMMERZ (Online)' : 'Cash on Delivery'}</span>
+                    <span className={`font-extrabold text-[10px] px-2 py-0.5 rounded border ${selectedOrder.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : selectedOrder.paymentStatus === 'FAILED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                      {selectedOrder.paymentStatus || "UNPAID"}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center text-xs text-slate-600">
                   <span>Subtotal:</span>
                   <span className="font-bold font-mono">৳{(selectedOrder.subtotal ?? selectedOrder.totalAmount).toFixed(2)}</span>

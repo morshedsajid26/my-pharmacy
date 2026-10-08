@@ -146,6 +146,9 @@ model OnlineOrder {
   discount            Float             @default(0)
   totalAmount         Float
   status              String            @default("PENDING")
+  paymentMethod       String            @default("COD") // COD, SSLCOMMERZ
+  paymentStatus       String            @default("UNPAID") // UNPAID, PAID, FAILED
+  transactionId       String?           @unique
   items               OnlineOrderItem[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt

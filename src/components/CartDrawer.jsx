@@ -38,6 +38,7 @@ export default function CartDrawer() {
   const [customer, setCustomer] = useState(null);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("COD");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const router = useRouter();
 
@@ -175,14 +176,20 @@ export default function CartDrawer() {
 
     setCheckoutLoading(true);
     try {
-      const result = await createOnlineOrderAction(cart, notes, finalAddress);
+      const result = await createOnlineOrderAction(cart, notes, finalAddress, paymentMethod);
       if (result.success) {
         saveCart([]);
         setNotes("");
+        setPaymentMethod("COD");
         setIsCartOpen(false);
-        toast.success("Order placed successfully!");
-        router.push("/orders");
+        if (result.gatewayUrl) {
+          window.location.href = result.gatewayUrl;
+        } else {
+          toast.success("Order placed successfully!");
+          router.push("/orders");
+        }
       }
+
     } catch (error) {
       toast.error(error.message || "Checkout failed");
     } finally {
@@ -351,7 +358,21 @@ export default function CartDrawer() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 pt-2 border-t border-slate-200/60">
+                <span className="font-bold text-slate-700 text-sm">Payment Method:</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className={`flex items-center justify-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all ${paymentMethod === 'COD' ? 'bg-medical-blue-50 border-medical-blue-400 text-medical-blue-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="payment_method" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="hidden" />
+                    Cash on Delivery
+                  </label>
+                  <label className={`flex items-center justify-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all ${paymentMethod === 'SSLCOMMERZ' ? 'bg-medical-blue-50 border-medical-blue-400 text-medical-blue-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="payment_method" checked={paymentMethod === 'SSLCOMMERZ'} onChange={() => setPaymentMethod('SSLCOMMERZ')} className="hidden" />
+                    Online Payment
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
                 <span className="font-extrabold text-slate-700 text-base">
                   Grand Total:
                 </span>
@@ -369,7 +390,7 @@ export default function CartDrawer() {
                   {checkoutLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <>Place Cash-On-Delivery Order</>
+                    <>{paymentMethod === 'COD' ? 'Place COD Order' : 'Pay via SSLCommerz'}</>
                   )}
                 </button>
               ) : (

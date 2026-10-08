@@ -115,6 +115,18 @@ export default function CustomerOrdersPage() {
       Title: "Amount", 
       render: (row) => <span className="text-xs font-bold text-slate-800 font-mono">৳{row.totalAmount}</span>
     },
+    {
+      key: "payment",
+      Title: "Payment",
+      render: (row) => (
+        <div className="flex flex-col items-center justify-center gap-1">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{row.paymentMethod || "COD"}</span>
+          <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${row.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : row.paymentStatus === 'FAILED' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+            {row.paymentStatus || "UNPAID"}
+          </span>
+        </div>
+      )
+    },
     { 
       key: "status", 
       Title: "Status", 
@@ -321,7 +333,16 @@ export default function CustomerOrdersPage() {
                         <CreditCard size={14} className="text-slate-400" />
                         <span>Payment Method:</span>
                       </span>
-                      <span className="font-extrabold text-slate-700">Cash on Delivery</span>
+                      <span className="font-extrabold text-slate-700 text-[11px]">{viewingOrder.paymentMethod === 'SSLCOMMERZ' ? 'SSLCOMMERZ (Online)' : 'Cash on Delivery'}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-slate-500 mt-2">
+                      <span className="flex items-center gap-1.5">
+                        <span>Payment Status:</span>
+                      </span>
+                      <span className={`font-extrabold text-[10px] px-2 py-0.5 rounded border ${viewingOrder.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : viewingOrder.paymentStatus === 'FAILED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        {viewingOrder.paymentStatus || "UNPAID"}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-2">
