@@ -422,7 +422,7 @@ export default function OnlineOrdersPage() {
                       className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all shadow-md shadow-emerald-600/10 disabled:opacity-50 inline-flex items-center gap-1.5"
                     >
                       {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check size={16} />}
-                      <span>Approve & Sync POS</span>
+                      <span>Approve</span>
                     </button>
                   </>
                 )}
@@ -434,7 +434,7 @@ export default function OnlineOrdersPage() {
 
       {/* BEAUTIFUL CUSTOM CONFIRMATION MODAL */}
       {confirmAction.type && (
-        <div className="fixed inset-0 z-[60] overflow-hidden flex items-center justify-center p-4">
+        <div className="fixed inset-0 overflow-hidden flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div 
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
             onClick={() => setConfirmAction({ type: null, orderId: null, orderNo: "" })} 

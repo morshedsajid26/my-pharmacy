@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { const order = await prisma.onlineOrder.findUnique({ where: { orderNo: 'ORD-001568-BPB4' }, include: { items: { include: { medicine: true } } } }); console.log(JSON.stringify(order, null, 2)); } main().catch(console.error).finally(() => prisma.\$disconnect());
