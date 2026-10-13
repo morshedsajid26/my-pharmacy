@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
 
 const CartContext = createContext();
 
@@ -28,8 +27,11 @@ export function CartProvider({ children }) {
     
     async function loadSettings() {
       try {
-        const fresh = await getStorefrontSettingsAction();
-        if (fresh) setSettings(fresh);
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const fresh = await res.json();
+          if (fresh && !fresh.error) setSettings(fresh);
+        }
       } catch (e) {
         console.error("Failed to load settings:", e);
       }

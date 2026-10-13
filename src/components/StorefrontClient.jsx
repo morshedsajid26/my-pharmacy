@@ -49,7 +49,6 @@ import {
   addMedicineRequestAction,
   removeMedicineRequestAction,
 } from "@/lib/actions/online-customer.actions";
-import { getStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
 import toast, { Toaster } from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import StorefrontHeader from "../app/(pages)/(landing)/StorefrontHeader";
@@ -87,15 +86,7 @@ export default function StorefrontClient({
     },
   );
 
-  // Load latest storefront settings (including discount tiers)
-  useEffect(() => {
-    async function loadSettings() {
-      const fresh = await getStorefrontSettingsAction();
-      if (fresh) setSettings(fresh);
-      console.log("Fetched storefront settings:", fresh);
-    }
-    loadSettings();
-  }, []);
+
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");

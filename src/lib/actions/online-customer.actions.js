@@ -187,7 +187,12 @@ export async function getCurrentCustomer() {
     if (!session) return null;
 
     const decrypted = await decrypt(session);
-    if (!decrypted || !decrypted.id) return null;
+    if (!decrypted || !decrypted.id) {
+      try {
+        (await cookies()).delete("customer_session");
+      } catch (_) {}
+      return null;
+    }
 
     const customer = await prisma.customer.findUnique({
       where: { id: decrypted.id },

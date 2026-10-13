@@ -63,8 +63,6 @@ export function Sidebar() {
       }
     }
     fetchCount();
-    const interval = setInterval(fetchCount, 8000); // Check every 8 seconds
-    return () => clearInterval(interval);
   }, []);
 
   return (

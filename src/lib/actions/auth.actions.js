@@ -49,7 +49,14 @@ export async function logoutAction() {
 export async function getSession() {
   const session = (await cookies()).get("session")?.value;
   if (!session) return null;
-  return await decrypt(session);
+  const decrypted = await decrypt(session);
+  if (!decrypted) {
+    try {
+      (await cookies()).delete("session");
+    } catch (_) {}
+    return null;
+  }
+  return decrypted;
 }
 
 export async function getCurrentUser() {
