@@ -27,3 +27,12 @@ export const getMyPrescriptions = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const deletePrescriptionOrder = async (req, res) => {
+  try {
+    await prescriptionService.deleteMyPrescriptionOrderService(req.user.id, req.params.id);
+    return res.status(200).json({ success: true, message: 'Prescription deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

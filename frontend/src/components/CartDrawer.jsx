@@ -14,13 +14,13 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import {
-  getCurrentCustomer,
-  createOnlineOrderAction,
-} from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
+import { useCustomerOrders } from "@/hooks/useCustomerPortal";
 import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
+  const { customer } = useAuth();
+  const { createOrder } = useCustomerOrders();
   const {
     cart,
     isCartOpen,
@@ -35,20 +35,11 @@ export default function CartDrawer() {
     settings,
   } = useCart();
 
-  const [customer, setCustomer] = useState(null);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    if (isCartOpen) {
-      getCurrentCustomer()
-        .then(setCustomer)
-        .catch(() => {});
-    }
-  }, [isCartOpen]);
 
   if (!isCartOpen) return null;
 
@@ -176,8 +167,13 @@ export default function CartDrawer() {
 
     setCheckoutLoading(true);
     try {
-      const result = await createOnlineOrderAction(cart, notes, finalAddress, paymentMethod);
-      if (result.success) {
+      const result = await createOrder({
+        items: cart,
+        notes,
+        deliveryAddress: finalAddress,
+        paymentMethod,
+      });
+      if (result.success || result.order) {
         saveCart([]);
         setNotes("");
         setPaymentMethod("COD");

@@ -4,28 +4,12 @@ import { useEffect, useState, useMemo } from "react";
 import { Heart, RefreshCw, Loader2, Phone, User, Package, Clock } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Table } from "@/components/Table";
-import { getMedicineRequestsAdminAction } from "@/lib/actions/online-customer.actions";
+import { useCustomerRequests } from "@/hooks/useCustomerRequests";
 import toast from "react-hot-toast";
 
 export default function CustomerRequestsPage() {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { requests, isLoading: loading, refetch: loadRequests } = useCustomerRequests();
 
-  async function loadRequests() {
-    setLoading(true);
-    try {
-      const data = await getMedicineRequestsAdminAction();
-      setRequests(data || []);
-    } catch (error) {
-      toast.error(error.message || "Failed to load requests");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadRequests();
-  }, []);
 
   // Compute metrics
   const metrics = useMemo(() => {

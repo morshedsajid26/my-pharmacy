@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Send, Bot, User, Loader2, X, MessageSquare, Maximize2, Trash2, Camera } from "lucide-react";
 import Link from "next/link";
 import Script from "next/script";
+import { useAIAssistant } from "@/hooks/useAIAssistant";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +18,8 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const { sendMessage: sendAIMessage, loadHistory: loadAIHistory } = useAIAssistant();
 
   // Initialize sessionId
   useEffect(() => {
@@ -42,22 +45,13 @@ export default function ChatWidget() {
 
   const loadHistory = async (sid) => {
     try {
-      const res = await fetch(`/api/chat/history?sessionId=${sid}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) {
-          // Load the most recent chat session
-          const latestChatId = data[0].id;
-          const chatRes = await fetch(`/api/chat/history?sessionId=${sid}&chatId=${latestChatId}`);
-          if (chatRes.ok) {
-            const chatData = await chatRes.json();
-            setMessages(chatData.messages.map(m => ({ role: m.role, content: m.content, image: m.image })));
-            return; // Exit here, loaded from DB successfully
-          }
-        }
+      const historyMessages = await loadAIHistory(sid);
+      if (historyMessages && historyMessages.length > 0) {
+        setMessages(historyMessages);
+        return;
       }
     } catch (error) {
-      console.error("Failed to load history from DB", error);
+      console.error("Failed to load history from backend", error);
     }
 
     // Fallback: If DB is empty (guest) or fetch failed, load from local storage
@@ -197,23 +191,12 @@ export default function ChatWidget() {
     try {
       setMessages([...newMessages, { role: "assistant", content: "", isTyping: true }]);
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages,
-          sessionId: sessionId,
-        }),
+      const replyContent = await sendAIMessage({
+        messages: newMessages,
+        sessionId: sessionId,
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
-        throw new Error(errData?.error || "API response error");
-      }
-
-      const data = await res.json();
-      setMessages([...newMessages, { role: "assistant", content: data.content }]);
-
+      setMessages([...newMessages, { role: "assistant", content: replyContent }]);
     } catch (error) {
       console.error("Chat error:", error);
       setMessages([...newMessages, { role: "assistant", content: `Error: ${error.message}` }]);

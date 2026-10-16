@@ -20,63 +20,23 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { Table } from "@/components/Table";
-import { 
-  getCurrentCustomer, 
-  getCustomerOrdersAction, 
-  logoutCustomerAction 
-} from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
+import { useCustomerOrders } from "@/hooks/useCustomerPortal";
 
 export default function CustomerOrdersPage() {
   const router = useRouter();
-  const [customer, setCustomer] = useState(null);
-  const [loadingCustomer, setLoadingCustomer] = useState(true);
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
-
-  // Load customer details
-  const loadCustomerData = async () => {
-    try {
-      const data = await getCurrentCustomer();
-      if (!data) {
-        toast.error("Please sign in to view your orders");
-        router.push("/");
-        return;
-      }
-      setCustomer(data);
-    } catch (e) {
-      toast.error("Failed to load customer profile details");
-    } finally {
-      setLoadingCustomer(false);
-    }
-  };
-
-  // Load customer orders
-  const loadOrdersData = async () => {
-    try {
-      const data = await getCustomerOrdersAction();
-      setOrders(data || []);
-    } catch (e) {
-      toast.error("Failed to load orders history");
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
+  const { customer, loading: loadingCustomer, logoutCustomer } = useAuth();
+  const { orders, isLoading: loadingOrders } = useCustomerOrders();
 
   useEffect(() => {
-    loadCustomerData();
-  }, []);
-
-  useEffect(() => {
-    if (customer) {
-      loadOrdersData();
+    if (!loadingCustomer && !customer) {
+      router.replace("/login");
     }
-  }, [customer]);
+  }, [customer, loadingCustomer, router]);
 
   const handleSignOut = async () => {
     try {
-      await logoutCustomerAction();
-      toast.success("Signed out successfully");
-      router.push("/");
+      await logoutCustomer();
     } catch (e) {
       toast.error("Sign out failed");
     }
@@ -96,7 +56,7 @@ export default function CustomerOrdersPage() {
       render: (row) => (
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 justify-center">
           <Calendar size={14} className="text-slate-400" />
-          {new Date(row.createdAt).toLocaleDateString()}
+          {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "N/A"}
         </div>
       )
     },
@@ -167,7 +127,7 @@ export default function CustomerOrdersPage() {
     }
   ];
 
-  if (loadingCustomer) {
+  if (loadingCustomer || !customer) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
         <Loader2 className="w-10 h-10 animate-spin text-medical-blue-600 mb-2" />
@@ -293,7 +253,7 @@ export default function CustomerOrdersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                        {viewingOrder.items.map((item, idx) => (
+                        {(viewingOrder.items || []).map((item, idx) => (
                           <tr key={idx}>
                             <td className="p-3">{item.medicine?.name || "Unknown Medicine"}</td>
                             <td className="p-3 text-center text-slate-500">{item.quantity}</td>

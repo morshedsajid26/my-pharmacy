@@ -7,7 +7,7 @@ import { UserPlus, Loader2, PlusCircle, CheckCircle } from "lucide-react";
 import InputField from "@/components/InputField";
 import Password from "@/components/Password";
 import { Button } from "@/components/Button";
-import { registerCustomerAction, checkCustomerExistsAction, sendVerificationEmailAction } from "@/lib/actions/online-customer.actions";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import { useEffect, useRef } from "react";
@@ -26,7 +26,7 @@ export default function SignupPage() {
   const generatedOtpRef = useRef("");
   
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, registerCustomer } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -50,7 +50,7 @@ export default function SignupPage() {
     
     try {
       // Check if number or email is already registered before generating OTP
-      const check = await checkCustomerExistsAction(phone, email);
+      const check = await api.post("/auth/customer/check", { phone, email });
       if (check.exists) {
         setIsSubmitting(false);
         return toast.error(`${check.field === 'phone' ? 'Mobile number' : 'Email address'} is already registered!`);
@@ -61,11 +61,10 @@ export default function SignupPage() {
       generatedOtpRef.current = code;
       
       // Send real email
-      await sendVerificationEmailAction(email, code);
+      await api.post("/otp/send-verification", { email, otp: code });
       
       setOtpStep(true);
       toast.success(`Verification code sent to your email!`, { duration: 6000 });
-      // Keep showing it in dev so it's easy to test without opening email
       
     } catch (error) { 
       toast.error(error.message || "Failed to send OTP. Please try again.");
@@ -75,7 +74,6 @@ export default function SignupPage() {
   };
 
   const handleOTPComplete = async (enteredOtp) => {
-    console.log("Entered OTP:", enteredOtp, "Expected:", generatedOtpRef.current);
     if (enteredOtp !== generatedOtpRef.current) {
       toast.error("Invalid OTP! Try the code displayed in the toast.");
       return;
@@ -83,8 +81,7 @@ export default function SignupPage() {
 
     setOtpVerifying(true);
     try {
-      const result = await registerCustomerAction(name, phone, email, password);
-      console.log("Registration result:", result);
+      const result = await registerCustomer({ name, phone, email, password });
       if (result.success) {
         toast.success(`Welcome, ${result.customer.name}! Account registered successfully.`);
         router.push("/");

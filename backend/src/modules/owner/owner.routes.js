@@ -13,6 +13,7 @@ const router = express.Router();
 
 router.use('/dashboard', dashboardRoutes);
 router.use('/items', itemRoutes);
+router.use('/medicines', itemRoutes);
 router.use('/sales', saleRoutes);
 router.use('/purchases', purchaseRoutes);
 router.use('/customers', customerRoutes);

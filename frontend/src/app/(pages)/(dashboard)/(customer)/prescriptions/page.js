@@ -23,24 +23,21 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { Table } from "@/components/Table";
-import { 
-  getCurrentCustomer, 
-  logoutCustomerAction 
-} from "@/lib/actions/online-customer.actions";
-import { 
-  createPrescriptionOrder, 
-  getCustomerPrescriptionOrders,
-  deletePrescriptionOrder
-} from "@/lib/actions/prescription.actions";
+import { useAuth } from "@/context/AuthContext";
+import { useCustomerPrescriptions } from "@/hooks/useCustomerPortal";
 
 export default function CustomerPrescriptionsPage() {
   const router = useRouter();
   const fileInputRef = useRef(null);
   
-  const [customer, setCustomer] = useState(null);
-  const [loadingCustomer, setLoadingCustomer] = useState(true);
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const { customer, loading: loadingCustomer, logoutCustomer } = useAuth();
+  const { prescriptions: orders, isLoading: loadingOrders, createPrescription, deletePrescription, refetch } = useCustomerPrescriptions();
+
+  useEffect(() => {
+    if (!loadingCustomer && !customer) {
+      router.replace("/login");
+    }
+  }, [customer, loadingCustomer, router]);
 
   // Upload Form State
   const [isUploading, setIsUploading] = useState(false);
@@ -53,50 +50,9 @@ export default function CustomerPrescriptionsPage() {
   // View Modal State
   const [viewingFile, setViewingFile] = useState(null);
 
-  // Load customer details
-  const loadCustomerData = async () => {
-    try {
-      const data = await getCurrentCustomer();
-      if (!data) {
-        toast.error("Please sign in to view your prescriptions");
-        router.push("/");
-        return;
-      }
-      setCustomer(data);
-    } catch (e) {
-      toast.error("Failed to load customer profile details");
-    } finally {
-      setLoadingCustomer(false);
-    }
-  };
-
-  // Load customer prescription orders
-  const loadOrdersData = async () => {
-    try {
-      const data = await getCustomerPrescriptionOrders(customer.id);
-      setOrders(data || []);
-    } catch (e) {
-      toast.error("Failed to load prescription history");
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCustomerData();
-  }, []);
-
-  useEffect(() => {
-    if (customer) {
-      loadOrdersData();
-    }
-  }, [customer]);
-
   const handleSignOut = async () => {
     try {
-      await logoutCustomerAction();
-      toast.success("Signed out successfully");
-      router.push("/");
+      await logoutCustomer();
     } catch (e) {
       toast.error("Sign out failed");
     }
@@ -131,27 +87,23 @@ export default function CustomerPrescriptionsPage() {
 
     setIsUploading(true);
     try {
-      const result = await createPrescriptionOrder({
-        customerId: customer.id,
-        prescriptionFile: filePreview,
+      await createPrescription({
+        prescriptionUrl: filePreview,
         durationDays: durationDays,
-        notes: notes
+        notes: notes || "",
+        address: customer?.address || "",
       });
 
-      if (result.success) {
-        toast.success("Prescription uploaded successfully!");
-        setShowUploadForm(false);
-        setFile(null);
-        setFilePreview(null);
-        setDurationDays("");
-        setNotes("");
-        // Reload orders
-        loadOrdersData();
-      }
+      toast.success("Prescription uploaded successfully!");
+      setShowUploadForm(false);
+      setFile(null);
+      setFilePreview(null);
+      setDurationDays("");
+      setNotes("");
+      refetch();
     } catch (error) {
       toast.error(error.message || "Failed to upload prescription");
     } finally {
-      setIsUploading(false);
       setIsUploading(false);
     }
   };
@@ -159,11 +111,7 @@ export default function CustomerPrescriptionsPage() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this prescription?")) return;
     try {
-      const result = await deletePrescriptionOrder(id);
-      if (result.success) {
-        toast.success("Prescription deleted successfully");
-        setOrders(orders.filter(order => order.id !== id));
-      }
+      await deletePrescription(id);
     } catch (e) {
       toast.error(e.message || "Failed to delete prescription");
     }

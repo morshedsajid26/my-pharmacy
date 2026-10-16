@@ -28,3 +28,49 @@ export const getDailyLedger = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getTopSelling = async (req, res) => {
+  try {
+    const data = await dashboardService.getTopSellingMedicinesService();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getTopProfitable = async (req, res) => {
+  try {
+    const data = await dashboardService.getTopProfitableMedicinesService();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getExpiring = async (req, res) => {
+  try {
+    const data = await dashboardService.getExpiringMedicinesService();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getUnsold = async (req, res) => {
+  try {
+    const data = await dashboardService.getUnsoldMedicinesService();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getLedgerYears = async (req, res) => {
+  try {
+    const data = await dashboardService.getLedgerYearsService();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

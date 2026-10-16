@@ -9,12 +9,12 @@ import { Button } from "@/components/Button";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
-import { resetPasswordAction } from "@/lib/actions/auth.actions";
+import { usePasswordReset } from "@/hooks/usePasswordReset";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { resetPassword, isResettingPassword } = usePasswordReset();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,19 +42,16 @@ export default function ResetPasswordPage() {
       return toast.error("Passwords do not match!");
     }
 
-    setIsSubmitting(true);
     try {
-      const result = await resetPasswordAction(email, token, password);
+      const result = await resetPassword({ email, token, newPassword: password });
       if (result.success) {
         toast.success("Password reset successful!");
         router.push("/login");
       } else {
-        toast.error(result.error || "Failed to reset password");
+        toast.error(result.message || "Failed to reset password");
       }
     } catch (error) {
       toast.error(error.message || "Failed to reset password");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -87,9 +84,9 @@ export default function ResetPasswordPage() {
         <Button
           type="submit"
           className="w-full h-12 text-base gap-2 shadow-lg shadow-medical-blue-600/20"
-          disabled={isSubmitting}
+          disabled={isResettingPassword}
         >
-          {isSubmitting ? (
+          {isResettingPassword ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>

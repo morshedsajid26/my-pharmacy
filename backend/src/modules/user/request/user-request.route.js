@@ -12,6 +12,7 @@ router.use(protect, requireCustomer);
 
 router.post('/', addMedicineRequest);
 router.delete('/:medicineId', removeMedicineRequest);
+router.get('/', getCustomerWishlist);
 router.get('/wishlist', getCustomerWishlist);
 
 export default router;

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getCurrentUser, updateUserAction } from "@/lib/actions/auth.actions";
-import { getStorefrontSettingsAction, updateStorefrontSettingsAction } from "@/lib/actions/online-admin.actions";
+import api from "@/lib/api";
 import InputField from "@/components/InputField";
 import { Button } from "@/components/Button";
 import Password from "@/components/Password";
@@ -44,10 +43,14 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [fullUser, storeSettings] = await Promise.all([
-          getCurrentUser(),
-          getStorefrontSettingsAction()
+        const [profileRes, storeSettingsRes] = await Promise.all([
+          api.get("/auth/me"),
+          api.get("/owner/settings")
         ]);
+        
+        const fullUser = profileRes?.user || profileRes?.customer || profileRes?.data?.user;
+        const storeSettings = storeSettingsRes?.data || storeSettingsRes;
+
         
         if (fullUser) {
           const data = {
@@ -186,15 +189,17 @@ export default function SettingsPage() {
         payload.password = password;
       }
 
-      const result = await updateUserAction(payload);
+      const res = await api.put("/auth/profile", payload);
+      const result = res?.data || res;
 
-      if (result.success) {
-        setUser(result.user);
+      if (result.success || result.user) {
+        const updatedUser = result.user || result.customer;
+        setUser(updatedUser);
         
         const updatedSnapshot = {
-          name: result.user.name || "",
-          email: result.user.email || "",
-          profilePicture: result.user.profilePicture || "",
+          name: updatedUser.name || "",
+          email: updatedUser.email || "",
+          profilePicture: updatedUser.profilePicture || "",
           password: "",
         };
         setOriginalData(updatedSnapshot);
@@ -237,11 +242,9 @@ export default function SettingsPage() {
         }]
       };
 
-      const result = await updateStorefrontSettingsAction(payload);
-      if (result.success) {
-        setIsEditingStorefront(false);
-        toast.success("Storefront settings updated successfully!");
-      }
+      await api.put("/owner/settings", payload);
+      setIsEditingStorefront(false);
+      toast.success("Storefront settings updated successfully!");
     } catch (error) {
       toast.error(error.message || "Failed to update storefront settings");
     } finally {

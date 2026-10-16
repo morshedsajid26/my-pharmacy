@@ -1,20 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCustomers, createCustomer, updateCustomer, payCustomerDue } from "@/lib/actions/customer.actions";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 
-export function useCustomers() {
+export function useCustomers(search = "") {
   const queryClient = useQueryClient();
 
   const fetchCustomers = useQuery({
-    queryKey: ["customers"],
+    queryKey: ["customers", search],
     queryFn: async () => {
-      return await getCustomers();
+      const res = await api.get("/owner/customers", {
+        params: search ? { search } : {},
+      });
+      return res?.data || res;
     },
   });
 
   const addCustomerMutation = useMutation({
     mutationFn: async (newCustomer) => {
-      return await createCustomer(newCustomer);
+      const res = await api.post("/owner/customers", newCustomer);
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -27,7 +31,8 @@ export function useCustomers() {
 
   const updateCustomerMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return await updateCustomer(id, data);
+      const res = await api.put(`/owner/customers/${id}`, data);
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -39,8 +44,12 @@ export function useCustomers() {
   });
 
   const collectDueMutation = useMutation({
-    mutationFn: async ({ customerId, amount, waiveAmount }) => {
-      return await payCustomerDue(customerId, amount, waiveAmount);
+    mutationFn: async ({ customerId, amount, waiveAmount = 0 }) => {
+      const res = await api.post(`/owner/customers/${customerId}/due-payment`, {
+        amount,
+        waiveAmount,
+      });
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -62,6 +71,7 @@ export function useCustomers() {
     collectDue: collectDueMutation.mutateAsync,
     isAdding: addCustomerMutation.isPending,
     isUpdating: updateCustomerMutation.isPending,
-    isCollecting: collectDueMutation.isPending
+    isCollecting: collectDueMutation.isPending,
+    refetch: fetchCustomers.refetch,
   };
 }

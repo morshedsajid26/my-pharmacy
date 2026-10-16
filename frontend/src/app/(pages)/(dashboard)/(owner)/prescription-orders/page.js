@@ -22,11 +22,9 @@ import { Modal } from "@/components/Modal";
 import InputField from "@/components/InputField";
 import Dropdown from "@/components/Dropdown";
 import toast from "react-hot-toast";
-import { getAllPrescriptionOrders, updatePrescriptionOrderStatus } from "@/lib/actions/prescription.actions";
+import { usePrescriptionOrders } from "@/hooks/usePrescriptionOrders";
 
 export default function PrescriptionOrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -34,33 +32,17 @@ export default function PrescriptionOrdersPage() {
   // Modal states
   const [viewingOrder, setViewingOrder] = useState(null);
 
-  const fetchOrders = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await getAllPrescriptionOrders({ status: filterStatus });
-      setOrders(data || []);
-    } catch (error) {
-      toast.error("Failed to fetch prescription orders");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filterStatus]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  const { prescriptions: orders, isLoading, updateStatus, refetch: fetchOrders } = usePrescriptionOrders(filterStatus);
 
   const handleStatusChange = async (orderId, newStatus) => {
     setIsUpdating(true);
     try {
-      await updatePrescriptionOrderStatus(orderId, newStatus);
-      toast.success(`Order marked as ${newStatus}`);
-      fetchOrders();
+      await updateStatus({ id: orderId, status: newStatus });
       if (viewingOrder && viewingOrder.id === orderId) {
         setViewingOrder({ ...viewingOrder, status: newStatus });
       }
     } catch (error) {
-      toast.error("Failed to update order status");
+      // handled in mutation
     } finally {
       setIsUpdating(false);
     }

@@ -5,34 +5,21 @@ import { useRouter } from "next/navigation";
 import { CustomerSidebar } from "@/layouts/CustomerSidebar";
 import { CustomerNavbar } from "@/layouts/CustomerNavbar";
 import { useUI } from "@/context/UIContext";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/utils/cn";
 import { Loader2 } from "lucide-react";
-import { getCurrentCustomer } from "@/lib/actions/online-customer.actions";
 
 export default function CustomerDashboardLayout({ children }) {
   const { isSidebarCollapsed } = useUI();
-  const [customer, setCustomer] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { customer, loading } = useAuth();
   const router = useRouter();
 
   // Enforce Route Protection for Customers
   useEffect(() => {
-    async function loadAuth() {
-      try {
-        const data = await getCurrentCustomer();
-        if (!data) {
-          router.replace("/login");
-        } else {
-          setCustomer(data);
-        }
-      } catch (error) {
-        router.replace("/login");
-      } finally {
-        setLoading(false);
-      }
+    if (!loading && !customer) {
+      router.replace("/login");
     }
-    loadAuth();
-  }, [router]);
+  }, [customer, loading, router]);
 
   if (loading) {
     return (

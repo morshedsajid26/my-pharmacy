@@ -9,23 +9,24 @@ import { Button } from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import Password from "@/components/Password";
 import { useEffect } from "react";
-import { loginCustomerAction } from "@/lib/actions/online-customer.actions";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user } = useAuth();
+  const { login, loginCustomer, user, customer } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (user) {
       router.replace("/dashboard");
+    } else if (customer) {
+      router.replace("/overview");
     }
-  }, [user, router]);
+  }, [user, customer, router]);
 
-  if (user) return null;
+  if (user || customer) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,9 +34,8 @@ export default function LoginPage() {
     try {
       let loggedIn = false;
       try {
-        const result = await loginCustomerAction(identifier.trim(), password);
-        if (result.success) {
-          toast.success("Successfully logged in!");
+        const result = await loginCustomer(identifier.trim(), password);
+        if (result?.success) {
           router.push("/overview");
           loggedIn = true;
         }

@@ -209,3 +209,16 @@ export const updateUserProfile = async (currentUser, { name, email, password, pr
 
   return { token, user: updatedUser };
 };
+
+export const checkCustomerExistsService = async ({ phone, email }) => {
+  if (phone) {
+    const existingPhone = await prisma.customer.findUnique({ where: { phone } });
+    if (existingPhone) return { exists: true, field: 'phone' };
+  }
+  if (email) {
+    const existingEmail = await prisma.customer.findUnique({ where: { email } });
+    if (existingEmail) return { exists: true, field: 'email' };
+  }
+  return { exists: false };
+};
+

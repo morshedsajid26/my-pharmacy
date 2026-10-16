@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Settings, Menu, X, LogOut, ArrowLeft, ShoppingBag, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useUI } from "../context/UIContext";
-import { logoutCustomerAction } from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 import { useCart } from "@/context/CartContext";
 
 export function CustomerNavbar({ customer }) {
   const { toggleSidebar, isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useUI();
+  const { logoutCustomer } = useAuth();
   const router = useRouter();
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -33,13 +34,12 @@ export function CustomerNavbar({ customer }) {
   const handleSignOut = async () => {
     setIsDropdownOpen(false);
     try {
-      await logoutCustomerAction();
-      router.push("/");
-      toast.success("Signed out successfully");
+      await logoutCustomer();
     } catch (e) {
       toast.error("Sign out failed");
     }
   };
+
 
   return (
     <header className="h-16 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-40">

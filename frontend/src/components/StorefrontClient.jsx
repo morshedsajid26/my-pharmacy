@@ -38,17 +38,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import {
-  registerCustomerAction,
-  loginCustomerAction,
-  logoutCustomerAction,
-  updateCustomerProfileAction,
-  getCustomerOrdersAction,
-  createOnlineOrderAction,
-  getCustomerWishlistAction,
-  addMedicineRequestAction,
-  removeMedicineRequestAction,
-} from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
+import { usePublicMedicines } from "@/hooks/useMedicines";
+import { useStorefrontSettings } from "@/hooks/useSettings";
 import toast, { Toaster } from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import StorefrontHeader from "../app/(pages)/(landing)/StorefrontHeader";
@@ -74,17 +67,16 @@ export default function StorefrontClient({
   initialSettings,
   mode = "landing",
 }) {
+  const { user: authUser, customer: authCustomer, loginCustomer, registerCustomer, logoutCustomer } = useAuth();
+  const { medicines: queryMedicines } = usePublicMedicines();
+  const { settings: querySettings } = useStorefrontSettings();
+
   // Storefront & Customer State
-  const [medicines] = useState(initialMedicines || []);
-  const [customer, setCustomer] = useState(initialCustomer);
-  const [staffUser, setStaffUser] = useState(initialStaffUser);
-  const [settings, setSettings] = useState(
-    initialSettings || {
-      minOrderForFreeDelivery: 500,
-      deliveryCharge: 20,
-      discountTiers: [],
-    },
-  );
+  const medicines = initialMedicines && initialMedicines.length > 0 ? initialMedicines : queryMedicines;
+  const customer = initialCustomer || authCustomer;
+  const staffUser = initialStaffUser || authUser;
+  const settings = initialSettings || querySettings;
+
 
 
 
@@ -140,8 +132,9 @@ export default function StorefrontClient({
     async function loadWishlist() {
       if (customer) {
         try {
-          const list = await getCustomerWishlistAction();
-          setWishlist(list);
+          const res = await api.get("/user/requests/wishlist");
+          const list = res?.data !== undefined ? res.data : res;
+          setWishlist(Array.isArray(list) ? list : []);
         } catch (e) {
           console.error("Failed to load customer wishlist:", e);
         }
@@ -189,14 +182,14 @@ export default function StorefrontClient({
     try {
       const isRequested = wishlist.includes(medId);
       if (isRequested) {
-        const res = await removeMedicineRequestAction(medId);
-        if (res.success) {
+        const res = await api.delete(`/user/requests/${medId}`);
+        if (res.success || !res.error) {
           setWishlist((prev) => prev.filter((id) => id !== medId));
           toast.success("Restock request cancelled successfully.");
         }
       } else {
-        const res = await addMedicineRequestAction(medId);
-        if (res.success) {
+        const res = await api.post("/user/requests", { medicineId: medId });
+        if (res.success || !res.error) {
           setWishlist((prev) => [...prev, medId]);
           toast.success(
             "Restock request submitted! We will notify you when restocked.",
@@ -220,11 +213,10 @@ export default function StorefrontClient({
     setAuthSubmitting(true);
     try {
       if (authMode === "login") {
-        const result = await loginCustomerAction(authPhone, authPassword);
-        if (result.success) {
-          setCustomer(result.customer);
+        const result = await loginCustomer(authPhone, authPassword);
+        if (result?.success) {
           setIsAuthModalOpen(false);
-          toast.success(`Welcome back, ${result.customer.name}!`);
+          toast.success(`Welcome back, ${result.customer?.name || "Customer"}!`);
           resetAuthForm();
         }
       } else {
@@ -267,19 +259,17 @@ export default function StorefrontClient({
 
     setOtpVerifying(true);
     try {
-      // Execute registration action (address is omitted during signup)
-      const result = await registerCustomerAction(
-        authName,
-        authPhone,
-        authPassword,
-      );
-      if (result.success) {
-        setCustomer(result.customer);
+      const result = await registerCustomer({
+        name: authName,
+        phone: authPhone,
+        password: authPassword,
+      });
+      if (result?.success) {
         setIsAuthModalOpen(false);
         setOtpStep(false);
         setGeneratedOtp("");
         toast.success(
-          `Welcome, ${result.customer.name}! Phone verified and account registered successfully.`,
+          `Welcome, ${result.customer?.name || "Customer"}! Phone verified and account registered successfully.`,
         );
         resetAuthForm();
       }
@@ -292,10 +282,8 @@ export default function StorefrontClient({
 
   const handleLogout = async () => {
     try {
-      await logoutCustomerAction();
-      setCustomer(null);
+      await logoutCustomer();
       setCustomerOrders([]);
-      toast.success("Logged out successfully");
     } catch (e) {
       toast.error("Logout failed");
     }
@@ -315,14 +303,16 @@ export default function StorefrontClient({
     if (!customer) return;
     setOrdersLoading(true);
     try {
-      const orders = await getCustomerOrdersAction();
-      setCustomerOrders(orders);
+      const res = await api.get("/user/orders/my-orders");
+      const orders = res?.data !== undefined ? res.data : res;
+      setCustomerOrders(Array.isArray(orders) ? orders : []);
     } catch (e) {
       toast.error(e.message || "Failed to load orders");
     } finally {
       setOrdersLoading(false);
     }
   };
+
 
   // Trigger loading orders when orders modal opens
   useEffect(() => {

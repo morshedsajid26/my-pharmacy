@@ -10,6 +10,7 @@ import settingsRoutes from './settings/user-settings.route.js';
 const router = express.Router();
 
 router.use('/items', itemRoutes);
+router.use('/medicines', itemRoutes);
 router.use('/orders', orderRoutes);
 router.use('/prescriptions', prescriptionRoutes);
 router.use('/requests', requestRoutes);

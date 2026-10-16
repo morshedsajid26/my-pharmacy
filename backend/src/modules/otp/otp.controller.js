@@ -28,3 +28,14 @@ export const resetPassword = async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 };
+
+export const sendVerificationEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const result = await otpService.sendVerificationEmailService(email, otp);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+

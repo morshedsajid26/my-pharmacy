@@ -112,3 +112,9 @@ export const resetPasswordService = async (email, token, newPassword) => {
 
   return { success: true };
 };
+
+export const sendVerificationEmailService = async (email, otp) => {
+  await sendOtpEmail(email, otp);
+  return { success: true, message: 'Verification email sent successfully' };
+};
+

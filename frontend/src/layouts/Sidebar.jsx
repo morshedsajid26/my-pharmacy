@@ -25,7 +25,7 @@ import {
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 import { useAuth } from "../context/AuthContext";
-import { getPendingOrdersCountAction } from "@/lib/actions/online-admin.actions";
+import { usePendingOrdersCount } from "@/hooks/useOnlineOrders";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -51,19 +51,8 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
-  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const { pendingCount: pendingOrdersCount } = usePendingOrdersCount();
 
-  useEffect(() => {
-    async function fetchCount() {
-      try {
-        const count = await getPendingOrdersCountAction();
-        setPendingOrdersCount(count);
-      } catch (error) {
-        console.error("Sidebar pending orders count error:", error);
-      }
-    }
-    fetchCount();
-  }, []);
 
   return (
     <>

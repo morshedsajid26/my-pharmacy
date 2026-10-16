@@ -253,3 +253,164 @@ export const getDailyLedgerService = async (year, month) => {
 
   return ledger;
 };
+
+export const getTopSellingMedicinesService = async () => {
+  const topSales = await prisma.saleItem.groupBy({
+    by: ['medicineId'],
+    _sum: {
+      quantity: true,
+      totalPrice: true,
+    },
+    orderBy: {
+      _sum: {
+        quantity: 'desc',
+      },
+    },
+    take: 5,
+  });
+
+  return await Promise.all(
+    topSales.map(async (item) => {
+      const medicine = await prisma.medicine.findUnique({
+        where: { id: item.medicineId },
+        select: { name: true, category: true, company: true },
+      });
+      return {
+        id: item.medicineId,
+        name: medicine?.name || 'Unknown',
+        category: medicine?.category || 'Unknown',
+        company: medicine?.company || 'Unknown',
+        quantitySold: item._sum.quantity || 0,
+        totalRevenue: item._sum.totalPrice || 0,
+      };
+    })
+  );
+};
+
+export const getTopProfitableMedicinesService = async () => {
+  const saleItems = await prisma.saleItem.findMany({
+    select: {
+      medicineId: true,
+      quantity: true,
+      totalPrice: true,
+      medicine: {
+        select: {
+          name: true,
+          category: true,
+          company: true,
+          purchasePrice: true,
+        },
+      },
+    },
+  });
+
+  const profitMap = {};
+  for (const item of saleItems) {
+    if (!item.medicine) continue;
+    const profit = item.totalPrice - item.medicine.purchasePrice * item.quantity;
+    if (!profitMap[item.medicineId]) {
+      profitMap[item.medicineId] = {
+        id: item.medicineId,
+        name: item.medicine.name,
+        category: item.medicine.category,
+        company: item.medicine.company,
+        quantitySold: 0,
+        totalRevenue: 0,
+        totalProfit: 0,
+      };
+    }
+    profitMap[item.medicineId].quantitySold += item.quantity;
+    profitMap[item.medicineId].totalRevenue += item.totalPrice;
+    profitMap[item.medicineId].totalProfit += profit;
+  }
+
+  return Object.values(profitMap)
+    .sort((a, b) => b.totalProfit - a.totalProfit)
+    .slice(0, 5);
+};
+
+export const getExpiringMedicinesService = async () => {
+  const threeMonthsLater = new Date();
+  threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+  return await prisma.medicine.findMany({
+    where: {
+      expiryDate: {
+        not: null,
+        lte: threeMonthsLater,
+      },
+    },
+    orderBy: {
+      expiryDate: 'asc',
+    },
+    take: 5,
+  });
+};
+
+export const getUnsoldMedicinesService = async () => {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const soldRecent = await prisma.saleItem.findMany({
+    where: {
+      createdAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+    select: {
+      medicineId: true,
+    },
+    distinct: ['medicineId'],
+  });
+
+  const soldIds = soldRecent.map((item) => item.medicineId);
+
+  return await prisma.medicine.findMany({
+    where: {
+      id: {
+        notIn: soldIds,
+      },
+      stock: {
+        gt: 0,
+      },
+    },
+    orderBy: {
+      stock: 'desc',
+    },
+    take: 5,
+  });
+};
+
+export const getLedgerYearsService = async () => {
+  const [earliestSale, earliestPurchase] = await Promise.all([
+    prisma.sale.findFirst({
+      orderBy: { date: 'asc' },
+      select: { date: true },
+    }),
+    prisma.purchase.findFirst({
+      orderBy: { date: 'asc' },
+      select: { date: true },
+    }),
+  ]);
+
+  const currentYear = new Date().getFullYear();
+  let startYear = currentYear;
+
+  if (earliestSale?.date) {
+    startYear = Math.min(startYear, new Date(earliestSale.date).getFullYear());
+  }
+  if (earliestPurchase?.date) {
+    startYear = Math.min(startYear, new Date(earliestPurchase.date).getFullYear());
+  }
+
+  if (startYear > currentYear || startYear < 2000) {
+    startYear = 2024;
+  }
+
+  const years = [];
+  for (let y = currentYear; y >= startYear; y--) {
+    years.push(y);
+  }
+  return years;
+};
+

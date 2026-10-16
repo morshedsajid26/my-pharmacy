@@ -17,11 +17,11 @@ import { Button } from "@/components/Button";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
-import { sendResetOtpAction } from "@/lib/actions/auth.actions";
+import { usePasswordReset } from "@/hooks/usePasswordReset";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { sendOtp, isSendingOtp } = usePasswordReset();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -40,21 +40,18 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const result = await sendResetOtpAction(email);
+      const result = await sendOtp(email);
       if (result.success) {
         toast.success("OTP sent to your email!");
         router.push(
           `/forgot-password/verify?email=${encodeURIComponent(email)}`,
         );
       } else {
-        toast.error(result.error || "Failed to send OTP. Email may not be registered.");
+        toast.error(result.message || "Failed to send OTP. Email may not be registered.");
       }
     } catch (error) {
       toast.error(error.message || "Email is not registered");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -93,9 +90,9 @@ export default function ForgotPasswordPage() {
         <Button
           type="submit"
           className="w-full h-12 text-base gap-2 shadow-lg shadow-medical-blue-600/20"
-          disabled={isSubmitting}
+          disabled={isSendingOtp}
         >
-          {isSubmitting ? (
+          {isSendingOtp ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>

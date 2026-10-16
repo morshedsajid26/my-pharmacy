@@ -7,14 +7,14 @@ import OTPInput from "@/components/OTPInput";
 import { Button } from "@/components/Button";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
-import { sendResetOtpAction, verifyResetOtpAction } from "@/lib/actions/auth.actions";
+import { usePasswordReset } from "@/hooks/usePasswordReset";
 
 export default function VerifyOTPPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
   const { user } = useAuth();
+  const { sendOtp, isSendingOtp, verifyOtp, isVerifyingOtp } = usePasswordReset();
 
   useEffect(() => {
     if (user) {
@@ -27,36 +27,30 @@ export default function VerifyOTPPage() {
   }, [user, email, router]);
 
   const handleSendOTP = async () => {
-    setIsSubmitting(true);
     try {
-      const result = await sendResetOtpAction(email);
+      const result = await sendOtp(email);
       if (result.success) {
         toast.success("OTP resent to your email!");
       } else {
-        toast.error(result.error || "Failed to resend OTP");
+        toast.error(result.message || "Failed to resend OTP");
       }
     } catch (error) {
       toast.error(error.message || "Failed to resend OTP");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleVerifyOTP = async (otp) => {
-    setIsSubmitting(true);
     try {
-      const result = await verifyResetOtpAction(email, otp);
+      const result = await verifyOtp({ email, otp });
       if (result.success) {
         toast.success("Identity verified!");
         // Route to reset-password passing verified email and token
         router.push(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(result.resetToken)}`);
       } else {
-        toast.error(result.error || "Invalid or expired OTP");
+        toast.error(result.message || "Invalid or expired OTP");
       }
     } catch (error) {
       toast.error(error.message || "Invalid or expired OTP");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -83,7 +77,7 @@ export default function VerifyOTPPage() {
                     variant="outline" 
                     className="w-full h-12" 
                     onClick={() => router.push("/forgot-password")}
-                    disabled={isSubmitting}
+                    disabled={isVerifyingOtp || isSendingOtp}
                 >
                     Change Email
                 </Button>
@@ -92,9 +86,9 @@ export default function VerifyOTPPage() {
                     <button 
                       onClick={handleSendOTP}
                       className="font-bold text-medical-blue-600 hover:text-medical-blue-700 transition-colors"
-                      disabled={isSubmitting}
+                      disabled={isSendingOtp || isVerifyingOtp}
                     >
-                      {isSubmitting ? "Sending..." : "Resend"}
+                      {isSendingOtp ? "Sending..." : "Resend"}
                     </button>
                 </p>
               </div>

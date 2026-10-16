@@ -12,6 +12,7 @@ const router = express.Router();
 router.use(protect, requireCustomer);
 
 router.post('/', validateCreateOrder, createOnlineOrder);
+router.get('/', getMyOrders);
 router.get('/my-orders', getMyOrders);
 router.get('/stats', getCustomerOverviewStats);
 

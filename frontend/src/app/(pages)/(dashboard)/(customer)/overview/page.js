@@ -12,46 +12,16 @@ import {
   TrendingUp,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  getCurrentCustomer,
-  getCustomerOverviewStatsAction,
-} from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
+import { useCustomerOverview } from "@/hooks/useCustomerPortal";
 
 export default function CustomerDashboardOverviewPage() {
   const router = useRouter();
-  const [customer, setCustomer] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { customer, loading: authLoading } = useAuth();
+  const { stats, isLoading: isStatsLoading } = useCustomerOverview();
 
-  // Stats State
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalSpent: 0,
-    pendingOrders: 0,
-    totalPrescriptions: 0,
-  });
+  const loading = authLoading || isStatsLoading;
 
-  const loadDashboardData = async () => {
-    try {
-      const data = await getCurrentCustomer();
-      if (!data) {
-        toast.error("Please sign in to view your dashboard");
-        router.push("/");
-        return;
-      }
-      setCustomer(data);
-
-      const statsData = await getCustomerOverviewStatsAction();
-      setStats(statsData);
-    } catch (e) {
-      toast.error("Failed to load dashboard overview");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
 
   if (loading) {
     return (

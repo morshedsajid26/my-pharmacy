@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getPurchases, recordPurchase, updatePurchase, deletePurchase } from "@/lib/actions/purchase.actions";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function usePurchases(params = {}) {
@@ -8,13 +8,15 @@ export function usePurchases(params = {}) {
   const fetchPurchases = useQuery({
     queryKey: ["purchases", params],
     queryFn: async () => {
-      return await getPurchases();
+      const res = await api.get("/owner/purchases");
+      return res?.data || res;
     },
   });
 
   const recordPurchaseMutation = useMutation({
     mutationFn: async (purchaseData) => {
-      return await recordPurchase(purchaseData);
+      const res = await api.post("/owner/purchases", purchaseData);
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
@@ -29,7 +31,8 @@ export function usePurchases(params = {}) {
 
   const updatePurchaseMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return await updatePurchase(id, data);
+      const res = await api.put(`/owner/purchases/${id}`, data);
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
@@ -44,7 +47,8 @@ export function usePurchases(params = {}) {
 
   const deletePurchaseMutation = useMutation({
     mutationFn: async (id) => {
-      return await deletePurchase(id);
+      const res = await api.delete(`/owner/purchases/${id}`);
+      return res?.data || res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
@@ -58,7 +62,7 @@ export function usePurchases(params = {}) {
   });
 
   return {
-    purchases: fetchPurchases.data,
+    purchases: fetchPurchases.data || [],
     isLoading: fetchPurchases.isLoading,
     isError: fetchPurchases.isError,
     recordPurchase: recordPurchaseMutation.mutateAsync,
@@ -67,5 +71,6 @@ export function usePurchases(params = {}) {
     isUpdating: updatePurchaseMutation.isPending,
     deletePurchase: deletePurchaseMutation.mutateAsync,
     isDeleting: deletePurchaseMutation.isPending,
+    refetch: fetchPurchases.refetch,
   };
 }

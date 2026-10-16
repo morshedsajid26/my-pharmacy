@@ -48,3 +48,13 @@ export const loginCustomer = async (req, res) => {
     return res.status(401).json({ success: false, message: error.message || 'Login failed' });
   }
 };
+
+export const checkCustomer = async (req, res) => {
+  try {
+    const result = await authService.checkCustomerExistsService(req.body);
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message || 'Check failed' });
+  }
+};
+

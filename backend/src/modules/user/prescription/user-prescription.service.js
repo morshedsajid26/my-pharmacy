@@ -18,3 +18,9 @@ export const getMyPrescriptionsService = async (customerId) => {
     orderBy: { createdAt: 'desc' },
   });
 };
+
+export const deleteMyPrescriptionOrderService = async (customerId, id) => {
+  return await prisma.prescriptionOrder.deleteMany({
+    where: { id, customerId },
+  });
+};

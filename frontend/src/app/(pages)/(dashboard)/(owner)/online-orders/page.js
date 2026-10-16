@@ -18,38 +18,15 @@ import {
   Loader2
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import { 
-  getOnlineOrdersAction, 
-  approveOnlineOrderAction, 
-  rejectOnlineOrderAction 
-} from "@/lib/actions/online-admin.actions";
+import { useOnlineOrders } from "@/hooks/useOnlineOrders";
 
 export default function OnlineOrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("PENDING"); // "PENDING" | "APPROVED" | "REJECTED" | "ALL"
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState({ type: null, orderId: null, orderNo: "" });
 
-  // Fetch orders from server action
-  const loadOrders = async () => {
-    setLoading(true);
-    try {
-      // Pass null to fetch all, otherwise pass status
-      const statusFilter = activeTab === "ALL" ? null : activeTab;
-      const data = await getOnlineOrdersAction(statusFilter);
-      setOrders(data);
-    } catch (error) {
-      toast.error("Failed to load online orders");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadOrders();
-  }, [activeTab]);
+  const { orders, isLoading: loading, approveOrder, rejectOrder, refetch: loadOrders } = useOnlineOrders(activeTab);
 
   // Non-blocking state triggers
   const handleApprove = (orderId, orderNo = "") => {
@@ -67,14 +44,8 @@ export default function OnlineOrdersPage() {
     setConfirmAction({ type: null, orderId: null, orderNo: "" });
     setActionLoading(true);
     try {
-      const result = await approveOnlineOrderAction(orderId);
-      if (result.success) {
-        toast.success(`Order approved! Invoice ${result.invoiceNo} registered.`);
-        setSelectedOrder(null);
-        loadOrders();
-      }
-    } catch (error) {
-      toast.error(error.message || "Failed to approve order");
+      await approveOrder(orderId);
+      setSelectedOrder(null);
     } finally {
       setActionLoading(false);
     }
@@ -84,14 +55,8 @@ export default function OnlineOrdersPage() {
     setConfirmAction({ type: null, orderId: null, orderNo: "" });
     setActionLoading(true);
     try {
-      const result = await rejectOnlineOrderAction(orderId);
-      if (result.success) {
-        toast.success("Order has been rejected successfully");
-        setSelectedOrder(null);
-        loadOrders();
-      }
-    } catch (error) {
-      toast.error(error.message || "Failed to reject order");
+      await rejectOrder({ orderId });
+      setSelectedOrder(null);
     } finally {
       setActionLoading(false);
     }

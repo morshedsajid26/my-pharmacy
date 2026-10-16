@@ -18,16 +18,11 @@ import {
   X
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import { 
-  getCurrentCustomer, 
-  updateCustomerProfileAction, 
-  logoutCustomerAction
-} from "@/lib/actions/online-customer.actions";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [customer, setCustomer] = useState(null);
-  const [loadingCustomer, setLoadingCustomer] = useState(true);
+  const { customer, loading: loadingCustomer, updateProfile, logoutCustomer } = useAuth();
 
   // Form State
   const [name, setName] = useState("");
@@ -40,43 +35,25 @@ export default function ProfilePage() {
   const [newAddressText, setNewAddressText] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  // Load customer details
-  const loadCustomerData = async () => {
-    try {
-      const data = await getCurrentCustomer();
-      if (!data) {
-        toast.error("Please sign in to view your profile settings");
-        router.push("/");
-        return;
-      }
-      setCustomer(data);
-      setName(data.name || "");
-      
-      // Safe JSON parsing of multiple addresses
-      if (data.address) {
+  useEffect(() => {
+    if (customer) {
+      setName(customer.name || "");
+      if (customer.address) {
         try {
-          const parsed = JSON.parse(data.address);
+          const parsed = JSON.parse(customer.address);
           if (Array.isArray(parsed)) {
             setAddresses(parsed);
           } else {
-            setAddresses([data.address]);
+            setAddresses([customer.address]);
           }
         } catch (e) {
-          setAddresses([data.address]);
+          setAddresses([customer.address]);
         }
       } else {
         setAddresses([]);
       }
-    } catch (e) {
-      toast.error("Failed to load customer profile details");
-    } finally {
-      setLoadingCustomer(false);
     }
-  };
-
-  useEffect(() => {
-    loadCustomerData();
-  }, []);
+  }, [customer]);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -106,11 +83,7 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      const result = await updateCustomerProfileAction(name, finalAddresses);
-      if (result.success) {
-        setCustomer(result.customer);
-        toast.success("Profile saved successfully!");
-      }
+      await updateProfile({ name, address: finalAddresses });
     } catch (error) {
       toast.error(error.message || "Failed to update profile settings");
     } finally {
@@ -126,14 +99,11 @@ export default function ProfilePage() {
     const newList = [...addresses, newAddressText.trim()];
     
     try {
-      const result = await updateCustomerProfileAction(name, newList);
-      if (result.success) {
-        setAddresses(newList);
-        setCustomer(result.customer);
-        setNewAddressText("");
-        setIsAddingNew(false);
-        toast.success("Address added and saved successfully!");
-      }
+      await updateProfile({ name, address: newList });
+      setAddresses(newList);
+      setNewAddressText("");
+      setIsAddingNew(false);
+      toast.success("Address added and saved successfully!");
     } catch (e) {
       toast.error(e.message || "Failed to save address");
     }
@@ -154,14 +124,11 @@ export default function ProfilePage() {
     newList[index] = editingContent.trim();
     
     try {
-      const result = await updateCustomerProfileAction(name, newList);
-      if (result.success) {
-        setAddresses(newList);
-        setCustomer(result.customer);
-        setEditingIndex(null);
-        setEditingContent("");
-        toast.success("Address modified and saved!");
-      }
+      await updateProfile({ name, address: newList });
+      setAddresses(newList);
+      setEditingIndex(null);
+      setEditingContent("");
+      toast.success("Address modified and saved!");
     } catch (e) {
       toast.error(e.message || "Failed to save address");
     }
@@ -172,12 +139,9 @@ export default function ProfilePage() {
     const newList = addresses.filter((_, i) => i !== index);
     
     try {
-      const result = await updateCustomerProfileAction(name, newList);
-      if (result.success) {
-        setAddresses(newList);
-        setCustomer(result.customer);
-        toast.success("Address removed successfully!");
-      }
+      await updateProfile({ name, address: newList });
+      setAddresses(newList);
+      toast.success("Address removed successfully!");
     } catch (e) {
       toast.error(e.message || "Failed to remove address");
     }
@@ -185,9 +149,7 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
-      await logoutCustomerAction();
-      toast.success("Signed out successfully");
-      router.push("/");
+      await logoutCustomer();
     } catch (e) {
       toast.error("Sign out failed");
     }
