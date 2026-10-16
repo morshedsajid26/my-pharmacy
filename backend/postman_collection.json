@@ -1,0 +1,466 @@
+{
+  "info": {
+    "_postman_id": "c1f72e34-58a4-4f93-80e9-b5087a32b901",
+    "name": "My Pharmacy Modular REST API Collection",
+    "description": "Modular Postman collection organized into Auth, OTP, Business Owner, and Customer/User modules.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "1. Auth Module (/api/auth)",
+      "item": [
+        {
+          "name": "Owner/Staff Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if(res.token) { pm.collectionVariables.set('adminToken', res.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@pharmacy.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Customer Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if(res.token) { pm.collectionVariables.set('customerToken', res.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahim Ahmed\",\n  \"phone\": \"01711000000\",\n  \"email\": \"rahim@gmail.com\",\n  \"password\": \"pass123\",\n  \"address\": \"Dhanmondi, Dhaka\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/customer/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "customer", "register"]
+            }
+          }
+        },
+        {
+          "name": "Customer Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if(res.token) { pm.collectionVariables.set('customerToken', res.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrPhone\": \"01711000000\",\n  \"password\": \"pass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/customer/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "customer", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. OTP Module (/api/otp)",
+      "item": [
+        {
+          "name": "Send Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@pharmacy.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/otp/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["otp", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Verify Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@pharmacy.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/otp/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["otp", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@pharmacy.com\",\n  \"token\": \"RESET_TOKEN\",\n  \"newPassword\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/otp/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["otp", "reset-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Business Owner Modules (/api/owner)",
+      "item": [
+        {
+          "name": "Dashboard - Summary KPIs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "dashboard", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Dashboard - Charts",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/dashboard/charts?range=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "dashboard", "charts"],
+              "query": [
+                { "key": "range", "value": "month" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Item Management - Get Medicines",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/items?search=napa",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "items"],
+              "query": [
+                { "key": "search", "value": "napa" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Item Management - Low Stock Alert",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/items/low-stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "items", "low-stock"]
+            }
+          }
+        },
+        {
+          "name": "Item Management - Add Medicine",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Parapa 500mg\",\n  \"genericName\": \"Paracetamol\",\n  \"company\": \"Beximco\",\n  \"category\": \"Tablet\",\n  \"purchasePrice\": 1.0,\n  \"sellingPrice\": 1.5,\n  \"stock\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owner/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "items"]
+            }
+          }
+        },
+        {
+          "name": "POS Sale - Record Sale",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walkingCustomerName\": \"Abul Kalam\",\n  \"paidAmount\": 150,\n  \"dueAmount\": 0,\n  \"totalAmount\": 150,\n  \"items\": [\n    {\n      \"medicineId\": \"1\",\n      \"quantity\": 10\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owner/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "sales"]
+            }
+          }
+        },
+        {
+          "name": "Purchase - Record Supplier Purchase",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"Square Pharma\",\n  \"totalAmount\": 500,\n  \"items\": [\n    {\n      \"medicineId\": \"6\",\n      \"quantity\": 500,\n      \"unitPrice\": 1.0,\n      \"sellingPrice\": 1.5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owner/purchases",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "purchases"]
+            }
+          }
+        },
+        {
+          "name": "Customer - Pay Due",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200,\n  \"waiveAmount\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owner/customers/CUSTOMER_ID/pay-due",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "customers", "CUSTOMER_ID", "pay-due"]
+            }
+          }
+        },
+        {
+          "name": "Order - Approve Online Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/orders/ORDER_ID/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["owner", "orders", "ORDER_ID", "approve"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Customer / User Modules (/api/user)",
+      "item": [
+        {
+          "name": "Item - Browse Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/items?search=sergel",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "items"],
+              "query": [
+                { "key": "search", "value": "sergel" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Settings - Get Public Store Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "settings"]
+            }
+          }
+        },
+        {
+          "name": "Order - Place Online Order (COD)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryAddress\": \"Banani, Dhaka\",\n  \"paymentMethod\": \"COD\",\n  \"notes\": \"Call on arrival\",\n  \"items\": [\n    {\n      \"id\": \"1\",\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Order - Place Online Order (SSLCommerz)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryAddress\": \"Gulshan 1, Dhaka\",\n  \"paymentMethod\": \"SSLCOMMERZ\",\n  \"items\": [\n    {\n      \"id\": \"1\",\n      \"quantity\": 5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Order - Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/orders/my-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "orders", "my-orders"]
+            }
+          }
+        },
+        {
+          "name": "AI Assistant - Chat & OCR",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"sess-001\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Sergel 20mg ache?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/ai-assistant",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "ai-assistant"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
