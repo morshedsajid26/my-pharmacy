@@ -49,7 +49,8 @@ export const protect = async (req, res, next) => {
 };
 
 export const requireAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  const role = req.user?.role?.toLowerCase();
+  if (req.user && (role === 'admin' || role === 'owner')) {
     next();
   } else {
     res.status(403).json({ success: false, message: 'Access denied: Admin role required' });
@@ -57,7 +58,8 @@ export const requireAdmin = (req, res, next) => {
 };
 
 export const requireStaffOrAdmin = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'staff')) {
+  const role = req.user?.role?.toLowerCase();
+  if (req.user && (role === 'admin' || role === 'staff' || role === 'pharmacist' || role === 'owner')) {
     next();
   } else {
     res.status(403).json({ success: false, message: 'Access denied: Admin or Staff role required' });

@@ -22,6 +22,7 @@ const router = express.Router();
 router.post('/login', validateLogin, loginUser);
 router.post('/signup', validateSignup, signupUser);
 router.get('/profile', protect, getProfile);
+router.get('/me', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 
 // Customer / Storefront Auth
