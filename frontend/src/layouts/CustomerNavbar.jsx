@@ -71,18 +71,17 @@ export function CustomerNavbar({ customer }) {
       </div>
 
       {/* spacer */}
-      <div className="flex-1 hidden lg:flex items-center gap-4">
+      <div className="flex-1" />
+
+      {/* Right Controls Container */}
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
         <Link 
           href="/"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 transition-all border border-slate-100"
         >
-          <ArrowLeft size={14} />
+          
           <span>Back to Store</span>
         </Link>
-      </div>
-
-      {/* Right Controls Container */}
-      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
         
         {/* Cart Link */}
         <button 

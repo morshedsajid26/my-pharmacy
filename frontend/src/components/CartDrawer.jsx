@@ -27,6 +27,7 @@ export default function CartDrawer() {
     setIsCartOpen,
     updateCartQty,
     removeFromCart,
+    clearCart,
     getCartTotal,
     getCartDeliveryCharge,
     getCartDiscount,
@@ -173,20 +174,49 @@ export default function CartDrawer() {
         deliveryAddress: finalAddress,
         paymentMethod,
       });
-      if (result.success || result.order) {
-        saveCart([]);
+
+      const isSuccess =
+        result?.success ||
+        result?.order ||
+        result?.orderNo ||
+        result?.data?.orderNo ||
+        result?.data?.id ||
+        result?.id;
+
+      if (isSuccess) {
+        // Clear cart from state and localStorage
+        if (typeof clearCart === "function") {
+          clearCart();
+        } else {
+          saveCart([]);
+        }
+
         setNotes("");
         setPaymentMethod("COD");
         setIsCartOpen(false);
-        if (result.gatewayUrl) {
-          window.location.href = result.gatewayUrl;
+
+        const gatewayUrl = result?.gatewayUrl || result?.data?.gatewayUrl;
+        if (gatewayUrl) {
+          window.location.href = gatewayUrl;
         } else {
-          toast.success("Order placed successfully!");
+          const orderNum =
+            result?.orderNo ||
+            result?.data?.orderNo ||
+            result?.order?.orderNo;
+
+          toast.success(
+            orderNum
+              ? `Order #${orderNum} placed successfully!`
+              : "Order placed successfully!",
+            { duration: 5000 }
+          );
           router.push("/orders");
         }
+      } else {
+        toast.error(result?.message || "Failed to place order. Please try again.");
       }
-
     } catch (error) {
+      console.error("Checkout error:", error);
       toast.error(error.message || "Checkout failed");
     } finally {
       setCheckoutLoading(false);

@@ -313,8 +313,19 @@ export function AuthProvider({ children }) {
       const res = await api.put("/auth/profile", profileData);
       const updatedUser = res.user || res.data?.user || res.customer || res.data?.customer;
       if (updatedUser) {
-        if (customer) setCustomer(updatedUser);
-        else setUser(updatedUser);
+        if (customer) {
+          const merged = { ...customer, ...updatedUser };
+          setCustomer(merged);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("customer", JSON.stringify(merged));
+          }
+        } else {
+          const merged = { ...user, ...updatedUser };
+          setUser(merged);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(merged));
+          }
+        }
       }
       toast.success("Profile updated successfully!");
       return { success: true, user: updatedUser };

@@ -7,6 +7,7 @@ import {
   User, 
   MapPin, 
   Phone, 
+  Mail,
   Lock, 
   Loader2, 
   ShieldCheck,
@@ -26,6 +27,7 @@ export default function ProfilePage() {
 
   // Form State
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [addresses, setAddresses] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -38,6 +40,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (customer) {
       setName(customer.name || "");
+      setEmail(customer.email || "");
       if (customer.address) {
         try {
           const parsed = JSON.parse(customer.address);
@@ -83,7 +86,7 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      await updateProfile({ name, address: finalAddresses });
+      await updateProfile({ name, email, address: finalAddresses });
     } catch (error) {
       toast.error(error.message || "Failed to update profile settings");
     } finally {
@@ -99,7 +102,7 @@ export default function ProfilePage() {
     const newList = [...addresses, newAddressText.trim()];
     
     try {
-      await updateProfile({ name, address: newList });
+      await updateProfile({ name, email, address: newList });
       setAddresses(newList);
       setNewAddressText("");
       setIsAddingNew(false);
@@ -124,7 +127,7 @@ export default function ProfilePage() {
     newList[index] = editingContent.trim();
     
     try {
-      await updateProfile({ name, address: newList });
+      await updateProfile({ name, email, address: newList });
       setAddresses(newList);
       setEditingIndex(null);
       setEditingContent("");
@@ -139,7 +142,7 @@ export default function ProfilePage() {
     const newList = addresses.filter((_, i) => i !== index);
     
     try {
-      await updateProfile({ name, address: newList });
+      await updateProfile({ name, email, address: newList });
       setAddresses(newList);
       toast.success("Address removed successfully!");
     } catch (e) {
@@ -183,7 +186,7 @@ export default function ProfilePage() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               
               {/* Part 1: General Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Name */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-500">Full Name</label>
@@ -211,6 +214,25 @@ export default function ProfilePage() {
                     <input 
                       type="tel" 
                       value={customer?.phone || ""} 
+                      disabled
+                      className="w-full h-12 pl-11 pr-4 border border-slate-100 bg-slate-50 text-slate-400 rounded-xl text-sm font-semibold cursor-not-allowed outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Address */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-500 flex items-center gap-1">
+                    <span>Email Address</span>
+                    <Lock size={12} className="text-slate-400" />
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <input 
+                      type="email" 
+                      placeholder="e.g. sajid@gmail.com" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       disabled
                       className="w-full h-12 pl-11 pr-4 border border-slate-100 bg-slate-50 text-slate-400 rounded-xl text-sm font-semibold cursor-not-allowed outline-none"
                     />

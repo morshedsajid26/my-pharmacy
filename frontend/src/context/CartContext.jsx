@@ -42,7 +42,22 @@ export function CartProvider({ children }) {
   // Sync cart to localStorage whenever it changes
   const saveCart = (newCart) => {
     setCart(newCart);
-    localStorage.setItem("pharmacy_cart", JSON.stringify(newCart));
+    if (!newCart || newCart.length === 0) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("pharmacy_cart");
+      }
+    } else {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pharmacy_cart", JSON.stringify(newCart));
+      }
+    }
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pharmacy_cart");
+    }
   };
 
   const addToCart = (med, qty = 1) => {
@@ -143,6 +158,7 @@ export function CartProvider({ children }) {
         addToCart,
         updateCartQty,
         removeFromCart,
+        clearCart,
         getCartTotal,
         getCartDeliveryCharge,
         getCartDiscount,

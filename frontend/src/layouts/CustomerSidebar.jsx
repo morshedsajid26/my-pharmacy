@@ -16,14 +16,14 @@ import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard Overview", path: "/overview" },
-  { icon: ShoppingBag, label: "My Orders History", path: "/orders" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/overview" },
+  { icon: ShoppingBag, label: "Orders History", path: "/orders" },
   {
     icon: FileText,
-    label: "Prescription Orders",
+    label: "Prescriptions Order",
     path: "/prescriptions",
   },
-  { icon: User, label: "Personal Details", path: "/profile" },
+  { icon: User, label: "My Profile", path: "/profile" },
 ];
 
 export function CustomerSidebar({ customer }) {

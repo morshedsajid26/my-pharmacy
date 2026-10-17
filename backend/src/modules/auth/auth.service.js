@@ -195,7 +195,7 @@ export const loginCustomerUser = async (credentials) => {
 export const updateUserProfile = async (currentUser, { name, email, password, profilePicture, address }) => {
   const userId = currentUser.id;
 
-  if (currentUser.type === 'customer') {
+  if (currentUser.type === 'customer' || currentUser.role === 'customer') {
     let serializedAddress = undefined;
     if (address !== undefined) {
       if (Array.isArray(address)) {
@@ -209,13 +209,46 @@ export const updateUserProfile = async (currentUser, { name, email, password, pr
     if (name) updateData.name = name.trim();
     if (serializedAddress !== undefined) updateData.address = serializedAddress;
 
+    if (email !== undefined) {
+      const cleanEmail = email && typeof email === 'string' && email.trim() !== '' ? email.trim().toLowerCase() : null;
+      if (cleanEmail) {
+        const existingCustomer = await prisma.customer.findFirst({
+          where: {
+            email: { equals: cleanEmail, mode: 'insensitive' },
+            NOT: { id: userId },
+          },
+        });
+        if (existingCustomer) {
+          throw new Error('Email is already registered by another customer account');
+        }
+        const existingUser = await prisma.user.findFirst({
+          where: {
+            email: { equals: cleanEmail, mode: 'insensitive' },
+          },
+        });
+        if (existingUser) {
+          throw new Error('Email is already registered by another account');
+        }
+      }
+      updateData.email = cleanEmail;
+    }
+
     const updatedCustomer = await prisma.customer.update({
       where: { id: userId },
       data: updateData,
       select: { id: true, name: true, phone: true, email: true, address: true, status: true },
     });
 
-    return { user: updatedCustomer };
+    const customerObj = {
+      ...updatedCustomer,
+      type: 'customer',
+      role: 'customer',
+    };
+
+    return {
+      user: customerObj,
+      customer: customerObj,
+    };
   }
 
   if (email && email !== currentUser.email) {

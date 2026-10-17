@@ -187,7 +187,7 @@ export function useCreateOnlineOrder() {
   const orderMutation = useMutation({
     mutationFn: async (orderData) => {
       const res = await api.post("/user/orders", orderData);
-      return res?.data || res;
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-orders"] });
