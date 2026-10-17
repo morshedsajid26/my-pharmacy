@@ -17,7 +17,9 @@ router.use(protect, requireStaffOrAdmin);
 
 router.get('/summary', getDashboardSummary);
 router.get('/charts', getChartData);
+router.get('/analytics', getChartData);
 router.get('/ledger', getDailyLedger);
+router.get('/daily-ledger', getDailyLedger);
 router.get('/top-selling', getTopSelling);
 router.get('/top-profitable', getTopProfitable);
 router.get('/expiring', getExpiring);

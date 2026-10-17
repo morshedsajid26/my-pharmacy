@@ -147,9 +147,16 @@ export function useDailyLedger(year, month) {
   const fetchLedger = useQuery({
     queryKey: ["reports", "daily-ledger", year, month],
     queryFn: async () => {
-      const res = await api.get("/owner/dashboard/daily-ledger", {
-        params: { year, month },
-      });
+      let res;
+      try {
+        res = await api.get("/owner/dashboard/ledger", {
+          params: { year, month },
+        });
+      } catch (err) {
+        res = await api.get("/owner/dashboard/daily-ledger", {
+          params: { year, month },
+        });
+      }
       return res?.data || res;
     },
     enabled: isStaffOrAdmin() && year !== undefined && month !== undefined,
