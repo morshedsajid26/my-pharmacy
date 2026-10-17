@@ -11,18 +11,23 @@ export const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies && (req.cookies.token || req.cookies.session || req.cookies.customer_session)) {
-    token = req.cookies.token || req.cookies.session || req.cookies.customer_session;
+  } else if (req.cookies) {
+    const isUserRoute = req.originalUrl?.includes('/user/') || req.baseUrl?.includes('/user');
+    if (isUserRoute) {
+      token = req.cookies.customer_session || req.cookies.customer_token || req.cookies.token || req.cookies.session;
+    } else {
+      token = req.cookies.token || req.cookies.session || req.cookies.customer_session || req.cookies.customer_token;
+    }
   }
 
-  if (!token) {
+  if (!token || token === 'no-staff-token' || token === 'undefined' || token === 'null') {
     return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    if (decoded.type === 'customer') {
+    if (decoded.type === 'customer' || decoded.role === 'customer') {
       const customer = await prisma.customer.findUnique({
         where: { id: decoded.id },
         select: { id: true, name: true, phone: true, email: true, address: true, status: true }
@@ -39,7 +44,8 @@ export const protect = async (req, res, next) => {
       if (!user) {
         return res.status(401).json({ success: false, message: 'User account not found' });
       }
-      req.user = { ...user, type: 'user' };
+      // Strictly two roles: 'owner' and 'customer'
+      req.user = { ...user, type: 'user', role: 'owner' };
     }
 
     next();
@@ -48,30 +54,24 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const requireAdmin = (req, res, next) => {
-  const role = req.user?.role?.toLowerCase();
-  if (req.user && (role === 'admin' || role === 'owner')) {
-    next();
-  } else {
-    res.status(403).json({ success: false, message: 'Access denied: Admin role required' });
+export const requireOwner = (req, res, next) => {
+  const role = String(req.user?.role || '').toLowerCase();
+  if (req.user && role === 'owner') {
+    return next();
   }
+  return res.status(403).json({ success: false, message: 'Access denied: Owner role required' });
 };
 
-export const requireStaffOrAdmin = (req, res, next) => {
-  const role = req.user?.role?.toLowerCase();
-  if (req.user && (role === 'admin' || role === 'staff' || role === 'pharmacist' || role === 'owner')) {
-    next();
-  } else {
-    res.status(403).json({ success: false, message: 'Access denied: Admin or Staff role required' });
-  }
-};
+// Aliases for backwards compatibility with any existing route imports
+export const requireAdmin = requireOwner;
+export const requireStaffOrAdmin = requireOwner;
 
 export const requireCustomer = (req, res, next) => {
-  if (req.user && req.user.type === 'customer') {
-    next();
-  } else {
-    res.status(403).json({ success: false, message: 'Access denied: Customer authentication required' });
+  const role = String(req.user?.role || '').toLowerCase();
+  if (req.user && (role === 'customer' || req.user.type === 'customer' || role === 'owner')) {
+    return next();
   }
+  return res.status(403).json({ success: false, message: 'Access denied: Customer authentication required' });
 };
 
 export const optionalAuth = async (req, res, next) => {

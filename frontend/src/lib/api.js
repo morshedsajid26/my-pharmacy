@@ -14,55 +14,45 @@ export const api = axios.create({
 export function getAuthToken(configUrl = "") {
   if (typeof window === "undefined") return null;
 
-  // Context-specific token routing
-  if (configUrl) {
-    if (configUrl.startsWith("/user/") || configUrl.startsWith("/customer/")) {
-      return (
-        Cookies.get("customer_token") ||
-        localStorage.getItem("customer_token") ||
-        Cookies.get("customer_session") ||
-        null
-      );
-    }
-    if (
-      configUrl.startsWith("/owner/") ||
-      configUrl.startsWith("/admin/") ||
-      configUrl.startsWith("/medicines") ||
-      configUrl.startsWith("/sales") ||
-      configUrl.startsWith("/purchases") ||
-      configUrl.startsWith("/dues")
-    ) {
-      return (
-        Cookies.get("token") ||
-        localStorage.getItem("token") ||
-        Cookies.get("session") ||
-        null
-      );
-    }
-  }
+  const staffToken =
+    Cookies.get("token") ||
+    localStorage.getItem("token") ||
+    Cookies.get("session") ||
+    null;
 
-  // Active role-based resolution
+  const customerToken =
+    Cookies.get("customer_token") ||
+    localStorage.getItem("customer_token") ||
+    Cookies.get("customer_session") ||
+    null;
+
   const activeRole = String(
     Cookies.get("role") || localStorage.getItem("role") || ""
   ).toLowerCase();
 
-  if (activeRole === "customer") {
-    return (
-      Cookies.get("customer_token") ||
-      localStorage.getItem("customer_token") ||
-      Cookies.get("customer_session") ||
-      null
-    );
+  // If customer route requested (/user/*)
+  if (configUrl.startsWith("/user/") || configUrl.startsWith("/customer/")) {
+    return customerToken || staffToken || null;
   }
 
-  return (
-    Cookies.get("token") ||
-    localStorage.getItem("token") ||
-    Cookies.get("session") ||
-    Cookies.get("customer_token") ||
-    localStorage.getItem("customer_token") ||
-    null
-  );
+  // If owner/staff route requested
+  if (
+    configUrl.startsWith("/owner/") ||
+    configUrl.startsWith("/admin/") ||
+    configUrl.startsWith("/medicines") ||
+    configUrl.startsWith("/sales") ||
+    configUrl.startsWith("/purchases") ||
+    configUrl.startsWith("/dues")
+  ) {
+    return staffToken || null;
+  }
+
+  // Active role-based resolution for general routes (/auth/*, etc.)
+  if (activeRole === "customer") {
+    return customerToken || staffToken || null;
+  }
+
+  return staffToken || customerToken || null;
 }
 
 export function isStaffOrAdmin() {
@@ -87,26 +77,34 @@ export function isCustomer() {
   const token =
     Cookies.get("customer_token") ||
     localStorage.getItem("customer_token") ||
-    Cookies.get("customer_session");
+    Cookies.get("customer_session") ||
+    Cookies.get("token") ||
+    localStorage.getItem("token");
   return !!token && role === "customer";
 }
 
 // Attach Authorization Bearer token to all outgoing requests
 api.interceptors.request.use(
   (config) => {
+    const isPublicRoute =
+      config.url === "/owner/settings/storefront" ||
+      config.url?.startsWith("/auth/") ||
+      config.url?.startsWith("/otp/");
+
     const isOwnerRoute =
-      config.url?.startsWith("/owner/") ||
-      config.url?.startsWith("/admin/") ||
-      config.url?.startsWith("/medicines") ||
-      config.url?.startsWith("/sales") ||
-      config.url?.startsWith("/purchases") ||
-      config.url?.startsWith("/dues");
+      !isPublicRoute &&
+      (config.url?.startsWith("/owner/") ||
+        config.url?.startsWith("/admin/") ||
+        config.url?.startsWith("/medicines") ||
+        config.url?.startsWith("/sales") ||
+        config.url?.startsWith("/purchases") ||
+        config.url?.startsWith("/dues"));
 
     const token = getAuthToken(config.url || "");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else if (isOwnerRoute) {
-      // Prevent browser credentials from sending customer_session cookie to owner routes
+      // Prevent browser credentials from sending customer_session cookie to protected owner routes
       config.headers.Authorization = "Bearer no-staff-token";
     }
     return config;

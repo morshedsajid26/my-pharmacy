@@ -85,15 +85,16 @@ export function AuthProvider({ children }) {
               profileRes;
 
             if (userData && (userData.id || userData.email || userData.phone)) {
-              const role =
-                userData.role ||
-                (userData.type === "customer" ? "customer" : "staff");
+              const role = (
+                String(profileRes?.role || userData.role || userData.type || "").toLowerCase() === "customer"
+              ) ? "customer" : "owner";
+
               Cookies.set("role", role, { expires: 7, path: "/" });
               if (typeof window !== "undefined") {
                 localStorage.setItem("role", role);
               }
 
-              if (userData.type === "customer" || userData.role === "customer") {
+              if (role === "customer") {
                 setCustomer(userData);
                 setUser(null);
                 if (typeof window !== "undefined") {
@@ -102,10 +103,11 @@ export function AuthProvider({ children }) {
                   localStorage.removeItem("token");
                 }
               } else {
-                setUser(userData);
+                const ownerUser = { ...userData, role: "owner" };
+                setUser(ownerUser);
                 setCustomer(null);
                 if (typeof window !== "undefined") {
-                  localStorage.setItem("user", JSON.stringify(userData));
+                  localStorage.setItem("user", JSON.stringify(ownerUser));
                   localStorage.removeItem("customer");
                   localStorage.removeItem("customer_token");
                 }
@@ -154,12 +156,11 @@ export function AuthProvider({ children }) {
       });
 
       const token = res.token || res.data?.token;
-      const returnedRole = String(
-        res.role ||
-        res.user?.role ||
-        res.customer?.role ||
-        (res.customer || res.user?.type === "customer" ? "customer" : "staff")
-      ).toLowerCase();
+      const returnedRole = (
+        String(res.role || res.user?.role || res.customer?.role || "").toLowerCase() === "customer" ||
+        res.customer ||
+        res.user?.type === "customer"
+      ) ? "customer" : "owner";
 
       if (token) {
         if (returnedRole === "customer") {
@@ -175,16 +176,16 @@ export function AuthProvider({ children }) {
           setCustomer(cust);
           setUser(null);
         } else {
-          const staffUser = res.user || res.data?.user;
+          const ownerUser = { ...(res.user || res.data?.user), role: "owner" };
           localStorage.setItem("token", token);
-          localStorage.setItem("role", returnedRole);
-          if (staffUser) localStorage.setItem("user", JSON.stringify(staffUser));
+          localStorage.setItem("role", "owner");
+          localStorage.setItem("user", JSON.stringify(ownerUser));
 
           Cookies.set("token", token, { expires: 7, path: "/" });
           Cookies.set("session", token, { expires: 7, path: "/" });
-          Cookies.set("role", returnedRole, { expires: 7, path: "/" });
+          Cookies.set("role", "owner", { expires: 7, path: "/" });
 
-          setUser(staffUser);
+          setUser(ownerUser);
           setCustomer(null);
         }
       }
@@ -203,8 +204,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Staff / Owner Signup
-  const signup = async (name, email, password, role = "PHARMACIST") => {
+  // Owner Signup
+  const signup = async (name, email, password, role = "owner") => {
     try {
       // Clear any prior customer token/session
       localStorage.removeItem("customer_token");
@@ -213,20 +214,19 @@ export function AuthProvider({ children }) {
       Cookies.remove("customer_session", { path: "/" });
       setCustomer(null);
 
-      const res = await api.post("/auth/register", { name, email, password, role });
+      const res = await api.post("/auth/register", { name, email, password, role: "owner" });
       const token = res.token || res.data?.token;
-      const staffUser = res.user || res.data?.user;
+      const ownerUser = { ...(res.user || res.data?.user), role: "owner" };
 
       if (token) {
-        const userRole = staffUser?.role || role || "staff";
         localStorage.setItem("token", token);
-        localStorage.setItem("role", userRole);
-        if (staffUser) localStorage.setItem("user", JSON.stringify(staffUser));
+        localStorage.setItem("role", "owner");
+        localStorage.setItem("user", JSON.stringify(ownerUser));
 
         Cookies.set("token", token, { expires: 7, path: "/" });
         Cookies.set("session", token, { expires: 7, path: "/" });
-        Cookies.set("role", userRole, { expires: 7, path: "/" });
-        setUser(staffUser);
+        Cookies.set("role", "owner", { expires: 7, path: "/" });
+        setUser(ownerUser);
       }
       toast.success("Account created successfully!");
       return true;

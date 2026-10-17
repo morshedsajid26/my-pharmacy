@@ -28,7 +28,7 @@ export const unifiedLogin = async ({ email, emailOrPhone, identifier, phone, pas
       user.password === password;
 
     if (isMatch) {
-      const userRole = String(user.role || 'staff').toLowerCase();
+      const userRole = 'owner';
       const token = generateToken({
         id: user.id,
         email: user.email,
@@ -98,7 +98,6 @@ export const unifiedLogin = async ({ email, emailOrPhone, identifier, phone, pas
         role: 'customer',
         type: 'customer',
         customer: customerData,
-        user: customerData,
       };
     }
   }
@@ -110,7 +109,7 @@ export const loginStaffOrAdmin = async (credentials) => {
   return unifiedLogin(credentials);
 };
 
-export const registerStaffOrAdmin = async ({ name, email, password, role = 'staff' }) => {
+export const registerStaffOrAdmin = async ({ name, email, password, role = 'owner' }) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new Error('Email is already registered');
@@ -122,19 +121,20 @@ export const registerStaffOrAdmin = async ({ name, email, password, role = 'staf
       name,
       email,
       password: hashedPassword,
-      role,
+      role: 'owner',
     },
   });
 
   const token = generateToken({
     id: user.id,
     email: user.email,
-    role: user.role,
+    role: 'owner',
     type: 'user',
   });
 
   return {
     token,
+    role: 'owner',
     user: {
       id: user.id,
       name: user.name,
