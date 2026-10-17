@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 
 export function useCustomerRequests() {
   const fetchRequests = useQuery({
@@ -8,6 +8,8 @@ export function useCustomerRequests() {
       const res = await api.get("/owner/requests");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {

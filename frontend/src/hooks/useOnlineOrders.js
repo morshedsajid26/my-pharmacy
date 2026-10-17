@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function useOnlineOrders(status = null) {
@@ -13,6 +13,8 @@ export function useOnlineOrders(status = null) {
       });
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   const approveOrderMutation = useMutation({
@@ -65,6 +67,8 @@ export function usePendingOrdersCount() {
       const res = await api.get("/owner/orders/pending-count");
       return res?.count ?? (res?.data?.count ?? 0);
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
     refetchInterval: 30000,
   });
 

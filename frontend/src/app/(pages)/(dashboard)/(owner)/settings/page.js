@@ -44,7 +44,7 @@ export default function SettingsPage() {
     async function loadData() {
       try {
         const [profileRes, storeSettingsRes] = await Promise.all([
-          api.get("/auth/me"),
+          api.get("/auth/me").catch(() => api.get("/auth/profile")),
           api.get("/owner/settings")
         ]);
         

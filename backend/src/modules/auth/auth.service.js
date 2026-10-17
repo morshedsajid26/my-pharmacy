@@ -9,34 +9,105 @@ export const generateToken = (payload) => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 
-export const loginStaffOrAdmin = async ({ email, password }) => {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    throw new Error('Invalid email or password');
+export const unifiedLogin = async ({ email, emailOrPhone, identifier, phone, password }) => {
+  const input = String(email || emailOrPhone || identifier || phone || '').trim();
+  if (!input || !password) {
+    throw new Error('Email/Phone and password are required');
   }
 
-  const isMatch = (await bcrypt.compare(password, user.password).catch(() => false)) || user.password === password;
-  if (!isMatch) {
-    throw new Error('Invalid email or password');
-  }
-
-  const token = generateToken({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    type: 'user',
+  // 1. Try finding Staff / Admin / Pharmacist in User table
+  const user = await prisma.user.findFirst({
+    where: {
+      email: { equals: input, mode: 'insensitive' },
+    },
   });
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      profilePicture: user.profilePicture,
+  if (user) {
+    const isMatch =
+      (await bcrypt.compare(password, user.password).catch(() => false)) ||
+      user.password === password;
+
+    if (isMatch) {
+      const userRole = String(user.role || 'staff').toLowerCase();
+      const token = generateToken({
+        id: user.id,
+        email: user.email,
+        role: userRole,
+        type: 'user',
+      });
+
+      const userData = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: userRole,
+        profilePicture: user.profilePicture,
+        type: 'user',
+      };
+
+      return {
+        token,
+        role: userRole,
+        type: 'user',
+        user: userData,
+      };
+    }
+  }
+
+  // 2. Try finding Customer in Customer table (by phone or email)
+  const customer = await prisma.customer.findFirst({
+    where: {
+      OR: [
+        { email: { equals: input, mode: 'insensitive' } },
+        { phone: input },
+      ],
     },
-  };
+  });
+
+  if (customer) {
+    if (!customer.password) {
+      throw new Error('No password set for this customer account. Please set a password first.');
+    }
+
+    const isMatch =
+      (await bcrypt.compare(password, customer.password).catch(() => false)) ||
+      customer.password === password;
+
+    if (isMatch) {
+      const token = generateToken({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        type: 'customer',
+        role: 'customer',
+      });
+
+      const customerData = {
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+        type: 'customer',
+        role: 'customer',
+      };
+
+      return {
+        token,
+        role: 'customer',
+        type: 'customer',
+        customer: customerData,
+        user: customerData,
+      };
+    }
+  }
+
+  throw new Error('Invalid email/phone or password');
+};
+
+export const loginStaffOrAdmin = async (credentials) => {
+  return unifiedLogin(credentials);
 };
 
 export const registerStaffOrAdmin = async ({ name, email, password, role = 'staff' }) => {
@@ -117,40 +188,8 @@ export const registerCustomerUser = async ({ name, phone, email, password, addre
   };
 };
 
-export const loginCustomerUser = async ({ emailOrPhone, password }) => {
-  const customer = await prisma.customer.findFirst({
-    where: {
-      OR: [{ email: emailOrPhone }, { phone: emailOrPhone }],
-    },
-  });
-
-  if (!customer) {
-    throw new Error('Invalid credentials');
-  }
-
-  const isMatch = (await bcrypt.compare(password, customer.password).catch(() => false)) || customer.password === password;
-  if (!isMatch) {
-    throw new Error('Invalid credentials');
-  }
-
-  const token = generateToken({
-    id: customer.id,
-    name: customer.name,
-    phone: customer.phone,
-    type: 'customer',
-    role: 'customer',
-  });
-
-  return {
-    token,
-    customer: {
-      id: customer.id,
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      address: customer.address,
-    },
-  };
+export const loginCustomerUser = async (credentials) => {
+  return unifiedLogin(credentials);
 };
 
 export const updateUserProfile = async (currentUser, { name, email, password, profilePicture, address }) => {

@@ -32,24 +32,12 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      let loggedIn = false;
-      try {
-        const result = await loginCustomer(identifier.trim(), password);
-        if (result?.success) {
+      const result = await login(identifier.trim(), password);
+      if (result?.success) {
+        if (result.role === "customer") {
           router.push("/overview");
-          loggedIn = true;
-        }
-      } catch (err) {
-        // Ignored, fallback to staff login
-      }
-
-      if (!loggedIn) {
-        const success = await login(identifier.trim(), password);
-        if (success) {
-          toast.success("Successfully logged in!");
-          router.push("/dashboard");
         } else {
-          toast.error("Invalid email or password");
+          router.push("/dashboard");
         }
       }
     } catch (error) {
@@ -73,9 +61,9 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <InputField
-                label="Email Address"
-                type="email"
-                placeholder="Enter your Email"
+                label="Email or Mobile Number"
+                type="text"
+                placeholder="Enter email or phone (e.g. 01xxxxxxxxx)"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required

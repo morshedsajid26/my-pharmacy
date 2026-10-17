@@ -15,12 +15,12 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { useCustomerOrders } from "@/hooks/useCustomerPortal";
+import { useCreateOnlineOrder } from "@/hooks/useCustomerPortal";
 import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
   const { customer } = useAuth();
-  const { createOrder } = useCustomerOrders();
+  const { createOrder } = useCreateOnlineOrder();
   const {
     cart,
     isCartOpen,

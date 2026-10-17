@@ -10,7 +10,6 @@ export default function PremiumHero({ customer, onAuthClick }) {
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[70%] bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-[120px] mix-blend-multiply" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[70%] bg-gradient-to-tl from-emerald-400/20 to-teal-400/20 rounded-full blur-[120px] mix-blend-multiply" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
       <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex flex-col items-center text-center">

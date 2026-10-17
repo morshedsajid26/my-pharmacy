@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api, { getAuthToken } from "@/lib/api";
+import api, { isCustomer } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function useCustomerOrders() {
@@ -12,7 +12,7 @@ export function useCustomerOrders() {
       const list = res?.data !== undefined ? res.data : res;
       return Array.isArray(list) ? list : [];
     },
-    enabled: typeof window !== "undefined" && !!getAuthToken(),
+    enabled: isCustomer(),
     retry: false,
   });
 
@@ -55,7 +55,7 @@ export function useCustomerOverview() {
         }
       );
     },
-    enabled: typeof window !== "undefined" && !!getAuthToken(),
+    enabled: isCustomer(),
     retry: false,
   });
 
@@ -82,7 +82,7 @@ export function useCustomerPrescriptions() {
       const list = res?.data !== undefined ? res.data : res;
       return Array.isArray(list) ? list : [];
     },
-    enabled: typeof window !== "undefined" && !!getAuthToken(),
+    enabled: isCustomer(),
     retry: false,
   });
 
@@ -140,7 +140,7 @@ export function useCustomerWishlist() {
       const list = res?.data !== undefined ? res.data : res;
       return Array.isArray(list) ? list : [];
     },
-    enabled: typeof window !== "undefined" && !!getAuthToken(),
+    enabled: isCustomer(),
     retry: false,
   });
 

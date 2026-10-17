@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function useCustomers(search = "") {
@@ -13,6 +13,8 @@ export function useCustomers(search = "") {
       });
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   const addCustomerMutation = useMutation({

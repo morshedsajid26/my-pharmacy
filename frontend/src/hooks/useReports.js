@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 
 export function useReports() {
   const fetchSummary = useQuery({
@@ -8,6 +8,8 @@ export function useReports() {
       const res = await api.get("/owner/dashboard/summary");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -22,11 +24,20 @@ export function useChartData(range = "month") {
   const fetchCharts = useQuery({
     queryKey: ["reports", "charts", range],
     queryFn: async () => {
-      const res = await api.get("/owner/dashboard/analytics", {
-        params: { range },
-      });
+      let res;
+      try {
+        res = await api.get("/owner/dashboard/charts", {
+          params: { range },
+        });
+      } catch (err) {
+        res = await api.get("/owner/dashboard/analytics", {
+          params: { range },
+        });
+      }
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -44,6 +55,8 @@ export function useTopSelling() {
       const res = await api.get("/owner/dashboard/top-selling");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -61,6 +74,8 @@ export function useExpiringMedicines() {
       const res = await api.get("/owner/dashboard/expiring");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -78,6 +93,8 @@ export function useTopProfitable() {
       const res = await api.get("/owner/dashboard/top-profitable");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -95,6 +112,8 @@ export function useUnsoldMedicines() {
       const res = await api.get("/owner/dashboard/unsold");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -112,6 +131,8 @@ export function useLedgerYears() {
       const res = await api.get("/owner/dashboard/ledger-years");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   return {
@@ -131,7 +152,8 @@ export function useDailyLedger(year, month) {
       });
       return res?.data || res;
     },
-    enabled: year !== undefined && month !== undefined,
+    enabled: isStaffOrAdmin() && year !== undefined && month !== undefined,
+    retry: false,
   });
 
   return {

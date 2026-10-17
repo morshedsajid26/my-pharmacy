@@ -11,15 +11,21 @@ import { Loader2 } from "lucide-react";
 
 export default function CustomerDashboardLayout({ children }) {
   const { isSidebarCollapsed } = useUI();
-  const { customer, loading } = useAuth();
+  const { customer, user, loading } = useAuth();
   const router = useRouter();
 
   // Enforce Route Protection for Customers
   useEffect(() => {
-    if (!loading && !customer) {
-      router.replace("/login");
+    if (!loading) {
+      if (!customer) {
+        if (user) {
+          router.replace("/dashboard");
+        } else {
+          router.replace("/login");
+        }
+      }
     }
-  }, [customer, loading, router]);
+  }, [customer, user, loading, router]);
 
   if (loading) {
     return (

@@ -11,15 +11,27 @@ import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
   const { isSidebarCollapsed } = useUI();
-  const { user, loading } = useAuth();
+  const { user, customer, loading } = useAuth();
   const router = useRouter();
+
+  const isAuthorized =
+    user &&
+    ["admin", "staff", "pharmacist", "owner"].includes(
+      String(user.role || "").toLowerCase()
+    );
 
   // Enforce Route Protection
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
+    if (!loading) {
+      if (!isAuthorized) {
+        if (customer) {
+          router.replace("/overview");
+        } else {
+          router.replace("/login");
+        }
+      }
     }
-  }, [user, loading, router]);
+  }, [isAuthorized, customer, loading, router]);
 
   // Render Premium Medical Authenticating Screen during initialization
   if (loading) {
@@ -34,7 +46,7 @@ export default function DashboardLayout({ children }) {
   }
 
   // Prevent flash of private dashboard content before redirection
-  if (!user) {
+  if (!isAuthorized) {
     return null;
   }
 

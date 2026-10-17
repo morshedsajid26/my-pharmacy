@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function useOwnerSettings() {
@@ -11,6 +11,8 @@ export function useOwnerSettings() {
       const res = await api.get("/owner/settings");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   const updateSettingsMutation = useMutation({

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { isStaffOrAdmin } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export function usePurchases(params = {}) {
@@ -11,6 +11,8 @@ export function usePurchases(params = {}) {
       const res = await api.get("/owner/purchases");
       return res?.data || res;
     },
+    enabled: isStaffOrAdmin(),
+    retry: false,
   });
 
   const recordPurchaseMutation = useMutation({

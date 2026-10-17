@@ -1,7 +1,8 @@
 export const validateLogin = (req, res, next) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  const identifier = req.body.email || req.body.identifier || req.body.emailOrPhone || req.body.phone;
+  const { password } = req.body;
+  if (!identifier || !password) {
+    return res.status(400).json({ success: false, message: 'Email/Phone and password are required' });
   }
   next();
 };
