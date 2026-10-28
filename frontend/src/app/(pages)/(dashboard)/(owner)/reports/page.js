@@ -563,7 +563,7 @@ export default function ReportsPage() {
           <div>
             <h3 className="text-slate-900 font-extrabold text-base tracking-tight flex items-center gap-2">
               <ProfitIcon size={18} className="text-emerald-600" />
-              <span>Most Profitable Medicines (সবচেয়ে বেশি লাভ)</span>
+              <span>Most Profitable Medicines</span>
             </h3>
             <p className="text-slate-400 text-xs font-medium">
               Top 5 medicines ranked by total profit generated
