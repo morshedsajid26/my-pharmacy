@@ -5,8 +5,8 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "SNS Pharmacy - Management System",
-  description: "Modern pharmacy management system built with Next.js",
+  title: "SS Pharmacy - Management System",
+  description: "Online pharmacy management system built with Next.js",
 };
 
 export default function RootLayout({ children }) {

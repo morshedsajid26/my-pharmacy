@@ -723,9 +723,9 @@ export default function StorefrontClient({
 
       {mode === "landing" && !searchQuery.trim() && (
         <>
-          <StandardsBanner />
-          <Testimonials />
-          <FAQSection openFaq={openFaq} onToggleFaq={setOpenFaq} />
+          {/* <StandardsBanner /> */}
+          {/* <Testimonials /> */}
+          {/* <FAQSection openFaq={openFaq} onToggleFaq={setOpenFaq} /> */}
         </>
       )}
 
