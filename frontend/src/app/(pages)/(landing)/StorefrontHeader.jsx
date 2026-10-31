@@ -1,33 +1,52 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   PlusCircle,
-  Clock,
   User,
-  LogOut,
   ShoppingBag,
   Search,
   X,
-  LayoutDashboard,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 
 export default function StorefrontHeader({
-  customer,
-  staffUser,
-  cartCount,
-  onOrdersClick,
-  onLogout,
-  onAuthClick,
-  onCartClick,
-  searchQuery,
-  setSearchQuery,
+  customer: propCustomer,
+  staffUser: propStaffUser,
+  searchQuery: propSearchQuery,
+  setSearchQuery: propSetSearchQuery,
 }) {
+  const router = useRouter();
+  const { customer: authCustomer, user: authUser } = useAuth();
+  const { cart } = useCart();
+
+  const customer = propCustomer !== undefined ? propCustomer : authCustomer;
+  const staffUser = propStaffUser !== undefined ? propStaffUser : authUser;
+
+  const [localSearch, setLocalSearch] = useState("");
+  const currentSearch = propSearchQuery !== undefined ? propSearchQuery : localSearch;
+
+  const handleSearchChange = (val) => {
+    if (propSetSearchQuery) {
+      propSetSearchQuery(val);
+    } else {
+      setLocalSearch(val);
+      if (val.trim()) {
+        router.push(`/shop?search=${encodeURIComponent(val.trim())}`);
+      } else {
+        router.push(`/shop`);
+      }
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-white/75 backdrop-blur-xl border-b border-slate-100/80 shadow-sm transition-all duration-300">
       <div className="max-w-[95%] xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo Brand */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 cursor-pointer">
           <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-medical-blue-600 to-medical-blue-500 flex items-center justify-center shadow-lg shadow-medical-blue-500/25">
             <PlusCircle className="text-white w-5 h-5 sm:w-7 sm:h-7" />
           </div>
@@ -45,7 +64,7 @@ export default function StorefrontHeader({
               </span>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Search Bar */}
         <div className="flex-1 max-w-2xl mx-1 sm:mx-4">
@@ -54,13 +73,13 @@ export default function StorefrontHeader({
             <input
               type="text"
               placeholder="Search medicines, categories, brands..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={currentSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full h-9 sm:h-12 pl-9 sm:pl-11 pr-9 sm:pr-11 rounded-xl sm:rounded-2xl bg-slate-50 text-slate-800 placeholder-slate-400 font-medium text-xs sm:text-sm border border-slate-200/60 focus:border-medical-blue-400 focus:bg-white focus:ring-2 focus:ring-medical-blue-500/10 transition-all outline-none shadow-inner"
             />
-            {searchQuery && (
+            {currentSearch && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => handleSearchChange("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 title="Clear Search"
               >
@@ -110,13 +129,13 @@ export default function StorefrontHeader({
               <Link
                 href="/overview"
                 className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 py-1.5 px-3 rounded-2xl border border-slate-200/50 transition-all cursor-pointer group"
-                title="Edit Profile Settings"
+                title="Customer Portal"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-medical-blue-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
                   {customer.profilePicture ? (
                     <img src={customer.profilePicture} alt={customer.name} className="w-full h-full object-cover" />
                   ) : (
-                    customer.name[0].toUpperCase()
+                    customer.name ? customer.name[0].toUpperCase() : "C"
                   )}
                 </div>
                 <div className="hidden md:flex flex-col items-start leading-none">

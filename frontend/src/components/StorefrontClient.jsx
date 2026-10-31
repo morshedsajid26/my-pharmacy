@@ -42,7 +42,7 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { usePublicMedicines } from "@/hooks/useMedicines";
 import { useStorefrontSettings } from "@/hooks/useSettings";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import OTPInput from "@/components/OTPInput";
 import StorefrontHeader from "../app/(pages)/(landing)/StorefrontHeader";
 import StorefrontHero from "../app/(pages)/(landing)/StorefrontHero";
@@ -325,7 +325,6 @@ export default function StorefrontClient({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
-      <Toaster position="top-center" />
       {/* <ChatWidget /> */}
 
       {/* FLOATING CART WIDGET */}
@@ -1087,3 +1086,4 @@ export default function StorefrontClient({
     </div>
   );
 }
+

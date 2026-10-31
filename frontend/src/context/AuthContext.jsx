@@ -190,7 +190,7 @@ export function AuthProvider({ children }) {
         }
       }
 
-      toast.success("Login successful!");
+      toast.success("Login successful!", { id: "auth-toast" });
       queryClient.invalidateQueries();
       return {
         success: true,
@@ -199,8 +199,9 @@ export function AuthProvider({ children }) {
         customer: res.customer || res.user,
       };
     } catch (error) {
-      toast.error(error.message || "Login failed");
-      return { success: false, error: error.message };
+      const errMsg = error?.message || "Invalid email/phone or password";
+      toast.error(errMsg, { id: "auth-toast" });
+      return { success: false, error: errMsg };
     }
   };
 
