@@ -13,7 +13,12 @@ router.use(protect, requireStaffOrAdmin);
 
 router.get('/', getAllOrdersAdmin);
 router.get('/pending-count', getPendingOrdersCount);
+
+// Support both PUT and PATCH for approving/rejecting orders
 router.put('/:id/approve', approveOnlineOrder);
+router.patch('/:id/approve', approveOnlineOrder);
+
 router.put('/:id/reject', rejectOnlineOrder);
+router.patch('/:id/reject', rejectOnlineOrder);
 
 export default router;

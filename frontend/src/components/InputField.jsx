@@ -32,10 +32,3 @@ const InputField = ({
 }
 
 export default InputField;
-
-{/* <InputField                 
-                // readOnly={true}
-                inputClass={`rounded-lg`}
-                label={`Question 3`}
-                placeholder={`What's your timeline for getting started?`}
-              /> */}

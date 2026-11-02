@@ -63,15 +63,24 @@ export const approveOnlineOrderService = async (orderId) => {
       });
     }
 
-    let dbCustomer = await tx.customer.findUnique({
-      where: { phone: order.customerPhone },
-    });
+    // Try finding customer by customerId first, then by customerPhone
+    let dbCustomer = null;
+    if (order.customerId) {
+      dbCustomer = await tx.customer.findUnique({
+        where: { id: order.customerId },
+      });
+    }
+    if (!dbCustomer && order.customerPhone) {
+      dbCustomer = await tx.customer.findUnique({
+        where: { phone: order.customerPhone },
+      });
+    }
 
     if (!dbCustomer) {
       dbCustomer = await tx.customer.create({
         data: {
-          name: order.customerName,
-          phone: order.customerPhone,
+          name: order.customerName || 'Online Customer',
+          phone: order.customerPhone || `CUST-${Date.now()}`,
           dueAmount: 0,
           totalSpent: order.totalAmount,
           status: 'Regular',
@@ -84,7 +93,7 @@ export const approveOnlineOrderService = async (orderId) => {
       });
     }
 
-    const invoiceNo = `INV-${Date.now()}`;
+    const invoiceNo = `INV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
     await tx.sale.create({
       data: {
         invoiceNo,

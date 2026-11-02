@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }) {
         } else {
           router.replace("/login");
         }
-      }
+      } 
     }
   }, [isAuthorized, customer, loading, router]);
 

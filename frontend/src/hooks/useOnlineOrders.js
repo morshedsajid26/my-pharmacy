@@ -19,7 +19,7 @@ export function useOnlineOrders(status = null) {
 
   const approveOrderMutation = useMutation({
     mutationFn: async (orderId) => {
-      const res = await api.patch(`/owner/orders/${orderId}/approve`);
+      const res = await api.put(`/owner/orders/${orderId}/approve`);
       return res?.data || res;
     },
     onSuccess: () => {
@@ -36,7 +36,7 @@ export function useOnlineOrders(status = null) {
 
   const rejectOrderMutation = useMutation({
     mutationFn: async ({ orderId, reason }) => {
-      const res = await api.patch(`/owner/orders/${orderId}/reject`, { reason });
+      const res = await api.put(`/owner/orders/${orderId}/reject`, { reason });
       return res?.data || res;
     },
     onSuccess: () => {
@@ -62,22 +62,17 @@ export function useOnlineOrders(status = null) {
 
 export function usePendingOrdersCount() {
   const fetchCount = useQuery({
-    queryKey: ["online-orders", "pending-count"],
+    queryKey: ["pending-orders-count"],
     queryFn: async () => {
       const res = await api.get("/owner/orders/pending-count");
-      return res?.count ?? (res?.data?.count ?? 0);
+      return res?.count || 0;
     },
     enabled: isStaffOrAdmin(),
-    retry: false,
     refetchInterval: 30000,
   });
 
   return {
-    pendingCount:
-      typeof fetchCount.data === "number"
-        ? fetchCount.data
-        : (fetchCount.data?.count ?? 0),
+    count: fetchCount.data || 0,
     isLoading: fetchCount.isLoading,
-    refetch: fetchCount.refetch,
   };
 }
