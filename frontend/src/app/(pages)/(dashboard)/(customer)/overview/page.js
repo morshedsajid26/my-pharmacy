@@ -14,13 +14,44 @@ import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useCustomerOverview } from "@/hooks/useCustomerPortal";
 
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  bg,
+  text,
+  trendHover,
+  showTrend,
+}) => (
+  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
+    <div className="flex justify-between items-start">
+      <div
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${bg} ${text}`}
+      >
+        <Icon size={24} />
+      </div>
+      {showTrend && (
+        <TrendingUp
+          size={20}
+          className={`text-slate-300 ${trendHover || ""} transition-colors`}
+        />
+      )}
+    </div>
+    <div>
+      <h3 className="text-2xl font-black text-slate-900">{value}</h3>
+      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+        {title}
+      </p>
+    </div>
+  </div>
+);
+
 export default function CustomerDashboardOverviewPage() {
   const router = useRouter();
   const { customer, loading: authLoading } = useAuth();
   const { stats, isLoading: isStatsLoading } = useCustomerOverview();
 
   const loading = authLoading || isStatsLoading;
-
 
   if (loading) {
     return (
@@ -31,8 +62,43 @@ export default function CustomerDashboardOverviewPage() {
     );
   }
 
+  const statItems = [
+    {
+      title: "Total Orders",
+      value: stats.totalOrders,
+      icon: ShoppingBag,
+      bg: "bg-blue-50",
+      text: "text-blue-600",
+      trendHover: "group-hover:text-blue-300",
+      showTrend: true,
+    },
+    {
+      title: "Total Spent",
+      value: `৳${stats.totalSpent}`,
+      icon: CreditCard,
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      trendHover: "group-hover:text-emerald-300",
+      showTrend: true,
+    },
+    {
+      title: "Pending Orders",
+      value: stats.pendingOrders,
+      icon: Clock,
+      bg: "bg-amber-50",
+      text: "text-amber-600",
+    },
+    {
+      title: "Prescriptions",
+      value: stats.totalPrescriptions,
+      icon: FileText,
+      bg: "bg-purple-50",
+      text: "text-purple-600",
+    },
+  ];
+
   return (
-    <div className=" mx-auto w-full">
+    <div className="mx-auto w-full">
       <Toaster position="top-center" />
 
       <div className="mb-8">
@@ -44,82 +110,11 @@ export default function CustomerDashboardOverviewPage() {
         </p>
       </div>
 
+      {/* STATS SECTION */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-        {/* TOTAL ORDERS */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
-          <div className="flex justify-between items-start">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <ShoppingBag size={24} />
-            </div>
-            <TrendingUp
-              size={20}
-              className="text-slate-300 group-hover:text-blue-300 transition-colors"
-            />
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-900">
-              {stats.totalOrders}
-            </h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-              Total Orders
-            </p>
-          </div>
-        </div>
-
-        {/* TOTAL SPENT */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
-          <div className="flex justify-between items-start">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <CreditCard size={24} />
-            </div>
-            <TrendingUp
-              size={20}
-              className="text-slate-300 group-hover:text-emerald-300 transition-colors"
-            />
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-900">
-              ৳{stats.totalSpent}
-            </h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-              Total Spent
-            </p>
-          </div>
-        </div>
-
-        {/* PENDING ORDERS */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
-          <div className="flex justify-between items-start">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <Clock size={24} />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-900">
-              {stats.pendingOrders}
-            </h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-              Pending Orders
-            </p>
-          </div>
-        </div>
-
-        {/* PRESCRIPTIONS */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
-          <div className="flex justify-between items-start">
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <FileText size={24} />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-900">
-              {stats.totalPrescriptions}
-            </h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-              Prescriptions
-            </p>
-          </div>
-        </div>
+        {statItems.map((item) => (
+          <StatCard key={item.title} {...item} />
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
