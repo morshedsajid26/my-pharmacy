@@ -4,7 +4,6 @@ import { createContext, useContext, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 
-
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
@@ -18,22 +17,37 @@ export function CartProvider({ children }) {
 
   // Load cart from localStorage and settings upon mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("pharmacy_cart");
-    if (savedCart) {
+    if (typeof window !== "undefined") {
       try {
-        setCart(JSON.parse(savedCart));
+        const savedCart = localStorage.getItem("pharmacy_cart");
+        if (savedCart) {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) {
+            // Filter out any corrupted/invalid items from previous runs
+            const validItems = parsed.filter(
+              (item) => item && item.id && Number(item.quantity) > 0 && typeof item.sellingPrice === "number"
+            );
+            setCart(validItems);
+            if (validItems.length !== parsed.length) {
+              localStorage.setItem("pharmacy_cart", JSON.stringify(validItems));
+            }
+          }
+        }
       } catch (e) {
-        console.error("Failed to parse cart:", e);
+        console.error("Failed to parse cart from localStorage:", e);
+        try {
+          localStorage.removeItem("pharmacy_cart");
+        } catch (_) {}
       }
     }
-    
+
     async function loadSettings() {
       try {
         const res = await api.get("/owner/settings/storefront");
         const fresh = res?.data || res;
         if (fresh && !fresh.error) setSettings(fresh);
       } catch (e) {
-        console.error("Failed to load settings:", e);
+        console.error("Failed to load storefront settings:", e);
       }
     }
     loadSettings();
@@ -41,14 +55,20 @@ export function CartProvider({ children }) {
 
   // Sync cart to localStorage whenever it changes
   const saveCart = (newCart) => {
-    setCart(newCart);
-    if (!newCart || newCart.length === 0) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("pharmacy_cart");
-      }
-    } else {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("pharmacy_cart", JSON.stringify(newCart));
+    const sanitizedCart = Array.isArray(newCart)
+      ? newCart.filter((item) => item && item.id && Number(item.quantity) > 0)
+      : [];
+    setCart(sanitizedCart);
+
+    if (typeof window !== "undefined") {
+      try {
+        if (sanitizedCart.length === 0) {
+          localStorage.removeItem("pharmacy_cart");
+        } else {
+          localStorage.setItem("pharmacy_cart", JSON.stringify(sanitizedCart));
+        }
+      } catch (err) {
+        console.error("Failed to save cart to localStorage:", err);
       }
     }
   };
@@ -56,45 +76,72 @@ export function CartProvider({ children }) {
   const clearCart = () => {
     setCart([]);
     if (typeof window !== "undefined") {
-      localStorage.removeItem("pharmacy_cart");
+      try {
+        localStorage.removeItem("pharmacy_cart");
+      } catch (_) {}
     }
   };
 
   const addToCart = (med, qty = 1) => {
-    if (med.stock < 2) {
-      return toast.error(`${med.name} is currently out of stock!`);
+    if (!med || typeof med !== "object" || !med.id) {
+      console.error("Invalid medicine object provided to addToCart:", med);
+      return toast.error("Could not add item to cart. Invalid product.");
     }
 
-    const existingIndex = cart.findIndex((item) => item.id === med.id);
+    const availableStock = Number(med.stock) || 0;
+    const addQuantity = Number(qty) > 0 ? Number(qty) : 1;
+
+    if (availableStock <= 0) {
+      return toast.error(`${med.name || "Medicine"} is currently out of stock!`);
+    }
+
+    // Sanitize medicine item so only serializable plain data fields are stored
+    const sanitizedItem = {
+      id: String(med.id),
+      name: String(med.name || "Medicine"),
+      company: String(med.company || ""),
+      category: String(med.category || ""),
+      sellingPrice: Number(med.sellingPrice) || 0,
+      purchasePrice: Number(med.purchasePrice) || 0,
+      stock: availableStock,
+      image: typeof med.image === "string" ? med.image : null,
+    };
+
+    const existingIndex = cart.findIndex((item) => item.id === sanitizedItem.id);
     if (existingIndex > -1) {
-      const currentQty = cart[existingIndex].quantity;
-      const targetQty = currentQty + qty;
-      if (targetQty > med.stock) {
+      const currentQty = Number(cart[existingIndex].quantity) || 0;
+      const targetQty = currentQty + addQuantity;
+      if (targetQty > availableStock) {
         return toast.error(
-          `Cannot add ${qty} more. Only ${med.stock - currentQty} more units available in stock.`,
+          `Cannot add ${addQuantity} more. Only ${availableStock - currentQty} more unit(s) available in stock.`,
         );
       }
       const updatedCart = [...cart];
-      updatedCart[existingIndex].quantity = targetQty;
+      updatedCart[existingIndex] = {
+        ...updatedCart[existingIndex],
+        ...sanitizedItem,
+        quantity: targetQty,
+      };
       saveCart(updatedCart);
     } else {
-      if (qty > med.stock) {
+      if (addQuantity > availableStock) {
         return toast.error(
-          `Cannot add ${qty} units. Only ${med.stock} units available in stock.`,
+          `Cannot add ${addQuantity} unit(s). Only ${availableStock} unit(s) available in stock.`,
         );
       }
-      saveCart([...cart, { ...med, quantity: qty }]);
+      saveCart([...cart, { ...sanitizedItem, quantity: addQuantity }]);
     }
-    toast.success(`Added ${qty} unit(s) of ${med.name} to cart!`);
+    toast.success(`Added ${addQuantity} unit(s) of ${sanitizedItem.name} to cart!`);
   };
 
   const updateCartQty = (id, change, maxStock) => {
     const updatedCart = cart
       .map((item) => {
-        if (item.id === id) {
-          const newQty = item.quantity + change;
-          if (newQty > maxStock) {
-            toast.error(`Only ${maxStock} units available in stock.`);
+        if (item && item.id === id) {
+          const newQty = (Number(item.quantity) || 0) + change;
+          const stockLimit = Number(maxStock) || Number(item.stock) || 999;
+          if (newQty > stockLimit) {
+            toast.error(`Only ${stockLimit} units available in stock.`);
             return item;
           }
           if (newQty <= 0) return null;
@@ -107,13 +154,13 @@ export function CartProvider({ children }) {
   };
 
   const removeFromCart = (id) => {
-    saveCart(cart.filter((item) => item.id !== id));
+    saveCart(cart.filter((item) => item && item.id !== id));
     toast.success("Item removed from cart");
   };
 
   const getCartTotal = () => {
     return cart.reduce(
-      (total, item) => total + item.sellingPrice * item.quantity,
+      (total, item) => total + (Number(item?.sellingPrice) || 0) * (Number(item?.quantity) || 0),
       0,
     );
   };
@@ -121,29 +168,31 @@ export function CartProvider({ children }) {
   const getCartDeliveryCharge = () => {
     const subtotal = getCartTotal();
     if (subtotal === 0) return 0;
-    return subtotal >= settings.minOrderForFreeDelivery
-      ? 0
-      : settings.deliveryCharge;
+    const minOrder = Number(settings?.minOrderForFreeDelivery) || 500;
+    const charge = Number(settings?.deliveryCharge) || 20;
+    return subtotal >= minOrder ? 0 : charge;
   };
 
   const getCartDiscount = () => {
     const subtotal = getCartTotal();
-    if (!settings.discountTiers || settings.discountTiers.length === 0)
+    if (!settings?.discountTiers || !Array.isArray(settings.discountTiers) || settings.discountTiers.length === 0) {
       return 0;
+    }
     const applicableTiers = settings.discountTiers.filter(
-      (t) => subtotal >= t.threshold,
+      (t) => t && subtotal >= (Number(t.threshold) || 0),
     );
     if (applicableTiers.length === 0) return 0;
     const bestTier = applicableTiers.reduce((prev, curr) =>
-      curr.percent > prev.percent ? curr : prev,
+      (Number(curr.percent) || 0) > (Number(prev.percent) || 0) ? curr : prev,
     );
-    return (subtotal * bestTier.percent) / 100;
+    return (subtotal * (Number(bestTier.percent) || 0)) / 100;
   };
 
   const getCartGrandTotal = () => {
     const subtotal = getCartTotal();
     if (subtotal === 0) return 0;
-    return subtotal + getCartDeliveryCharge() - getCartDiscount();
+    const total = subtotal + getCartDeliveryCharge() - getCartDiscount();
+    return Math.max(0, total);
   };
 
   return (

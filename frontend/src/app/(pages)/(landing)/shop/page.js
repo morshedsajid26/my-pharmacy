@@ -243,9 +243,9 @@ function ShopContent() {
                     selectedQuantity={selectedQuantities[med.id] || 1}
                     onIncreaseQuantity={() => {
                       const current = selectedQuantities[med.id] || 1;
-                      const cartItem = cart.find((item) => item.id === med.id);
-                      const qtyInCart = cartItem ? cartItem.quantity : 0;
-                      const remainingStock = med.stock - qtyInCart;
+                      const cartItem = cart?.find((item) => item?.id === med.id);
+                      const qtyInCart = cartItem ? (cartItem.quantity || 0) : 0;
+                      const remainingStock = (med.stock || 0) - qtyInCart;
                       if (current < remainingStock) {
                         setSelectedQuantities((prev) => ({
                           ...prev,
@@ -262,13 +262,13 @@ function ShopContent() {
                         }));
                       }
                     }}
-                    onAddToCart={(medicine, qty) => {
-                      addToCart(medicine, qty);
+                    onAddToCart={() => {
+                      const qty = selectedQuantities[med.id] || 1;
+                      addToCart(med, qty);
                       setSelectedQuantities((prev) => ({
                         ...prev,
-                        [medicine.id]: 1,
+                        [med.id]: 1,
                       }));
-                      toast.success(`Added ${qty} × ${medicine.name} to cart`);
                     }}
                     onRequestRestock={handleRequestRestock}
                   />

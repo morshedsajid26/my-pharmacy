@@ -4,27 +4,27 @@ import { Pill, Package, Heart, Minus, Plus } from "lucide-react";
 
 export default function MedicineCard({ 
   medicine, 
-  cart, 
-  wishlist, 
+  cart = [], 
+  wishlist = [], 
   wishlistLoading, 
-  selectedQuantity, 
+  selectedQuantity = 1, 
   onIncreaseQuantity, 
   onDecreaseQuantity, 
   onAddToCart, 
   onRequestRestock 
 }) {
-  const cartItem = cart.find(item => item.id === medicine.id);
-  const qtyInCart = cartItem ? cartItem.quantity : 0;
-  const remainingStock = medicine.stock - qtyInCart;
+  const cartItem = cart?.find(item => item?.id === medicine?.id);
+  const qtyInCart = cartItem ? (cartItem.quantity || 0) : 0;
+  const remainingStock = Math.max(0, (medicine?.stock || 0) - qtyInCart);
 
-  const isAvailable = medicine.stock >= 2;
-  const isRequested = wishlist.includes(medicine.id);
+  const isAvailable = (medicine?.stock || 0) > 0;
+  const isRequested = wishlist?.includes(medicine?.id);
 
   return (
     <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-row sm:flex-col justify-between group h-full">
       {/* Medicine Graphic Placeholder */}
       <div className="w-[110px] sm:w-full shrink-0 min-h-[120px] sm:h-36 bg-white flex items-center justify-center relative group-hover:from-medical-blue-50/20 group-hover:to-medical-blue-100/10 transition-all duration-300 border-r sm:border-r-0 sm:border-b border-slate-100/50 overflow-hidden p-2 sm:p-0">
-        {medicine.image && (
+        {medicine?.image && (
           <img 
             src={medicine.image} 
             alt={medicine.name} 
@@ -39,15 +39,15 @@ export default function MedicineCard({
         )}
         
         <div 
-          id={`fallback-${medicine.id}`}
-          style={{ display: medicine.image ? 'none' : 'flex' }}
+          id={`fallback-${medicine?.id}`}
+          style={{ display: medicine?.image ? 'none' : 'flex' }}
           className="w-14 h-14 rounded-2xl bg-white border border-slate-200/60 shadow-sm flex items-center justify-center text-slate-400 group-hover:text-medical-blue-500 group-hover:border-medical-blue-200/60 transition-all duration-300 z-10"
         >
           <Pill className="w-8 h-8 sm:w-7 sm:h-7" strokeWidth={1.5} />
         </div>
         
         {/* Low stock pill warning */}
-        {medicine.stock <= 5 && medicine.stock >= 2 && (
+        {medicine?.stock <= 5 && medicine?.stock >= 1 && (
           <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[8px] sm:text-[9px] font-black px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider z-20">
             Low Stock: {medicine.stock}
           </span>
@@ -59,7 +59,7 @@ export default function MedicineCard({
           {/* Category & Status tag */}
           <div className="flex items-center justify-between mb-1.5 sm:mb-2 gap-2">
             <span className="text-slate-400 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest truncate">
-              {medicine.category}
+              {medicine?.category}
             </span>
             {isAvailable ? (
               <span className="bg-emerald-50 text-emerald-600 text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 whitespace-nowrap">
@@ -74,15 +74,15 @@ export default function MedicineCard({
             )}
           </div>
 
-          <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight line-clamp-2 sm:truncate" title={medicine.name}>
-            {medicine.name}
+          <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-tight line-clamp-2 sm:truncate" title={medicine?.name}>
+            {medicine?.name}
           </h3>
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 mt-0.5 truncate">{medicine.company}</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 mt-0.5 truncate">{medicine?.company}</p>
         </div>
 
         <div className="mt-2 sm:mt-4 flex flex-col sm:flex-col justify-end h-full">
           <div className="flex items-baseline gap-1 mb-2 sm:mb-0">
-            <span className="text-base sm:text-xl font-black text-slate-900">৳{medicine.sellingPrice}</span>
+            <span className="text-base sm:text-xl font-black text-slate-900">৳{medicine?.sellingPrice}</span>
             <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">/ Unit</span>
           </div>
 
@@ -115,7 +115,7 @@ export default function MedicineCard({
                 )}
                 
                 <button 
-                  onClick={qtyInCart > 0 ? undefined : onAddToCart}
+                  onClick={qtyInCart > 0 ? undefined : () => onAddToCart && onAddToCart(medicine, selectedQuantity)}
                   disabled={remainingStock < 1}
                   className={`flex-1 px-3 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-sm text-center ${
                     remainingStock < 1 

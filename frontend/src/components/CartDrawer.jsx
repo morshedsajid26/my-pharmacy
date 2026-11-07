@@ -251,55 +251,65 @@ export default function CartDrawer() {
             {cart.length > 0 ? (
               <>
                 <div className="space-y-4">
-                  {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-extrabold text-slate-800 text-sm truncate">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {item.company}
-                        </p>
-                        <span className="text-xs font-black text-medical-blue-600 mt-1 block">
-                          ৳{item.sellingPrice} each
-                        </span>
-                      </div>
+                  {cart.map((item) => {
+                    const itemTotal = (Number(item?.sellingPrice) || 0) * (Number(item?.quantity) || 0);
 
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                          <button
-                            onClick={() =>
-                              updateCartQty(item.id, -1, item.stock)
-                            }
-                            className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-8 text-center text-xs font-extrabold text-slate-800">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateCartQty(item.id, 1, item.stock)
-                            }
-                            className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
-                          >
-                            <Plus size={14} />
-                          </button>
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-4 p-3.5 bg-slate-50 rounded-2xl border border-slate-100"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-extrabold text-slate-800 text-sm truncate">
+                            {item.name}
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {item.company}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <span className="text-xs font-medium text-slate-500">
+                              ৳{item.sellingPrice} each
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-xs font-black text-medical-blue-600 bg-medical-blue-50/80 px-2 py-0.5 rounded-md border border-medical-blue-100">
+                              Total: ৳{Number.isInteger(itemTotal) ? itemTotal : itemTotal.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
 
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <button
+                              onClick={() =>
+                                updateCartQty(item.id, -1, item.stock)
+                              }
+                              className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="w-8 text-center text-xs font-extrabold text-slate-800">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateCartQty(item.id, 1, item.stock)
+                              }
+                              className="p-1.5 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="pt-6 border-t border-slate-100 space-y-4">

@@ -347,27 +347,39 @@ export default function SalesPage() {
                    <p className="text-sm">Basket is empty</p>
                 </div>
               ) : (
-                basket.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 border border-slate-100 group animate-in slide-in-from-right-2 duration-200">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <h4 className="text-sm font-bold text-slate-900 truncate">{item.name}</h4>
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
-                          {item.category}
-                        </span>
+                basket.map((item) => {
+                  const itemTotal = (Number(item?.sellingPrice) || 0) * (Number(item?.quantity) || 0);
+
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 border border-slate-100 group animate-in slide-in-from-right-2 duration-200">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          <h4 className="text-sm font-bold text-slate-900 truncate">{item.name}</h4>
+                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                            {item.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className="text-xs font-medium text-slate-500">
+                            ৳{(Number(item?.sellingPrice) || 0).toFixed(2)} / unit
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-xs font-black text-medical-blue-600 bg-medical-blue-50/80 px-2 py-0.5 rounded-md border border-medical-blue-100">
+                            Total: ৳{Number.isInteger(itemTotal) ? itemTotal : itemTotal.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">৳{item.sellingPrice.toFixed(2)} / unit</p>
+                      <div className="flex items-center gap-2 bg-white rounded-lg border border-slate-200 p-1">
+                         <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-slate-100 rounded transition-colors cursor-pointer"><Minus size={14} /></button>
+                         <span className="text-sm font-bold min-w-[20px] text-center">{item.quantity}</span>
+                         <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-slate-100 rounded transition-colors cursor-pointer"><Plus size={14} /></button>
+                      </div>
+                      <button onClick={() => removeFromBasket(item.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors cursor-pointer">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <div className="flex items-center gap-2 bg-white rounded-lg border border-slate-200 p-1">
-                       <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-slate-100 rounded transition-colors"><Minus size={14} /></button>
-                       <span className="text-sm font-bold min-w-[20px] text-center">{item.quantity}</span>
-                       <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-slate-100 rounded transition-colors"><Plus size={14} /></button>
-                    </div>
-                    <button onClick={() => removeFromBasket(item.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
