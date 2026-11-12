@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
   CreditCard,
   Clock,
   FileText,
   Loader2,
-  TrendingUp,
+  ArrowUpRight,
 } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useCustomerOverview } from "@/hooks/useCustomerPortal";
 
@@ -18,36 +17,26 @@ const StatCard = ({
   title,
   value,
   icon: Icon,
-  bg,
-  text,
-  trendHover,
-  showTrend,
+  accentClass = "bg-medical-blue-50 text-medical-blue-600 border-medical-blue-100",
 }) => (
-  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all h-36">
-    <div className="flex justify-between items-start">
+  <div className="bg-white rounded-xl p-5 border border-slate-200/85 hover:border-slate-300 transition-colors flex flex-col justify-between gap-4">
+    <div className="flex justify-between items-center">
+      <p className="text-xs font-semibold text-slate-500">{title}</p>
       <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${bg} ${text}`}
+        className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${accentClass}`}
       >
-        <Icon size={24} />
+        <Icon size={18} />
       </div>
-      {showTrend && (
-        <TrendingUp
-          size={20}
-          className={`text-slate-300 ${trendHover || ""} transition-colors`}
-        />
-      )}
     </div>
     <div>
-      <h3 className="text-2xl font-black text-slate-900">{value}</h3>
-      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-        {title}
-      </p>
+      <h3 className="text-2xl font-bold font-mono text-slate-900 tracking-tight">
+        {value}
+      </h3>
     </div>
   </div>
 );
 
 export default function CustomerDashboardOverviewPage() {
-  const router = useRouter();
   const { customer, loading: authLoading } = useAuth();
   const { stats, isLoading: isStatsLoading } = useCustomerOverview();
 
@@ -56,8 +45,8 @@ export default function CustomerDashboardOverviewPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500">
-        <Loader2 className="w-8 h-8 animate-spin mb-4 text-medical-blue-600" />
-        <p className="font-semibold text-sm">Loading your dashboard...</p>
+        <Loader2 className="w-8 h-8 animate-spin mb-3 text-medical-blue-600" />
+        <p className="font-medium text-sm">Loading patient portal...</p>
       </div>
     );
   }
@@ -67,84 +56,107 @@ export default function CustomerDashboardOverviewPage() {
       title: "Total Orders",
       value: stats.totalOrders,
       icon: ShoppingBag,
-      bg: "bg-blue-50",
-      text: "text-blue-600",
-      trendHover: "group-hover:text-blue-300",
-      showTrend: true,
+      accentClass:
+        "bg-medical-blue-50 text-medical-blue-600 border-medical-blue-100",
     },
     {
       title: "Total Spent",
       value: `৳${stats.totalSpent}`,
       icon: CreditCard,
-      bg: "bg-emerald-50",
-      text: "text-emerald-600",
-      trendHover: "group-hover:text-emerald-300",
-      showTrend: true,
+      accentClass: "bg-emerald-50 text-emerald-700 border-emerald-200/70",
     },
     {
       title: "Pending Orders",
       value: stats.pendingOrders,
       icon: Clock,
-      bg: "bg-amber-50",
-      text: "text-amber-600",
+      accentClass: "bg-amber-50 text-amber-700 border-amber-200/70",
     },
     {
       title: "Prescriptions",
       value: stats.totalPrescriptions,
       icon: FileText,
-      bg: "bg-purple-50",
-      text: "text-purple-600",
+      accentClass: "bg-slate-100 text-slate-700 border-slate-200/80",
+    },
+  ];
+
+  const actionItems = [
+    {
+      title: "Order History & Tracking",
+      description:
+        "Monitor active deliveries and view itemized receipts from previous purchases.",
+      href: "/orders",
+      icon: ShoppingBag,
+      badge: "Orders",
+    },
+    {
+      title: "Upload Prescription",
+      description:
+        "Submit a photo of your prescription for direct verification by our licensed pharmacist.",
+      href: "/prescriptions",
+      icon: FileText,
+      badge: "Clinical Desk",
     },
   ];
 
   return (
-    <div className="mx-auto w-full">
+    <div className="mx-auto w-full space-y-6">
       <Toaster position="top-center" />
 
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Welcome back, {customer?.name}! 👋
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Here is an overview of your activity and recent stats.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Welcome back, {customer?.name}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Manage your prescriptions, medicine refills, and delivery history
+          </p>
+        </div>
+        <Link
+          href="/shop"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-medical-blue-600 hover:bg-medical-blue-700 text-white text-xs font-semibold transition-colors self-start sm:self-auto"
+        >
+          <span>Order Medicines</span>
+          <ArrowUpRight size={14} />
+        </Link>
       </div>
 
       {/* STATS SECTION */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statItems.map((item) => (
           <StatCard key={item.title} {...item} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Link
-          href="/orders"
-          className="bg-medical-blue-600 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-medical-blue-900/20 group hover:shadow-xl hover:-translate-y-1 transition-all"
-        >
-          <div className="bg-white/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <ShoppingBag size={24} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">View Orders</h2>
-          <p className="text-medical-blue-100 text-sm font-medium">
-            Track your pending shipments and view full receipt details of past
-            purchases.
-          </p>
-        </Link>
-
-        <Link
-          href="/prescriptions"
-          className="bg-purple-600 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-purple-900/20 group hover:shadow-xl hover:-translate-y-1 transition-all"
-        >
-          <div className="bg-white/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <FileText size={24} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">Upload Prescription</h2>
-          <p className="text-purple-100 text-sm font-medium">
-            Upload a valid prescription and our pharmacists will process your
-            medicine quickly.
-          </p>
-        </Link>
+      {/* QUICK ACTIONS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {actionItems.map((action) => {
+          const ActionIcon = action.icon;
+          return (
+            <Link
+              key={action.title}
+              href={action.href}
+              className="bg-white rounded-xl p-6 border border-slate-200/85 hover:border-medical-blue-600/50 hover:shadow-sm transition-all group flex flex-col justify-between gap-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-medical-blue-50 border border-medical-blue-100 text-medical-blue-600 flex items-center justify-center group-hover:bg-medical-blue-600 group-hover:text-white transition-colors">
+                  <ActionIcon size={20} />
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 group-hover:text-medical-blue-600 transition-colors">
+                  <span>{action.badge}</span>
+                  <ArrowUpRight size={14} />
+                </span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 group-hover:text-medical-blue-700 transition-colors">
+                  {action.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                  {action.description}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

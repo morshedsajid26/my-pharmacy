@@ -112,14 +112,14 @@ export default function OnlineOrdersPage() {
 
       {/* ORDERS LIST */}
       {loading ? (
-        <div className="h-64 flex items-center justify-center bg-white rounded-3xl border border-slate-100 shadow-sm">
+        <div className="h-64 flex items-center justify-center bg-white rounded-xl border border-slate-200">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-medical-blue-600" />
-            <p className="text-slate-400 font-semibold text-sm">Fetching online orders...</p>
+            <p className="text-slate-500 font-medium text-sm">Fetching online orders...</p>
           </div>
         </div>
       ) : orders.length > 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>

@@ -1,78 +1,185 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  FileText,
+  Thermometer,
+  Clock,
+  CheckCircle2,
+  Building2,
+} from "lucide-react";
 
 export default function PremiumHero({ customer, onAuthClick }) {
   return (
-    <section className="relative w-full min-h-[500px] md:min-h-[700px] flex items-center justify-center overflow-hidden bg-slate-50 pb-24 md:pb-50 pt-20">
-      {/* Premium Background Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[70%] bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-[120px] mix-blend-multiply" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[70%] bg-gradient-to-tl from-emerald-400/20 to-teal-400/20 rounded-full blur-[120px] mix-blend-multiply" />
-      </div>
+    <section className="relative w-full bg-white border-b border-slate-200 overflow-hidden">
+      <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Clean Real-World Pharmacy Value Proposition */}
+          <div className="lg:col-span-7 space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-100 border border-slate-200">
+              <span className="w-2 h-2 rounded-full bg-medical-blue-600" />
+              <span className="text-xs font-semibold text-slate-700">
+                DGDA Registered Model Pharmacy • Dhaka
+              </span>
+            </div>
 
-      <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex flex-col items-center text-center">
-        {/* Top Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-white/80 shadow-sm mb-8 animate-fade-in-up">
-          <Sparkles className="w-4 h-4 text-medical-blue-600" />
-          <span className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-widest">
-            Welcome to the Future of Healthcare
-          </span>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight leading-[1.15]">
+              Order genuine medicines &amp; healthcare products{" "}
+              <span className="text-medical-blue-600">from home.</span>
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed">
+              Sourced directly from leading pharmaceutical companies in
+              Bangladesh. Every order is checked by a licensed pharmacist and
+              delivered across Dhaka within 45–60 minutes.
+            </p>
+
+            {/* Primary & Secondary Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+              <Link
+                href="/shop"
+                className="inline-flex items-center justify-center gap-2 bg-medical-blue-600 hover:bg-medical-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm transition-colors"
+              >
+                <span>Browse All Medicines</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              {customer ? (
+                <Link
+                  href="/prescriptions"
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-6 py-3 rounded-lg font-semibold text-sm transition-colors cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 text-medical-blue-600" />
+                  <span>Upload Prescription</span>
+                </Link>
+              ) : (
+                <button
+                  onClick={onAuthClick}
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 px-6 py-3 rounded-lg font-semibold text-sm transition-colors cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 text-medical-blue-600" />
+                  <span>Upload Prescription</span>
+                </button>
+              )}
+            </div>
+
+            {/* Key Metrics Strip */}
+            <div className="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 sm:gap-8 max-w-lg">
+              <div>
+                <p className="text-lg sm:text-xl font-bold text-slate-900 font-mono">
+                  100%
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Authentic Medicines
+                </p>
+              </div>
+              <div>
+                <p className="text-lg sm:text-xl font-bold text-slate-900 font-mono">
+                  &lt; 25°C
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Temperature Controlled
+                </p>
+              </div>
+              <div>
+                <p className="text-lg sm:text-xl font-bold text-slate-900 font-mono">
+                  45–60m
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Home Delivery
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Clean Structured Pharmacy Service Panel */}
+          <div className="lg:col-span-5">
+            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+              {/* Card Header */}
+              <div className="bg-white px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-5 h-5 text-medical-blue-600" />
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900 leading-none">
+                      How Your Order Is Fulfilled
+                    </h2>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      DGDA Good Pharmacy Practice (GPP)
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold bg-medical-blue-50 text-medical-blue-700 border border-medical-blue-200 px-2 py-0.5 rounded">
+                  Verified
+                </span>
+              </div>
+
+              {/* Steps */}
+              <div className="p-5 space-y-4 divide-y divide-slate-200/70">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-medical-blue-600 shrink-0 mt-0.5">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                      1. Direct Pharmaceutical Supply
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Stocked directly from Square, Incepta, Beximco, Renata,
+                      and authorized distributors.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5 pt-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-medical-blue-600 shrink-0 mt-0.5">
+                    <Thermometer className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                      2. Cold-Chain &amp; Hygiene Storage
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Insulins, vaccines, and temperature-sensitive items stored
+                      in calibrated medical refrigerators.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5 pt-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-medical-blue-600 shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
+                      3. Pharmacist Check &amp; Dispatch
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Batch numbers and expiry dates are verified before sealing
+                      your package for delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="bg-white px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-medical-blue-600" />
+                  Free delivery on orders ৳500+
+                </span>
+                <Link
+                  href="/shop"
+                  className="font-semibold text-medical-blue-600 hover:text-medical-blue-700 transition-colors"
+                >
+                  Start Ordering →
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Main Headline */}
-        <h1 className="text-5xl sm:text-6xl md:text-8xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6 max-w-5xl">
-          Your Health, <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-medical-blue-600 to-emerald-500">
-            Delivered Beautifully.
-          </span>
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-lg sm:text-2xl font-medium text-slate-500 max-w-2xl mb-10 leading-relaxed">
-          Experience premium pharmacy services right at your fingertips. 100%
-          genuine medicines, superfast delivery, and unparalleled customer care.
-        </p>
-
-        {/* Call to Actions */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <Link
-            href="/shop"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-slate-900/20 hover:scale-105"
-          >
-            Shop Medicines <ArrowRight className="w-5 h-5" />
-          </Link>
-
-          {customer ? (
-            <Link
-              href="/prescriptions"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
-            >
-              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload
-              Prescription
-            </Link>
-          ) : (
-            <button
-              onClick={onAuthClick}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
-            >
-              <ShieldCheck className="w-5 h-5 text-emerald-500" /> Upload
-              Prescription
-            </button>
-          )}
-        </div>
       </div>
-
-      {/* Decorative Floating Elements (Visible on larger screens) */}
-      <div
-        className="hidden lg:block absolute left-10 top-1/4 w-24 h-24 bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl rotate-12 animate-float"
-        style={{ animationDuration: "6s" }}
-      />
-      <div
-        className="hidden lg:block absolute right-20 bottom-1/4 w-32 h-32 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] shadow-2xl -rotate-12 animate-float"
-        style={{ animationDuration: "8s", animationDelay: "1s" }}
-      />
     </section>
   );
 }

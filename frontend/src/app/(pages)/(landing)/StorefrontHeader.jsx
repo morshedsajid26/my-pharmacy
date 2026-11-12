@@ -4,11 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  PlusCircle,
+  Plus,
   User,
   ShoppingBag,
   Search,
   X,
+  ShieldCheck,
+  Clock,
+  PhoneCall,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -21,13 +24,14 @@ export default function StorefrontHeader({
 }) {
   const router = useRouter();
   const { customer: authCustomer, user: authUser } = useAuth();
-  const { cart } = useCart();
+  const { cart, setIsCartOpen } = useCart();
 
   const customer = propCustomer !== undefined ? propCustomer : authCustomer;
   const staffUser = propStaffUser !== undefined ? propStaffUser : authUser;
 
   const [localSearch, setLocalSearch] = useState("");
-  const currentSearch = propSearchQuery !== undefined ? propSearchQuery : localSearch;
+  const currentSearch =
+    propSearchQuery !== undefined ? propSearchQuery : localSearch;
 
   const handleSearchChange = (val) => {
     if (propSetSearchQuery) {
@@ -43,39 +47,67 @@ export default function StorefrontHeader({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/75 backdrop-blur-xl border-b border-slate-100/80 shadow-sm transition-all duration-300">
-      <div className="max-w-[95%] xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Logo Brand */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0 cursor-pointer">
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-medical-blue-600 to-medical-blue-500 flex items-center justify-center shadow-lg shadow-medical-blue-500/25">
-            <PlusCircle className="text-white w-5 h-5 sm:w-7 sm:h-7" />
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 transition-all">
+      {/* Top Clinical Utility Bar - Neutral Slate */}
+      <div className="hidden md:block bg-slate-900 text-slate-300 text-[11px] border-b border-slate-800">
+        <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <span className="flex items-center gap-1.5 font-medium text-white">
+              <ShieldCheck className="w-3.5 h-3.5 text-medical-blue-400" />
+              DGDA Licensed Model Pharmacy (#2349-D)
+            </span>
+            <span className="text-slate-700">|</span>
+            <span className="text-slate-400">
+              100% Direct Manufacturer Sourced
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none hidden sm:block">
-                S&S<span className="text-medical-blue-600">Pharmacy</span>
-              </h1>
-              <span
-                className="flex h-1.5 w-1.5 sm:h-2 sm:w-2 relative"
-                title="Pharmacy Active Online"
-              >
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500"></span>
-              </span>
-            </div>
+          <div className="flex items-center gap-5 text-slate-300">
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <Clock className="w-3 h-3 text-medical-blue-400" />
+              Express Delivery: 45–60 mins across Dhaka
+            </span>
+            <span className="text-slate-700">|</span>
+            <a
+              href="tel:+8801756899699"
+              className="flex items-center gap-1.5 text-white font-medium hover:text-medical-blue-300 transition-colors"
+            >
+              <PhoneCall className="w-3 h-3 text-medical-blue-400" />
+              Helpline: 01756-899699
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation Bar */}
+      <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-[70px] flex items-center justify-between gap-3 sm:gap-6">
+        {/* Brand Identity */}
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 sm:gap-3 shrink-0 cursor-pointer group"
+        >
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-medical-blue-600 flex items-center justify-center text-white group-hover:bg-medical-blue-700 transition-colors">
+            <Plus className="w-5 h-5 stroke-[2.75]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-base sm:text-xl font-bold text-slate-900 tracking-tight leading-none">
+              S&amp;S <span className="text-medical-blue-600">Pharmacy</span>
+            </span>
+            <span className="text-[10px] font-medium text-slate-500 hidden sm:block mt-0.5">
+              Online Pharmacy &amp; Healthcare
+            </span>
           </div>
         </Link>
 
-        {/* Search Bar */}
-        <div className="flex-1 max-w-2xl mx-1 sm:mx-4">
+        {/* Search Input */}
+        <div className="flex-1 max-w-xl mx-1 sm:mx-4">
           <div className="relative group w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5 group-focus-within:text-medical-blue-600 transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-medical-blue-600 transition-colors" />
             <input
               type="text"
-              placeholder="Search medicines, categories, brands..."
+              placeholder="Search medicines by brand, generic name, or category..."
               value={currentSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-9 sm:h-12 pl-9 sm:pl-11 pr-9 sm:pr-11 rounded-xl sm:rounded-2xl bg-slate-50 text-slate-800 placeholder-slate-400 font-medium text-xs sm:text-sm border border-slate-200/60 focus:border-medical-blue-400 focus:bg-white focus:ring-2 focus:ring-medical-blue-500/10 transition-all outline-none shadow-inner"
+              className="w-full h-10 sm:h-10.5 pl-10 pr-9 rounded-lg bg-slate-50 text-slate-900 placeholder-slate-400 font-normal text-xs sm:text-sm border border-slate-200 focus:border-medical-blue-600 focus:bg-white focus:ring-2 focus:ring-medical-blue-600/15 transition-all outline-none"
             />
             {currentSearch && (
               <button
@@ -83,78 +115,94 @@ export default function StorefrontHeader({
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 title="Clear Search"
               >
-                <X size={16} className="sm:w-5 sm:h-5" />
+                <X size={15} />
               </button>
             )}
           </div>
         </div>
 
-        {/* Header Controls */}
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        {/* Right Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link
             href="/shop"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-blue-600 font-bold text-xs sm:text-sm transition-all cursor-pointer"
-            title="Shop Medicines"
+            className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
           >
-            <ShoppingBag size={16} className="w-4 h-4" />
-            <span className="hidden lg:inline">Shop</span>
+            <ShoppingBag size={16} className="text-medical-blue-600" />
+            <span>All Medicines</span>
           </Link>
 
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+            title="View Cart"
+          >
+            <ShoppingBag size={15} className="text-medical-blue-600" />
+            <span className="font-mono font-bold">{cart.length}</span>
+          </button>
+
           {staffUser ? (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-3 rounded-2xl border border-indigo-200/50 transition-all cursor-pointer group"
-                title="Go to Dashboard"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                  {staffUser.profilePicture ? (
-                    <img src={staffUser.profilePicture} alt={staffUser.name} className="w-full h-full object-cover" />
-                  ) : (
-                    staffUser.name ? staffUser.name[0].toUpperCase() : "A"
-                  )}
-                </div>
-                <div className="hidden md:flex flex-col items-start leading-none">
-                  <span className="text-xs font-bold text-indigo-700 max-w-[100px] lg:max-w-[120px] truncate group-hover:text-indigo-800 transition-colors">
-                    {staffUser.name}
-                  </span>
-                  <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider">
-                    {staffUser.role}
-                  </span>
-                </div>
-              </Link>
-            </div>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 py-1.5 px-3 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+              title="Go to Admin Dashboard"
+            >
+              <div className="w-7 h-7 rounded-md bg-slate-900 text-white flex items-center justify-center font-semibold text-xs overflow-hidden">
+                {staffUser.profilePicture ? (
+                  <img
+                    src={staffUser.profilePicture}
+                    alt={staffUser.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : staffUser.name ? (
+                  staffUser.name[0].toUpperCase()
+                ) : (
+                  "A"
+                )}
+              </div>
+              <div className="hidden md:flex flex-col items-start leading-none">
+                <span className="text-xs font-semibold text-slate-900 max-w-[110px] truncate">
+                  {staffUser.name}
+                </span>
+                <span className="text-[10px] font-medium text-slate-500 capitalize mt-0.5">
+                  {staffUser.role || "Dashboard"}
+                </span>
+              </div>
+            </Link>
           ) : customer ? (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/overview"
-                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 py-1.5 px-3 rounded-2xl border border-slate-200/50 transition-all cursor-pointer group"
-                title="Customer Portal"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-medical-blue-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                  {customer.profilePicture ? (
-                    <img src={customer.profilePicture} alt={customer.name} className="w-full h-full object-cover" />
-                  ) : (
-                    customer.name ? customer.name[0].toUpperCase() : "C"
-                  )}
-                </div>
-                <div className="hidden md:flex flex-col items-start leading-none">
-                  <span className="text-xs font-bold text-slate-700 max-w-[100px] lg:max-w-[120px] truncate group-hover:text-medical-blue-600 transition-colors">
-                    {customer.name}
-                  </span>
-                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                    Customer
-                  </span>
-                </div>
-              </Link>
-            </div>
+            <Link
+              href="/overview"
+              className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 py-1.5 px-3 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+              title="Customer Portal"
+            >
+              <div className="w-7 h-7 rounded-md bg-medical-blue-600 text-white flex items-center justify-center font-semibold text-xs overflow-hidden">
+                {customer.profilePicture ? (
+                  <img
+                    src={customer.profilePicture}
+                    alt={customer.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : customer.name ? (
+                  customer.name[0].toUpperCase()
+                ) : (
+                  "C"
+                )}
+              </div>
+              <div className="hidden md:flex flex-col items-start leading-none">
+                <span className="text-xs font-semibold text-slate-900 max-w-[110px] truncate">
+                  {customer.name}
+                </span>
+                <span className="text-[10px] font-medium text-slate-500 mt-0.5">
+                  My Account
+                </span>
+              </div>
+            </Link>
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-1.5 px-3 sm:px-4.5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-extrabold text-xs sm:text-sm transition-all shadow-md shadow-medical-blue-600/10 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
             >
-              <User size={14} className="sm:w-4 sm:h-4" />
-              <span className="">Sign In</span>
+              <User size={15} />
+              <span>Sign In</span>
             </Link>
           )}
         </div>

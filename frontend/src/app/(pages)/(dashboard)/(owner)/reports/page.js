@@ -51,7 +51,7 @@ import {
   useDailyLedger,
 } from "@/hooks/useReports";
 
-const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1"];
+const PIE_COLORS = ["#0d9488", "#0284c7", "#10b981", "#f59e0b", "#64748b", "#475569"];
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -299,102 +299,106 @@ export default function ReportsPage() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Monthly Sales Card */}
-        <div className="bg-gradient-to-br from-medical-blue-600 to-medical-blue-800 text-white rounded-2xl p-6 shadow-lg shadow-medical-blue-600/10 flex flex-col justify-between group gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-4">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <p className="text-medical-blue-100 text-xs font-bold uppercase tracking-widest">
+              <p className="text-slate-500 text-xs font-semibold">
                 Active Monthly Sales
               </p>
-              <h3 className="text-3xl font-black font-mono tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
                 ৳{stats.monthlySales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </h3>
             </div>
-            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-              <DollarSign size={22} className="text-white" />
+            <div className="w-9 h-9 bg-medical-blue-50 border border-medical-blue-100 rounded-lg flex items-center justify-center shrink-0">
+              <DollarSign size={18} className="text-medical-blue-600" />
             </div>
           </div>
-          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-medical-blue-100">
-            <div className="space-y-0.5">
-              <span className="text-slate-200 block">🏪 Shop POS:</span>
-              <span className="text-white font-mono text-xs">৳{(stats.monthlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          <div className="border-t border-slate-100 pt-3 flex justify-between gap-2 text-xs text-slate-500">
+            <div>
+              <span className="text-slate-400 block text-[11px]">Shop POS</span>
+              <span className="text-slate-800 font-mono font-semibold">৳{(stats.monthlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="space-y-0.5 text-right">
-              <span className="text-amber-200 block">🌐 Online:</span>
-              <span className="text-white font-mono text-xs">৳{(stats.monthlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <div className="text-right">
+              <span className="text-slate-400 block text-[11px]">Online</span>
+              <span className="text-slate-800 font-mono font-semibold">৳{(stats.monthlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>
 
         {/* Stock Valuation Card */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-800 text-white rounded-2xl p-6 shadow-lg shadow-indigo-600/10 flex items-center justify-between group">
-          <div className="space-y-1">
-            <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest">
-              Total Stock Valuation
-            </p>
-            <h3 className="text-3xl font-black font-mono tracking-tight">
-              ৳{stats.totalStockValue?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] text-indigo-200 font-medium pt-1">
-              Valued at purchase cost across inventory
-            </p>
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-slate-500 text-xs font-semibold">
+                Total Stock Valuation
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
+                ৳{stats.totalStockValue?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </h3>
+            </div>
+            <div className="w-9 h-9 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
+              <Package size={18} className="text-slate-700" />
+            </div>
           </div>
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-            <Package size={22} className="text-white" />
+          <div className="border-t border-slate-100 pt-3">
+            <p className="text-xs text-slate-400">
+              Valued at unit purchase cost across inventory
+            </p>
           </div>
         </div>
 
         {/* Yearly Sales Card */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-6 shadow-lg shadow-emerald-600/10 flex flex-col justify-between group gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-4">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest">
+              <p className="text-slate-500 text-xs font-semibold">
                 Active Yearly Sales
               </p>
-              <h3 className="text-3xl font-black font-mono tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
                 ৳{stats.yearlySales?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </h3>
             </div>
-            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-              <DollarSign size={22} className="text-white" />
+            <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-center shrink-0">
+              <DollarSign size={18} className="text-emerald-600" />
             </div>
           </div>
-          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-emerald-100">
-            <div className="space-y-0.5">
-              <span className="text-slate-200 block">🏪 Shop POS:</span>
-              <span className="text-white font-mono text-xs">৳{(stats.yearlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          <div className="border-t border-slate-100 pt-3 flex justify-between gap-2 text-xs text-slate-500">
+            <div>
+              <span className="text-slate-400 block text-[11px]">Shop POS</span>
+              <span className="text-slate-800 font-mono font-semibold">৳{(stats.yearlyShopSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="space-y-0.5 text-right">
-              <span className="text-amber-200 block">🌐 Online:</span>
-              <span className="text-white font-mono text-xs">৳{(stats.yearlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <div className="text-right">
+              <span className="text-slate-400 block text-[11px]">Online</span>
+              <span className="text-slate-800 font-mono font-semibold">৳{(stats.yearlyOnlineSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>
 
         {/* Avg Order / Delivery Fees Card */}
-        <div className="bg-gradient-to-br from-amber-600 to-orange-850 text-white rounded-2xl p-6 shadow-lg shadow-amber-600/10 flex flex-col justify-between group gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-4">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <p className="text-amber-100 text-xs font-bold uppercase tracking-widest">
+              <p className="text-slate-500 text-xs font-semibold">
                 Avg Transaction Size
               </p>
-              <h3 className="text-3xl font-black font-mono tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
                 ৳{avgOrderValue?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
             </div>
-            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0 backdrop-blur-sm group-hover:scale-110 transition-transform">
-              <DollarSign size={22} className="text-white" />
+            <div className="w-9 h-9 bg-medical-blue-50 border border-medical-blue-100 rounded-lg flex items-center justify-center shrink-0">
+              <DollarSign size={18} className="text-medical-blue-600" />
             </div>
           </div>
-          <div className="border-t border-white/15 pt-3 flex justify-between gap-2 text-[10px] font-bold text-amber-100">
-            <div className="space-y-0.5">
-              <span className="text-slate-200 block">💳 Invoices Count:</span>
-              <span className="text-white font-mono text-xs">{stats.totalTransactions?.toLocaleString()} tx</span>
+          <div className="border-t border-slate-100 pt-3 flex justify-between gap-2 text-xs text-slate-500">
+            <div>
+              <span className="text-slate-400 block text-[11px]">Invoices</span>
+              <span className="text-slate-800 font-mono font-semibold">{stats.totalTransactions?.toLocaleString()} tx</span>
             </div>
-            <div className="space-y-0.5 text-right">
-              <span className="text-slate-200 block">🚚 Delivery Fees:</span>
-              <span className="text-white font-mono text-xs">৳{(stats.totalDeliveryCharge || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <div className="text-right">
+              <span className="text-slate-400 block text-[11px]">Delivery Fees</span>
+              <span className="text-slate-800 font-mono font-semibold">৳{(stats.totalDeliveryCharge || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>
@@ -403,27 +407,27 @@ export default function ReportsPage() {
       {/* Main Charts Block */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Composed Cash Flow Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-100/50 p-6 flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="text-slate-900 font-extrabold text-base tracking-tight">
+              <h3 className="text-slate-900 font-bold text-base tracking-tight">
                 Cash Flow Analytics
               </h3>
-              <p className="text-slate-400 text-xs font-medium">
+              <p className="text-slate-500 text-xs">
                 Sales Revenue vs Procurement Costs vs Net Profits
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+            <div className="flex items-center gap-4 text-xs font-semibold text-slate-500">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-blue-500/20 border border-blue-500 rounded-sm inline-block"></span>
+                <span className="w-2.5 h-2.5 bg-medical-blue-600 rounded-xs inline-block"></span>
                 <span>Revenue</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-red-400 rounded-sm inline-block"></span>
+                <span className="w-2.5 h-2.5 bg-slate-400 rounded-xs inline-block"></span>
                 <span>Purchases</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 bg-emerald-500 rounded-full inline-block"></span>
+                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full inline-block"></span>
                 <span>Net Profit</span>
               </div>
             </div>
@@ -433,17 +437,17 @@ export default function ReportsPage() {
               <ComposedChart data={chartData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.14} />
+                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} stroke="#94a3b8" />
-                <YAxis fontSize={11} fontWeight={600} tickLine={false} axisLine={false} stroke="#94a3b8" tickFormatter={(v) => `৳${v}`} />
+                <XAxis dataKey="name" fontSize={11} fontWeight={500} tickLine={false} axisLine={false} stroke="#64748b" />
+                <YAxis fontSize={11} fontWeight={500} tickLine={false} axisLine={false} stroke="#64748b" tickFormatter={(v) => `৳${v}`} />
                 <RechartsTooltip content={<CustomTooltip />} />
-                <Area type="monotone" name="Revenue" dataKey="sales" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-                <Bar name="Purchases" dataKey="purchase" fill="#f87171" radius={[4, 4, 0, 0]} barSize={20} opacity={0.8} />
-                <Line type="monotone" name="Net Profit" dataKey="profit" stroke="#10b981" strokeWidth={3} dot={{ r: 3, stroke: "#10b981", strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 5 }} />
+                <Area type="monotone" name="Revenue" dataKey="sales" stroke="#0d9488" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                <Bar name="Purchases" dataKey="purchase" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={20} />
+                <Line type="monotone" name="Net Profit" dataKey="profit" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, stroke: "#10b981", strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 5 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

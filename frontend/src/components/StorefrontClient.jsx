@@ -330,22 +330,22 @@ export default function StorefrontClient({
       {/* FLOATING CART WIDGET */}
       <button
         onClick={() => setIsCartOpen(true)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-y border-l border-medical-blue-600/20 group active:scale-95 cursor-pointer"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center rounded-l-xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden border-y border-l border-slate-200 group active:scale-95 cursor-pointer"
       >
         {/* Top Segment: Cart Icon & Item Count */}
-        <div className="bg-medical-blue-600 group-hover:bg-medical-blue-700 text-white px-3.5 py-3 flex flex-col items-center justify-center gap-1 min-w-[80px] border-b border-white/15 transition-colors">
+        <div className="bg-medical-blue-600 group-hover:bg-medical-blue-700 text-white px-3.5 py-2.5 flex flex-col items-center justify-center gap-1 min-w-[76px] border-b border-white/10 transition-colors">
           <ShoppingCart
-            size={18}
-            className="text-white group-hover:scale-110 transition-transform"
+            size={16}
+            className="text-white"
           />
-          <span className="text-[10px] font-black tracking-wide whitespace-nowrap">
+          <span className="text-[10px] font-semibold tracking-wide whitespace-nowrap">
             {totalItems} {totalItems === 1 ? "Item" : "Items"}
           </span>
         </div>
 
         {/* Bottom Segment: Total Price */}
-        <div className="bg-emerald-500 group-hover:bg-emerald-600 text-white w-full px-2 py-2 flex items-center justify-center transition-colors">
-          <span className="text-xs font-black tracking-wide whitespace-nowrap">
+        <div className="bg-slate-900 text-white w-full px-2 py-1.5 flex items-center justify-center transition-colors">
+          <span className="text-xs font-mono font-bold tracking-wide whitespace-nowrap">
             ৳{getCartTotal()}
           </span>
         </div>
@@ -379,8 +379,8 @@ export default function StorefrontClient({
           <PremiumCategories categories={categories} />
           
           <PremiumProductRow
-            title="Flash Sale"
-            subtitle="Hurry Up! Deals end soon"
+            title="Essential Daily Medicines"
+            subtitle="Clinical & Household Staples"
             medicines={medicines.slice(0, 4)}
             cart={cart}
             wishlist={wishlist}
@@ -413,8 +413,8 @@ export default function StorefrontClient({
           <PremiumBrands medicines={medicines} />
 
           <PremiumProductRow
-            title="Trending Products"
-            subtitle="Most loved by our customers"
+            title="Frequently Dispensed"
+            subtitle="Regular Refills & Healthcare"
             medicines={medicines.slice(4, 8)}
             cart={cart}
             wishlist={wishlist}

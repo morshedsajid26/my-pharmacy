@@ -327,8 +327,8 @@ export default function SalesPage() {
 
         {/* Right Column: Basket & Summary */}
         <div className="space-y-6 lg:sticky lg:top-20">
-          <div className="flex flex-col h-[calc(100vh-165px)] bg-white rounded-xl border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
-            <div className="p-4 border-b border-slate-50 flex items-center justify-between shrink-0">
+          <div className="flex flex-col h-[calc(100vh-165px)] bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-medical-blue-50 rounded-lg">
                      <ShoppingCart size={20} className="text-medical-blue-600" />

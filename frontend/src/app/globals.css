@@ -1,36 +1,45 @@
 @import "tailwindcss";
 
 @theme {
-  --color-medical-blue-50: #eff6ff;
-  --color-medical-blue-100: #dbeafe;
-  --color-medical-blue-200: #bfdbfe;
-  --color-medical-blue-300: #93c5fd;
-  --color-medical-blue-400: #60a5fa;
-  --color-medical-blue-500: #3b82f6;
-  --color-medical-blue-600: #2563eb;
-  --color-medical-blue-700: #1d4ed8;
-  --color-medical-blue-800: #1e40af;
-  --color-medical-blue-900: #1e3a8a;
+  /* Real-World Clinical Teal Palette (Arogga / Practo / Modern Pharmacy Standard) */
+  --color-medical-blue-50: #f0fdfa;
+  --color-medical-blue-100: #ccfbf1;
+  --color-medical-blue-200: #99f6e4;
+  --color-medical-blue-300: #5eead4;
+  --color-medical-blue-400: #2dd4bf;
+  --color-medical-blue-500: #14b8a6;
+  --color-medical-blue-600: #0d9488;
+  --color-medical-blue-700: #0f766e;
+  --color-medical-blue-800: #115e59;
+  --color-medical-blue-900: #134e4a;
 
-  --color-medical-green-50: #f0fdf4;
-  --color-medical-green-100: #dcfce7;
-  --color-medical-green-200: #bbf7d0;
-  --color-medical-green-300: #86efac;
-  --color-medical-green-400: #4ade80;
-  --color-medical-green-500: #22c55e;
-  --color-medical-green-600: #16a34a;
-  --color-medical-green-700: #15803d;
-  --color-medical-green-800: #166534;
-  --color-medical-green-900: #14532d;
+  /* Clean Emerald Semantic Accents */
+  --color-medical-green-50: #ecfdf5;
+  --color-medical-green-100: #d1fae5;
+  --color-medical-green-200: #a7f3d0;
+  --color-medical-green-300: #6ee7b7;
+  --color-medical-green-400: #34d399;
+  --color-medical-green-500: #10b981;
+  --color-medical-green-600: #059669;
+  --color-medical-green-700: #047857;
+  --color-medical-green-800: #065f46;
+  --color-medical-green-900: #064e3b;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 @media print {
-  /* Set html & body to hidden by default but ensure background is white */
   html, body {
     visibility: hidden !important;
     background: white !important;
@@ -39,13 +48,11 @@ body {
     height: auto !important;
   }
 
-  /* Remove default browser print headers and footers (date, title, page numbers) */
   @page {
     size: auto;
     margin: 0mm;
   }
 
-  /* Collapse the visual height of all other layout containers so they don't force page breaks */
   main, aside, header, nav, footer, button, .no-print, div[role="dialog"] {
     display: block !important;
     height: 0 !important;
@@ -57,7 +64,6 @@ body {
     box-shadow: none !important;
   }
 
-  /* Render receipt cleanly */
   #print-area, #print-area * {
     visibility: visible !important;
   }
@@ -72,7 +78,6 @@ body {
     box-shadow: none !important;
   }
 
-  /* Standard 76mm Thermal Paper Receipt */
   #print-area.receipt-width {
     width: 76mm !important;
     max-width: 76mm !important;
@@ -81,35 +86,25 @@ body {
     font-family: monospace !important;
   }
 
-  /* Full Page A4 Printout */
   #print-area.a4-width {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 100 !important;
     padding: 15mm !important;
     margin: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   }
 }
 
-button{
+button {
   cursor: pointer;
 }
 
-@keyframes float {
-  0% { transform: translateY(0px) rotate(var(--tw-rotate)); }
-  50% { transform: translateY(-20px) rotate(var(--tw-rotate)); }
-  100% { transform: translateY(0px) rotate(var(--tw-rotate)); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
+  animation: fadeInUp 0.4s ease-out forwards;
 }
 
 @keyframes marquee {
@@ -117,5 +112,5 @@ button{
   100% { transform: translateX(-50%); }
 }
 .animate-marquee {
-  animation: marquee 25s linear infinite;
+  animation: marquee 30s linear infinite;
 }

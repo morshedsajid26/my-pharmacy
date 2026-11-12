@@ -21,22 +21,20 @@ import { useCustomers } from "@/hooks/useCustomers";
 import toast from "react-hot-toast";
 
 // Unified design summary card to match dashboard page
-const StatCard = ({ title, value, icon: IconComponent, gradientFrom, gradientTo, isCurrency = false }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-xl shadow-slate-100/50 hover:shadow-2xl hover:shadow-slate-200/50 hover:translate-y-[-4px] transition-all duration-300 group flex items-center justify-between">
-    <div className="space-y-2">
-      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+const StatCard = ({ title, value, icon: IconComponent, isCurrency = false }) => (
+  <div className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 transition-colors flex items-center justify-between">
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold text-slate-500">
         {title}
       </p>
-      <h3 className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+      <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
         {isCurrency
           ? `৳${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           : Number(value || 0).toLocaleString()}
       </h3>
     </div>
-    <div
-      className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${gradientFrom} ${gradientTo} flex items-center justify-center shrink-0 shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
-    >
-      <IconComponent size={22} className="text-white" />
+    <div className="w-10 h-10 rounded-lg bg-medical-blue-50 border border-medical-blue-100 flex items-center justify-center shrink-0 text-medical-blue-600">
+      <IconComponent size={18} />
     </div>
   </div>
 );
