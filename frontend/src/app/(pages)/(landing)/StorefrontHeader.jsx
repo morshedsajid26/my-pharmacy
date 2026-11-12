@@ -9,9 +9,6 @@ import {
   ShoppingBag,
   Search,
   X,
-  ShieldCheck,
-  Clock,
-  PhoneCall,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -48,36 +45,6 @@ export default function StorefrontHeader({
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 transition-all">
-      {/* Top Clinical Utility Bar - Neutral Slate */}
-      <div className="hidden md:block bg-slate-900 text-slate-300 text-[11px] border-b border-slate-800">
-        <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <span className="flex items-center gap-1.5 font-medium text-white">
-              <ShieldCheck className="w-3.5 h-3.5 text-medical-blue-400" />
-              DGDA Licensed Model Pharmacy (#2349-D)
-            </span>
-            <span className="text-slate-700">|</span>
-            <span className="text-slate-400">
-              100% Direct Manufacturer Sourced
-            </span>
-          </div>
-          <div className="flex items-center gap-5 text-slate-300">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <Clock className="w-3 h-3 text-medical-blue-400" />
-              Express Delivery: 45–60 mins across Dhaka
-            </span>
-            <span className="text-slate-700">|</span>
-            <a
-              href="tel:+8801756899699"
-              className="flex items-center gap-1.5 text-white font-medium hover:text-medical-blue-300 transition-colors"
-            >
-              <PhoneCall className="w-3 h-3 text-medical-blue-400" />
-              Helpline: 01756-899699
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation Bar */}
       <div className="max-w-[95%] xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-[70px] flex items-center justify-between gap-3 sm:gap-6">
         {/* Brand Identity */}

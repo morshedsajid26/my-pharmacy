@@ -166,13 +166,7 @@ export default function DashboardPage() {
             Real-time financial metrics, stock valuation, and inventory alerts
           </p>
         </div>
-        <Link
-          href="/sales"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-medical-blue-600 hover:bg-medical-blue-700 text-white text-xs font-semibold transition-colors self-start sm:self-auto"
-        >
-          <span>Open POS Terminal</span>
-          <ArrowUpRight size={14} />
-        </Link>
+       
       </div>
 
       {/* Summary KPI Cards (Mapped) */}

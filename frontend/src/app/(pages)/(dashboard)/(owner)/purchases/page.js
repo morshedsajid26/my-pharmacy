@@ -26,11 +26,134 @@ export default function PurchasesPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [purchaseDiscount, setPurchaseDiscount] = useState(0);
 
-  const defaultCompanies = ["Beximco Pharma", "Square Pharma", "Healthcare Pharma", "Incepta"];
   const companies = useMemo(() => {
-    const all = new Set([...defaultCompanies, ...(purchases || []).map(p => p.supplier).filter(Boolean)]);
-    return Array.from(all);
-  }, [purchases]);
+    const all = new Set(
+      (medicines || [])
+        .map((m) => m.company?.trim())
+        .filter(Boolean)
+    );
+    (purchases || []).forEach((p) => {
+      const s = p.supplier?.trim();
+      if (s) all.add(s);
+    });
+    return Array.from(all).sort((a, b) => a.localeCompare(b));
+  }, [purchases, medicines]);
+
+  const activeCompany = selectedCompany === "new" ? newCompanyText.trim() : selectedCompany;
+
+  const handleCompanyChange = (val) => {
+    setSelectedCompany(val);
+    if (val !== "new") {
+      setNewCompanyText("");
+    }
+    const newTarget = (val === "new" ? "" : val).toLowerCase().trim();
+    if (newTarget) {
+      setPurchaseItems((prev) =>
+        prev.map((item) => {
+          if (!item.medicineId || item.isNew) return item;
+          const med = (medicines || []).find(
+            (m) => m.id.toString() === item.medicineId.toString()
+          );
+          if (med) {
+            const comp = (med.company || "").toLowerCase().trim();
+            if (
+              comp !== newTarget &&
+              !comp.includes(newTarget) &&
+              !newTarget.includes(comp)
+            ) {
+              return {
+                ...item,
+                medicineId: "",
+                name: "",
+                genericName: "",
+                price: 0,
+                sellingPrice: 0,
+              };
+            }
+          }
+          return item;
+        })
+      );
+    }
+  };
+
+  const handleMedicineSelect = (index, val) => {
+    if (!val) return;
+    if (val === "new") {
+      const updated = [...purchaseItems];
+      updated[index] = {
+        ...updated[index],
+        isNew: true,
+        medicineId: "new",
+        name: "",
+        genericName: "",
+        category: "Tablet",
+      };
+      setPurchaseItems(updated);
+    } else {
+      const med = (medicines || []).find((m) => m.id.toString() === val.toString());
+      const updated = [...purchaseItems];
+      updated[index] = {
+        ...updated[index],
+        medicineId: val,
+        isNew: false,
+        name: med ? med.name : updated[index].name,
+        genericName: med ? (med.genericName || "") : updated[index].genericName,
+        category: med ? (med.category || "Tablet") : updated[index].category,
+        price: med && (med.purchasePrice !== undefined && med.purchasePrice !== null) ? med.purchasePrice : updated[index].price,
+        sellingPrice: med && (med.sellingPrice !== undefined && med.sellingPrice !== null) ? med.sellingPrice : updated[index].sellingPrice,
+      };
+      setPurchaseItems(updated);
+    }
+  };
+
+  const getMedicineOptionsForRow = (item) => {
+    if (!activeCompany) {
+      return [
+        { label: "⚠️ Please select a company first", value: "" },
+        { label: "+ Add New Medicine", value: "new" },
+      ];
+    }
+
+    const target = activeCompany.toLowerCase().trim();
+    const matched = (medicines || []).filter((m) => {
+      const comp = (m.company || "").toLowerCase().trim();
+      return comp === target || comp.includes(target) || target.includes(comp);
+    });
+
+    const opts = [
+      { label: "+ Add New Medicine", value: "new" },
+      ...matched.map((m) => ({
+        label: `${m.name} (${m.category || "Tablet"})`,
+        value: m.id.toString(),
+      })),
+    ];
+
+    if (matched.length === 0) {
+      opts.splice(1, 0, {
+        label: `No saved medicines found for "${activeCompany}"`,
+        value: "",
+      });
+    }
+
+    if (
+      item.medicineId &&
+      item.medicineId !== "new" &&
+      !opts.some((o) => o.value === item.medicineId.toString())
+    ) {
+      const currentMed = (medicines || []).find(
+        (m) => m.id.toString() === item.medicineId.toString()
+      );
+      if (currentMed) {
+        opts.push({
+          label: `${currentMed.name} (${currentMed.category || "Tablet"})`,
+          value: currentMed.id.toString(),
+        });
+      }
+    }
+
+    return opts;
+  };
 
   const columns = useMemo(() => [
     { key: "id", Title: "Purchase ID", render: (row) => <span className="font-bold text-medical-blue-600">#{row.id}</span> },
@@ -191,12 +314,7 @@ export default function PurchasesPage() {
                 <Dropdown 
                   label="Supplier Company" 
                   value={selectedCompany}
-                  onSelect={(val) => {
-                    setSelectedCompany(val);
-                    if (val !== "new") {
-                      setNewCompanyText("");
-                    }
-                  }}
+                  onSelect={handleCompanyChange}
                   placeholder="Select Company"
                   options={[
                     { label: "+ Add New Company", value: "new" },
@@ -279,18 +397,9 @@ export default function PurchasesPage() {
                           <div>
                             <Dropdown 
                               value={item.medicineId}
-                              onSelect={(val) => {
-                                if (val === "new") {
-                                  updateItem(index, "isNew", true);
-                                } else {
-                                  updateItem(index, "medicineId", val);
-                                }
-                              }}
-                              placeholder="Select Medicine"
-                              options={[
-                                { label: "+ Add New Medicine", value: "new" },
-                                ...(medicines || []).map(m => ({ label: m.name, value: m.id.toString() }))
-                              ]} 
+                              onSelect={(val) => handleMedicineSelect(index, val)}
+                              placeholder={!activeCompany ? "Select Company First" : "Select Medicine"}
+                              options={getMedicineOptionsForRow(item)} 
                             />
                           </div>
                         )}
