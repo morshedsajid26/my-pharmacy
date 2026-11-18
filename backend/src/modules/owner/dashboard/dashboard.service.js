@@ -14,8 +14,10 @@ export const getDashboardSummaryService = async () => {
     totalDeliveryChargeAgg,
     monthlyOnlineSalesAgg,
     monthlyShopSalesAgg,
+    monthlyPurchaseAgg,
     yearlyOnlineSalesAgg,
     yearlyShopSalesAgg,
+    yearlyPurchaseAgg,
     totalTransactions,
   ] = await Promise.all([
     prisma.sale.aggregate({
@@ -35,18 +37,26 @@ export const getDashboardSummaryService = async () => {
     }),
     prisma.sale.aggregate({
       where: { date: { gte: startOfMonth }, isOnline: true },
-      _sum: { totalAmount: true },
+      _sum: { totalAmount: true, profit: true },
     }),
     prisma.sale.aggregate({
       where: { date: { gte: startOfMonth }, isOnline: false },
+      _sum: { totalAmount: true, profit: true },
+    }),
+    prisma.purchase.aggregate({
+      where: { date: { gte: startOfMonth } },
       _sum: { totalAmount: true },
     }),
     prisma.sale.aggregate({
       where: { date: { gte: startOfYear }, isOnline: true },
-      _sum: { totalAmount: true },
+      _sum: { totalAmount: true, profit: true },
     }),
     prisma.sale.aggregate({
       where: { date: { gte: startOfYear }, isOnline: false },
+      _sum: { totalAmount: true, profit: true },
+    }),
+    prisma.purchase.aggregate({
+      where: { date: { gte: startOfYear } },
       _sum: { totalAmount: true },
     }),
     prisma.sale.count(),
@@ -58,17 +68,26 @@ export const getDashboardSummaryService = async () => {
 
   const mOnlineSales = monthlyOnlineSalesAgg._sum.totalAmount || 0;
   const mShopSales = monthlyShopSalesAgg._sum.totalAmount || 0;
+  const mOnlineProfit = monthlyOnlineSalesAgg._sum.profit || 0;
+  const mShopProfit = monthlyShopSalesAgg._sum.profit || 0;
+
   const yOnlineSales = yearlyOnlineSalesAgg._sum.totalAmount || 0;
   const yShopSales = yearlyShopSalesAgg._sum.totalAmount || 0;
+  const yOnlineProfit = yearlyOnlineSalesAgg._sum.profit || 0;
+  const yShopProfit = yearlyShopSalesAgg._sum.profit || 0;
 
   return {
     todaySales: todaySales._sum.totalAmount || 0,
     todayProfit: todaySales._sum.profit || 0,
     todayPurchase: todayPurchase._sum.totalAmount || 0,
     monthlySales: mOnlineSales + mShopSales,
+    monthlyPurchase: monthlyPurchaseAgg._sum.totalAmount || 0,
+    monthlyProfit: mOnlineProfit + mShopProfit,
     monthlyOnlineSales: mOnlineSales,
     monthlyShopSales: mShopSales,
     yearlySales: yOnlineSales + yShopSales,
+    yearlyPurchase: yearlyPurchaseAgg._sum.totalAmount || 0,
+    yearlyProfit: yOnlineProfit + yShopProfit,
     yearlyOnlineSales: yOnlineSales,
     yearlyShopSales: yShopSales,
     totalStockValue,
@@ -80,44 +99,81 @@ export const getDashboardSummaryService = async () => {
   };
 };
 
-export const getChartDataService = async (range = 'month') => {
+export const getChartDataService = async (range = 'month', reqYear, reqMonth) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const chartData = [];
   const now = new Date();
 
   if (range === 'day') {
-    for (let i = 6; i >= 0; i--) {
-      const dayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      dayDate.setHours(0, 0, 0, 0);
-      const nextDayDate = new Date(dayDate);
-      nextDayDate.setDate(dayDate.getDate() + 1);
+    const targetYear = reqYear ? parseInt(reqYear, 10) : now.getFullYear();
+    const targetMonth = reqMonth !== undefined && reqMonth !== null ? parseInt(reqMonth, 10) : now.getMonth();
 
-      const [dailyOnlineSales, dailyShopSales, dailyPurchase] = await Promise.all([
-        prisma.sale.aggregate({
-          where: { date: { gte: dayDate, lt: nextDayDate }, isOnline: true },
-          _sum: { totalAmount: true, profit: true },
-        }),
-        prisma.sale.aggregate({
-          where: { date: { gte: dayDate, lt: nextDayDate }, isOnline: false },
-          _sum: { totalAmount: true, profit: true },
-        }),
-        prisma.purchase.aggregate({
-          where: { date: { gte: dayDate, lt: nextDayDate } },
-          _sum: { totalAmount: true },
-        }),
-      ]);
+    // If current year and month, only calculate days that have occurred up to today; otherwise, full month days
+    const isCurrentMonth = targetYear === now.getFullYear() && targetMonth === now.getMonth();
+    const daysToShow = isCurrentMonth ? now.getDate() : new Date(targetYear, targetMonth + 1, 0).getDate();
 
-      const label = dayDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
-      const onlineAmt = dailyOnlineSales._sum.totalAmount || 0;
-      const shopAmt = dailyShopSales._sum.totalAmount || 0;
+    const startOfMonth = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+    const endOfPeriod = isCurrentMonth
+      ? new Date(targetYear, targetMonth, now.getDate() + 1, 0, 0, 0, 0)
+      : new Date(targetYear, targetMonth + 1, 1, 0, 0, 0, 0);
+
+    const [monthSales, monthPurchases] = await Promise.all([
+      prisma.sale.findMany({
+        where: {
+          date: {
+            gte: startOfMonth,
+            lt: endOfPeriod,
+          },
+        },
+        select: {
+          date: true,
+          totalAmount: true,
+          profit: true,
+          isOnline: true,
+        },
+      }),
+      prisma.purchase.findMany({
+        where: {
+          date: {
+            gte: startOfMonth,
+            lt: endOfPeriod,
+          },
+        },
+        select: {
+          date: true,
+          totalAmount: true,
+        },
+      }),
+    ]);
+
+    const monthName = months[targetMonth];
+
+    for (let day = 1; day <= daysToShow; day++) {
+      const dayDate = new Date(targetYear, targetMonth, day);
+
+      const daySales = monthSales.filter((s) => new Date(s.date).getDate() === day);
+      const dayPurchases = monthPurchases.filter((p) => new Date(p.date).getDate() === day);
+
+      const onlineAmt = daySales
+        .filter((s) => s.isOnline)
+        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const shopAmt = daySales
+        .filter((s) => !s.isOnline)
+        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+      const totalProfit = daySales.reduce((sum, s) => sum + (s.profit || 0), 0);
+      const totalPurchase = dayPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+
+      const label = `${day} ${monthName}`;
 
       chartData.push({
         name: label,
+        day,
+        date: dayDate.toISOString().split('T')[0],
         sales: onlineAmt + shopAmt,
         onlineSales: onlineAmt,
         shopSales: shopAmt,
-        purchase: dailyPurchase._sum.totalAmount || 0,
-        profit: (dailyOnlineSales._sum.profit || 0) + (dailyShopSales._sum.profit || 0),
+        purchase: totalPurchase,
+        profit: totalProfit,
       });
     }
   } else if (range === 'year') {

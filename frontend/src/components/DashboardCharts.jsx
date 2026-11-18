@@ -99,7 +99,7 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
           }
           subtitle={
             activeRange === "day"
-              ? "Last 7 days gross sales compared to purchase outlay"
+              ? `Current month daily sales vs. purchase (Day 1 - ${salesData?.length || new Date().getDate()})`
               : activeRange === "year"
                 ? "5-year revenue vs. procurement comparison"
                 : "12-month revenue vs. procurement comparison"
@@ -126,6 +126,7 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  interval={activeRange === "day" && salesData?.length > 14 ? "preserveStartEnd" : 0}
                   tick={{ fill: "#64748b", fontWeight: 500 }}
                 />
                 <YAxis
@@ -144,14 +145,14 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
                   dataKey="sales"
                   fill="#0d9488"
                   radius={[4, 4, 0, 0]}
-                  barSize={activeRange === "day" ? 30 : 20}
+                  maxBarSize={activeRange === "day" ? (salesData?.length > 15 ? 14 : 26) : 22}
                 />
                 <Bar
                   name="Purchase"
                   dataKey="purchase"
                   fill="#94a3b8"
                   radius={[4, 4, 0, 0]}
-                  barSize={activeRange === "day" ? 30 : 20}
+                  maxBarSize={activeRange === "day" ? (salesData?.length > 15 ? 14 : 26) : 22}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -169,7 +170,7 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
           }
           subtitle={
             activeRange === "day"
-              ? "Realized daily net earnings"
+              ? `Current month daily net earnings (Day 1 - ${salesData?.length || new Date().getDate()})`
               : activeRange === "year"
                 ? "Realized annual net earnings"
                 : "Realized net earnings over the past 12 months"
@@ -196,6 +197,7 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  interval={activeRange === "day" && salesData?.length > 14 ? "preserveStartEnd" : 0}
                   tick={{ fill: "#64748b", fontWeight: 500 }}
                 />
                 <YAxis
@@ -213,7 +215,7 @@ export function DashboardCharts({ salesData, activeRange, onRangeChange }) {
                   stroke="#0d9488"
                   strokeWidth={2.5}
                   dot={{
-                    r: 3.5,
+                    r: activeRange === "day" && salesData?.length > 15 ? 2.5 : 3.5,
                     stroke: "#fff",
                     strokeWidth: 2,
                     fill: "#0d9488",

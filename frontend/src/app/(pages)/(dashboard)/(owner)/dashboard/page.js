@@ -70,7 +70,7 @@ const SummaryCard = ({
 );
 
 export default function DashboardPage() {
-  const [range, setRange] = useState("month");
+  const [range, setRange] = useState("day");
   const { summary, isLoading: isSummaryLoading } = useReports();
   const { charts, isLoading: isChartLoading } = useChartData(range);
 
@@ -91,6 +91,12 @@ export default function DashboardPage() {
     todaySales: 0,
     todayPurchase: 0,
     todayProfit: 0,
+    monthlySales: 0,
+    monthlyPurchase: 0,
+    monthlyProfit: 0,
+    yearlySales: 0,
+    yearlyPurchase: 0,
+    yearlyProfit: 0,
     totalStockValue: 0,
     lowStockCount: 0,
     stockOutCount: 0,
@@ -98,26 +104,81 @@ export default function DashboardPage() {
 
   const salesData = charts?.monthlyData || [];
 
+  const getPeriodStats = () => {
+    if (range === "day") {
+      return {
+        salesTitle: "Today Total Sales",
+        salesSubtitle: "POS & online fulfilled today",
+        salesValue: stats.todaySales ?? 0,
+        purchaseTitle: "Today Purchase",
+        purchaseSubtitle: "Inventory procurement today",
+        purchaseValue: stats.todayPurchase ?? 0,
+        profitTitle: "Today Net Profit",
+        profitSubtitle: "Realized net margin today",
+        profitValue: stats.todayProfit ?? 0,
+      };
+    }
+    if (range === "year") {
+      return {
+        salesTitle: "Yearly Total Sales",
+        salesSubtitle: "POS & online fulfilled this year",
+        salesValue:
+          stats.yearlySales ??
+          (salesData?.reduce((acc, curr) => acc + (curr.sales || 0), 0) || 0),
+        purchaseTitle: "Yearly Purchase",
+        purchaseSubtitle: "Inventory procurement this year",
+        purchaseValue:
+          stats.yearlyPurchase ??
+          (salesData?.reduce((acc, curr) => acc + (curr.purchase || 0), 0) || 0),
+        profitTitle: "Yearly Net Profit",
+        profitSubtitle: "Realized net margin this year",
+        profitValue:
+          stats.yearlyProfit ??
+          (salesData?.reduce((acc, curr) => acc + (curr.profit || 0), 0) || 0),
+      };
+    }
+    // Default: 'month'
+    return {
+      salesTitle: "Monthly Total Sales",
+      salesSubtitle: "POS & online fulfilled this month",
+      salesValue:
+        stats.monthlySales ??
+        (salesData?.reduce((acc, curr) => acc + (curr.sales || 0), 0) || 0),
+      purchaseTitle: "Monthly Purchase",
+      purchaseSubtitle: "Inventory procurement this month",
+      purchaseValue:
+        stats.monthlyPurchase ??
+        (salesData?.reduce((acc, curr) => acc + (curr.purchase || 0), 0) || 0),
+      profitTitle: "Monthly Net Profit",
+      profitSubtitle: "Realized net margin this month",
+      profitValue:
+        stats.monthlyProfit ??
+        (salesData?.reduce((acc, curr) => acc + (curr.profit || 0), 0) || 0),
+    };
+  };
+
+  const periodStats = getPeriodStats();
+
   const summaryItems = [
     {
-      title: "Today Total Sales",
-      subtitle: "POS & online fulfilled revenue",
-      value: stats.todaySales,
+      title: periodStats.salesTitle,
+      subtitle: periodStats.salesSubtitle,
+      value: periodStats.salesValue,
       icon: ShoppingCart,
       accentClass:
         "bg-medical-blue-50 text-medical-blue-600 border-medical-blue-100",
     },
     {
-      title: "Today Purchase",
-      subtitle: "Inventory procurement cost",
-      value: stats.todayPurchase,
+      title: periodStats.purchaseTitle,
+      subtitle: periodStats.purchaseSubtitle,
+      value: periodStats.purchaseValue,
       icon: Truck,
       accentClass: "bg-slate-100 text-slate-700 border-slate-200/80",
     },
     {
-      title: "Today Net Profit",
-      subtitle: "Realized net margin today",
-      value: stats.todayProfit,
+      title: periodStats.profitTitle,
+      subtitle: periodStats.profitSubtitle,
+      value: periodStats.profitValue,
       icon: BarChart3,
       accentClass: "bg-emerald-50 text-emerald-700 border-emerald-200/70",
     },
@@ -157,7 +218,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Dispensary Overview
@@ -166,7 +227,27 @@ export default function DashboardPage() {
             Real-time financial metrics, stock valuation, and inventory alerts
           </p>
         </div>
-       
+
+        {/* Range Selector Header Tabs */}
+        <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200/70 p-1 rounded-xl self-start sm:self-auto shadow-2xs">
+          {[
+            { id: "day", label: "Daily" },
+            { id: "month", label: "Monthly" },
+            { id: "year", label: "Yearly" },
+          ].map((r) => (
+            <button
+              key={r.id}
+              onClick={() => setRange(r.id)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                range === r.id
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Summary KPI Cards (Mapped) */}

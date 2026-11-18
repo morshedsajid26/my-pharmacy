@@ -10,6 +10,9 @@ import {
   MapPin,
   Loader2,
   User,
+  Crosshair,
+  Navigation,
+  ExternalLink,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -17,9 +20,17 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCreateOnlineOrder } from "@/hooks/useCustomerPortal";
 import { useRouter } from "next/navigation";
+import {
+  getCurrentDevicePosition,
+  reverseGeocode,
+  formatAddressWithCoordinates,
+  parseLocationFromAddress,
+  deduplicateAddresses,
+  isSameLocation,
+} from "@/lib/locationUtils";
 
 export default function CartDrawer() {
-  const { customer } = useAuth();
+  const { customer, updateProfile } = useAuth();
   const { createOrder } = useCreateOnlineOrder();
   const {
     cart,
@@ -40,7 +51,100 @@ export default function CartDrawer() {
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [exactAddressPrompt, setExactAddressPrompt] = useState({
+    isOpen: false,
+    coords: null,
+    houseFlat: "",
+    roadBlock: "",
+    areaCity: "",
+    landmark: "",
+  });
   const router = useRouter();
+
+  const handleUseCurrentLocation = async () => {
+    if (!customer) {
+      setIsCartOpen(false);
+      router.push("/login?redirect=cart");
+      return toast.error("Please sign in first to save your location");
+    }
+
+    setDetectingLocation(true);
+    try {
+      toast.loading("Detecting device GPS location...", { id: "cart-geo" });
+      const { latitude, longitude } = await getCurrentDevicePosition();
+      
+      toast.loading("Resolving street and area details...", { id: "cart-geo" });
+      const geo = await reverseGeocode(latitude, longitude);
+      toast.dismiss("cart-geo");
+
+      setExactAddressPrompt({
+        isOpen: true,
+        coords: { lat: latitude, lng: longitude },
+        houseFlat: geo.houseNumber ? `House ${geo.houseNumber}` : "",
+        roadBlock: geo.road || "",
+        areaCity: geo.area ? `${geo.area}, ${geo.city || "Dhaka"}` : (geo.readable || "Dhaka"),
+        landmark: "",
+      });
+      toast.success("GPS pinned! Please confirm House & Flat details.");
+    } catch (err) {
+      toast.dismiss("cart-geo");
+      toast.error(err.message || "Could not detect device location");
+    } finally {
+      setDetectingLocation(false);
+    }
+  };
+
+  const handleSaveExactAddress = async () => {
+    const parts = [];
+    if (exactAddressPrompt.houseFlat.trim()) parts.push(exactAddressPrompt.houseFlat.trim());
+    if (exactAddressPrompt.roadBlock.trim()) parts.push(exactAddressPrompt.roadBlock.trim());
+    if (exactAddressPrompt.areaCity.trim()) parts.push(exactAddressPrompt.areaCity.trim());
+    
+    let fullText = parts.filter(Boolean).join(", ");
+    if (exactAddressPrompt.landmark.trim()) {
+      fullText += ` (${exactAddressPrompt.landmark.trim()})`;
+    }
+
+    if (!fullText.trim()) {
+      fullText = "Current GPS Location";
+    }
+
+    const formatted = formatAddressWithCoordinates(
+      fullText,
+      exactAddressPrompt.coords.lat,
+      exactAddressPrompt.coords.lng
+    );
+
+    let currentList = [];
+    if (customer.address) {
+      try {
+        const parsed = JSON.parse(customer.address);
+        if (Array.isArray(parsed)) currentList = parsed;
+        else currentList = [customer.address];
+      } catch {
+        currentList = [customer.address];
+      }
+    }
+
+    const cleanExisting = deduplicateAddresses(currentList);
+    const updatedList = [formatted, ...cleanExisting.filter((a) => !isSameLocation(a, formatted))];
+    
+    if (typeof updateProfile === "function") {
+      await updateProfile({ address: updatedList });
+    }
+
+    setSelectedAddressIndex(0);
+    setExactAddressPrompt({
+      isOpen: false,
+      coords: null,
+      houseFlat: "",
+      roadBlock: "",
+      areaCity: "",
+      landmark: "",
+    });
+    toast.success("Exact delivery address saved and selected!");
+  };
 
   if (!isCartOpen) return null;
 
@@ -53,26 +157,131 @@ export default function CartDrawer() {
       );
     }
 
-    const savedAddresses = [];
+    const rawSavedAddresses = [];
     if (customer.address) {
       try {
         const parsed = JSON.parse(customer.address);
         if (Array.isArray(parsed)) {
-          savedAddresses.push(...parsed);
+          rawSavedAddresses.push(...parsed);
         } else {
-          savedAddresses.push(customer.address);
+          rawSavedAddresses.push(customer.address);
         }
       } catch (e) {
-        savedAddresses.push(customer.address);
+        rawSavedAddresses.push(customer.address);
       }
     }
+    const savedAddresses = deduplicateAddresses(rawSavedAddresses);
 
     return (
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-          <span>Deliver to:</span>
-          <span className="text-slate-800 font-extrabold">{customer.name}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <span>Deliver to:</span>
+            <span className="text-slate-800 font-extrabold">{customer.name}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={detectingLocation}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-medical-blue-600 hover:text-medical-blue-700 bg-medical-blue-50 hover:bg-medical-blue-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer border border-medical-blue-200/50"
+            title="Detect and use current device location"
+          >
+            {detectingLocation ? <Loader2 size={11} className="animate-spin" /> : <Crosshair size={11} />}
+            <span>Deliver Here (GPS)</span>
+          </button>
         </div>
+
+        {/* Exact Delivery Address Details Form (when GPS button is clicked) */}
+        {exactAddressPrompt.isOpen && (
+          <div className="bg-white p-3.5 rounded-2xl border-2 border-medical-blue-500 shadow-md space-y-3 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800">
+                <MapPin size={14} className="text-medical-blue-600" />
+                <span>Exact Delivery Address Details</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>GPS Pinned</span>
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-tight">
+              GPS has detected your area. Please add your House/Flat number so the rider can easily reach your door:
+            </p>
+
+            <div className="space-y-2 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  House / Flat / Floor No. <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. House 14, Flat 4B, 3rd Floor"
+                  value={exactAddressPrompt.houseFlat}
+                  onChange={(e) => setExactAddressPrompt({ ...exactAddressPrompt, houseFlat: e.target.value })}
+                  className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500 outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  Road / Block / Sector
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Road 5, Block B, Mirpur 10"
+                  value={exactAddressPrompt.roadBlock}
+                  onChange={(e) => setExactAddressPrompt({ ...exactAddressPrompt, roadBlock: e.target.value })}
+                  className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  Area / City (Auto-detected from GPS)
+                </label>
+                <input
+                  type="text"
+                  value={exactAddressPrompt.areaCity}
+                  onChange={(e) => setExactAddressPrompt({ ...exactAddressPrompt, areaCity: e.target.value })}
+                  className="w-full h-9 px-3 border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  Landmark / Note for Rider (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Near Mosque / Beside ATM booth"
+                  value={exactAddressPrompt.landmark}
+                  onChange={(e) => setExactAddressPrompt({ ...exactAddressPrompt, landmark: e.target.value })}
+                  className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-medical-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setExactAddressPrompt({ isOpen: false, coords: null, houseFlat: "", roadBlock: "", areaCity: "", landmark: "" })}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveExactAddress}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-medical-blue-600 hover:bg-medical-blue-700 transition-all shadow-sm cursor-pointer"
+              >
+                Save & Deliver Here
+              </button>
+            </div>
+          </div>
+        )}
 
         {savedAddresses.length > 0 ? (
           <div className="border-t border-slate-200/50 pt-3 space-y-2">
@@ -82,27 +291,51 @@ export default function CartDrawer() {
             </span>
 
             <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-              {savedAddresses.map((addr, idx) => (
-                <label
-                  key={idx}
-                  className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                    selectedAddressIndex === idx
-                      ? "bg-medical-blue-50/50 border-medical-blue-300 text-medical-blue-900 font-bold"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="checkout_address"
-                    checked={selectedAddressIndex === idx}
-                    onChange={() => setSelectedAddressIndex(idx)}
-                    className="mt-0.5 text-medical-blue-600 focus:ring-medical-blue-500"
-                  />
-                  <span className="leading-tight break-words max-w-[210px]">
-                    {addr}
-                  </span>
-                </label>
-              ))}
+              {savedAddresses.map((addr, idx) => {
+                const loc = parseLocationFromAddress(addr);
+                return (
+                  <label
+                    key={idx}
+                    className={`flex items-start justify-between gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                      selectedAddressIndex === idx
+                        ? "bg-medical-blue-50/50 border-medical-blue-300 text-medical-blue-900 font-bold"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2 min-w-0">
+                      <input
+                        type="radio"
+                        name="checkout_address"
+                        checked={selectedAddressIndex === idx}
+                        onChange={() => setSelectedAddressIndex(idx)}
+                        className="mt-0.5 text-medical-blue-600 focus:ring-medical-blue-500"
+                      />
+                      <div className="space-y-0.5 min-w-0">
+                        <span className="leading-tight break-words max-w-[190px] block font-semibold text-slate-800">
+                          {loc.cleanAddress}
+                        </span>
+                        {loc.hasCoordinates && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>GPS Pinned</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <a
+                      href={loc.directionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-slate-400 hover:text-medical-blue-600 p-1 shrink-0 transition-colors"
+                      title="View directions on Google Maps"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+                  </label>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -112,17 +345,27 @@ export default function CartDrawer() {
                 ⚠️ No saved address found!
               </span>
               <p className="leading-relaxed">
-                You must register at least one delivery address in your profile
-                to checkout.
+                Save your current location instantly or register an address in your profile.
               </p>
             </div>
+            
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={detectingLocation}
+              className="w-full py-2.5 px-3 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold text-xs text-center transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {detectingLocation ? <Loader2 size={13} className="animate-spin" /> : <Crosshair size={13} />}
+              <span>Use Current Device Location</span>
+            </button>
+
             <Link
               href="/profile"
               onClick={() => setIsCartOpen(false)}
-              className="w-full py-2.5 px-3 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold text-xs text-center transition-all shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs text-center transition-all flex items-center justify-center gap-1.5"
             >
               <User size={12} />
-              <span>Go to Profile to Add Address</span>
+              <span>Go to Profile</span>
             </Link>
           </div>
         )}
@@ -141,19 +384,20 @@ export default function CartDrawer() {
       return toast.error("Your cart is empty!");
     }
 
-    let savedAddresses = [];
+    let rawSavedAddresses = [];
     if (customer.address) {
       try {
         const parsed = JSON.parse(customer.address);
         if (Array.isArray(parsed)) {
-          savedAddresses.push(...parsed);
+          rawSavedAddresses.push(...parsed);
         } else {
-          savedAddresses.push(customer.address);
+          rawSavedAddresses.push(customer.address);
         }
       } catch (e) {
-        savedAddresses.push(customer.address);
+        rawSavedAddresses.push(customer.address);
       }
     }
+    const savedAddresses = deduplicateAddresses(rawSavedAddresses);
 
     if (savedAddresses.length === 0) {
       return toast.error(

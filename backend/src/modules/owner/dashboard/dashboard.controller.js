@@ -11,7 +11,11 @@ export const getDashboardSummary = async (req, res) => {
 
 export const getChartData = async (req, res) => {
   try {
-    const data = await dashboardService.getChartDataService(req.query.range);
+    const data = await dashboardService.getChartDataService(
+      req.query.range,
+      req.query.year,
+      req.query.month
+    );
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

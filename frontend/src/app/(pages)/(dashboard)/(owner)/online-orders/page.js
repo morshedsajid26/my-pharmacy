@@ -11,14 +11,17 @@ import {
   FileText, 
   Calendar,
   Eye, 
-  RefreshCw,
-  AlertCircle,
-  Package,
-  User,
-  Loader2
+  RefreshCw, 
+  AlertCircle, 
+  Package, 
+  User, 
+  Loader2,
+  Navigation,
+  ExternalLink
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useOnlineOrders } from "@/hooks/useOnlineOrders";
+import { parseLocationFromAddress } from "@/lib/locationUtils";
 
 export default function OnlineOrdersPage() {
   const [activeTab, setActiveTab] = useState("PENDING"); // "PENDING" | "APPROVED" | "REJECTED" | "ALL"
@@ -147,11 +150,39 @@ export default function OnlineOrdersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4.5 max-w-xs truncate" title={order.address}>
-                      <span className="flex items-center gap-1 text-xs text-slate-500">
-                        <MapPin size={12} className="shrink-0 text-slate-400" />
-                        <span className="truncate">{order.address}</span>
-                      </span>
+                    <td className="px-6 py-4.5 max-w-xs">
+                      {(() => {
+                        const loc = parseLocationFromAddress(order.address);
+                        return (
+                          <a
+                            href={loc.directionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group inline-flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-medical-blue-600 transition-colors"
+                            title="Click to open Google Maps Directions"
+                          >
+                            <div className="w-6 h-6 rounded-lg bg-medical-blue-50 text-medical-blue-600 group-hover:bg-medical-blue-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-xs">
+                              <Navigation size={12} className="group-hover:scale-110 transition-transform" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1">
+                                <span className="truncate max-w-[150px] block group-hover:underline underline-offset-2 font-medium">
+                                  {loc.cleanAddress}
+                                </span>
+                                {loc.hasCoordinates && (
+                                  <span className="px-1 py-0.2 rounded text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    GPS
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-medical-blue-600/70 group-hover:text-medical-blue-700 font-bold flex items-center gap-0.5">
+                                <span>Directions</span>
+                                <ExternalLink size={8} />
+                              </span>
+                            </div>
+                          </a>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4.5 text-xs text-slate-400">
                       <div className="flex items-center gap-1.5">
@@ -266,19 +297,44 @@ export default function OnlineOrdersPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Delivery Details</h4>
-                  <div className="flex items-start gap-1.5">
-                    <MapPin size={14} className="text-slate-400 mt-0.5" />
-                    <span className="text-xs font-semibold text-slate-600 leading-tight">{selectedOrder.address}</span>
-                  </div>
-                  {selectedOrder.notes && (
-                    <div className="flex items-start gap-1.5 pt-1">
-                      <FileText size={14} className="text-slate-400 mt-0.5" />
-                      <span className="text-xs text-slate-500 leading-tight"><em>Notes: {selectedOrder.notes}</em></span>
+                {(() => {
+                  const loc = parseLocationFromAddress(selectedOrder.address);
+                  return (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Delivery Details</h4>
+                      <div className="flex items-start gap-1.5">
+                        <MapPin size={14} className="text-medical-blue-600 mt-0.5 shrink-0" />
+                        <div className="space-y-1 min-w-0">
+                          <span className="text-xs font-semibold text-slate-700 leading-tight block">{loc.cleanAddress}</span>
+                          {loc.hasCoordinates && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>GPS: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="pt-1">
+                        <a
+                          href={loc.directionsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-medical-blue-600 hover:bg-medical-blue-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                        >
+                          <Navigation size={12} />
+                          <span>Open Google Maps Directions</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      </div>
+                      {selectedOrder.notes && (
+                        <div className="flex items-start gap-1.5 pt-1.5 border-t border-slate-200/60 mt-1">
+                          <FileText size={14} className="text-slate-400 mt-0.5" />
+                          <span className="text-xs text-slate-500 leading-tight"><em>Notes: {selectedOrder.notes}</em></span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
 
               {/* Items List */}

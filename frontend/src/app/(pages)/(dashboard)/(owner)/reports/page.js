@@ -264,7 +264,7 @@ export default function ReportsPage() {
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              7 Days
+              Daily
             </button>
             <button
               onClick={() => setRange("month")}
@@ -442,11 +442,11 @@ export default function ReportsPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" fontSize={11} fontWeight={500} tickLine={false} axisLine={false} stroke="#64748b" />
+                <XAxis dataKey="name" fontSize={11} fontWeight={500} tickLine={false} axisLine={false} stroke="#64748b" interval={range === "day" && chartData?.length > 14 ? "preserveStartEnd" : 0} />
                 <YAxis fontSize={11} fontWeight={500} tickLine={false} axisLine={false} stroke="#64748b" tickFormatter={(v) => `৳${v}`} />
                 <RechartsTooltip content={<CustomTooltip />} />
                 <Area type="monotone" name="Revenue" dataKey="sales" stroke="#0d9488" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                <Bar name="Purchases" dataKey="purchase" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar name="Purchases" dataKey="purchase" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={range === "day" ? (chartData?.length > 15 ? 14 : 24) : 20} />
                 <Line type="monotone" name="Net Profit" dataKey="profit" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, stroke: "#10b981", strokeWidth: 2, fill: "#fff" }} activeDot={{ r: 5 }} />
               </ComposedChart>
             </ResponsiveContainer>

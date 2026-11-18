@@ -16,12 +16,15 @@ import {
   Calendar,
   CreditCard,
   Eye,
-  X
+  X,
+  Navigation,
+  ExternalLink
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { Table } from "@/components/Table";
 import { useAuth } from "@/context/AuthContext";
 import { useCustomerOrders } from "@/hooks/useCustomerPortal";
+import { parseLocationFromAddress } from "@/lib/locationUtils";
 
 export default function CustomerOrdersPage() {
   const router = useRouter();
@@ -63,12 +66,26 @@ export default function CustomerOrdersPage() {
     { 
       key: "address", 
       Title: "Delivery", 
-      render: (row) => (
-        <div className="text-xs text-slate-500 max-w-[200px] truncate mx-auto flex items-center justify-center gap-1" title={row.address}>
-          <MapPin size={12} className="text-slate-400" />
-          {row.address}
-        </div>
-      )
+      render: (row) => {
+        const loc = parseLocationFromAddress(row.address);
+        return (
+          <a
+            href={loc.directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-medical-blue-600 max-w-[200px] mx-auto transition-colors font-medium"
+            title="Click to view Google Maps Directions"
+          >
+            <Navigation size={12} className="text-medical-blue-500 shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="truncate group-hover:underline underline-offset-2">{loc.cleanAddress}</span>
+            {loc.hasCoordinates && (
+              <span className="px-1 py-0.2 rounded text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                GPS
+              </span>
+            )}
+          </a>
+        );
+      }
     },
     { 
       key: "totalAmount", 
@@ -270,21 +287,46 @@ export default function CustomerOrdersPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-xs">
                   
                   {/* Shipping Info */}
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/50 space-y-1.5">
-                    <div className="flex items-start gap-1.5 text-slate-500">
-                      <MapPin size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
-                      <span className="leading-relaxed">
-                        Shipping Location:<br/>
-                        <strong className="text-slate-700 font-bold">{viewingOrder.address}</strong>
-                      </span>
-                    </div>
-                    {viewingOrder.notes && (
-                      <div className="flex items-start gap-1.5 text-slate-500 border-t border-slate-100 pt-1.5 mt-1.5">
-                        <FileText size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
-                        <span>Notes: <em className="text-slate-600">{viewingOrder.notes}</em></span>
+                  {(() => {
+                    const loc = parseLocationFromAddress(viewingOrder.address);
+                    return (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/50 space-y-2">
+                        <div className="flex items-start gap-2 text-slate-500">
+                          <MapPin size={15} className="text-medical-blue-600 mt-0.5 flex-shrink-0" />
+                          <div className="min-w-0 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                              Shipping Location:
+                            </span>
+                            <strong className="text-slate-800 font-bold block leading-relaxed">{loc.cleanAddress}</strong>
+                            {loc.hasCoordinates && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>GPS: {loc.latitude?.toFixed(5)}, {loc.longitude?.toFixed(5)}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="pt-1">
+                          <a
+                            href={loc.directionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-medical-blue-50 hover:bg-medical-blue-100 text-medical-blue-700 font-bold text-xs transition-colors"
+                          >
+                            <Navigation size={12} />
+                            <span>Map Directions</span>
+                            <ExternalLink size={11} />
+                          </a>
+                        </div>
+                        {viewingOrder.notes && (
+                          <div className="flex items-start gap-1.5 text-slate-500 border-t border-slate-100 pt-1.5 mt-1.5">
+                            <FileText size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                            <span>Notes: <em className="text-slate-600">{viewingOrder.notes}</em></span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
 
                   {/* Payment Summary */}
                   <div className="bg-white p-3 rounded-xl border border-slate-200/50 flex flex-col justify-between">
