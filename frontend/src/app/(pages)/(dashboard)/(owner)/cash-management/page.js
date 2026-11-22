@@ -225,7 +225,7 @@ export default function CashManagementPage() {
         render: (row) => {
           const dateObj = new Date(row.date);
           return (
-            <span className="font-mono text-slate-500">
+            <span className="font-mono text-slate-500 whitespace-nowrap">
               {dateObj.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -241,7 +241,7 @@ export default function CashManagementPage() {
         width: 130,
         render: (row) => (
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
+            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap ${
               row.type === "SALE"
                 ? "bg-teal-50 text-teal-700 border border-teal-200/60"
                 : row.type === "PURCHASE"
@@ -259,22 +259,29 @@ export default function CashManagementPage() {
         key: "title",
         Title: "Description / Title",
         align: "left",
-        className: "font-bold text-slate-900",
+        minWidth: 240,
+        className: "font-bold text-slate-900 whitespace-nowrap",
       },
       {
         key: "party",
         Title: "Party / Reason",
         align: "left",
-        className: "text-slate-500",
-        render: (row) => row.party || row.category || "-",
+        width: 160,
+        className: "text-slate-600 whitespace-nowrap",
+        render: (row) => (
+          <span className="truncate max-w-[150px] inline-block" title={row.party || row.category || "-"}>
+            {row.party || row.category || "-"}
+          </span>
+        ),
       },
       {
         key: "cashIn",
         Title: "Cash In (+)",
         align: "right",
+        width: 135,
         render: (row) =>
           row.flow === "IN" ? (
-            <span className="font-mono font-bold text-emerald-600">
+            <span className="font-mono font-bold text-emerald-600 whitespace-nowrap">
               +৳{Number(row.amount || 0).toFixed(2)}
             </span>
           ) : (
@@ -285,9 +292,10 @@ export default function CashManagementPage() {
         key: "cashOut",
         Title: "Cash Out (-)",
         align: "right",
+        width: 135,
         render: (row) =>
           row.flow !== "IN" ? (
-            <span className="font-mono font-bold text-rose-600">
+            <span className="font-mono font-bold text-rose-600 whitespace-nowrap">
               -৳{Number(row.amount || 0).toFixed(2)}
             </span>
           ) : (
@@ -298,17 +306,18 @@ export default function CashManagementPage() {
         key: "profit",
         Title: "Profit / Net",
         align: "right",
+        width: 135,
         render: (row) => {
           if (row.profit !== undefined) {
             return (
-              <span className="font-mono font-bold text-emerald-700">
+              <span className="font-mono font-bold text-emerald-700 whitespace-nowrap">
                 +৳{Number(row.profit).toFixed(2)}
               </span>
             );
           }
           if (row.type === "EXPENSE") {
             return (
-              <span className="font-mono font-bold text-rose-600">
+              <span className="font-mono font-bold text-rose-600 whitespace-nowrap">
                 -৳{Number(row.amount).toFixed(2)}
               </span>
             );
@@ -316,28 +325,8 @@ export default function CashManagementPage() {
           return <span className="text-slate-400 font-mono">-</span>;
         },
       },
-      {
-        key: "actions",
-        Title: "Action",
-        align: "center",
-        sortable: false,
-        width: 80,
-        render: (row) => {
-          if (row.type !== "EXPENSE") return null;
-          return (
-            <button
-              onClick={() => handleDeleteExpense(row.id.replace("expense-", ""))}
-              disabled={isDeletingExpense}
-              title="Delete Expense"
-              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-            >
-              <Trash2 size={14} />
-            </button>
-          );
-        },
-      },
     ],
-    [handleDeleteExpense, isDeletingExpense]
+    []
   );
 
   // TanStack Table Heads: Monthly View
@@ -347,8 +336,9 @@ export default function CashManagementPage() {
         key: "day",
         Title: "Day / Date",
         align: "left",
+        width: 110,
         render: (row) => (
-          <span className="font-bold text-slate-900 font-mono">
+          <span className="font-bold text-slate-900 font-mono whitespace-nowrap">
             {row.day} {MONTH_NAMES[selectedMonth]?.slice(0, 3)}
           </span>
         ),
@@ -357,24 +347,27 @@ export default function CashManagementPage() {
         key: "shopSales",
         Title: "Shop Sales",
         align: "right",
+        width: 120,
         render: (row) => (
-          <span className="font-mono">৳{Number(row.shopSales || 0).toFixed(2)}</span>
+          <span className="font-mono whitespace-nowrap">৳{Number(row.shopSales || 0).toFixed(2)}</span>
         ),
       },
       {
         key: "onlineSales",
         Title: "Online Sales",
         align: "right",
+        width: 120,
         render: (row) => (
-          <span className="font-mono">৳{Number(row.onlineSales || 0).toFixed(2)}</span>
+          <span className="font-mono whitespace-nowrap">৳{Number(row.onlineSales || 0).toFixed(2)}</span>
         ),
       },
       {
         key: "sales",
         Title: "Total Revenue",
         align: "right",
+        width: 130,
         render: (row) => (
-          <span className="font-mono font-bold text-teal-700">
+          <span className="font-mono font-bold text-teal-700 whitespace-nowrap">
             ৳{Number(row.sales || 0).toFixed(2)}
           </span>
         ),
@@ -383,8 +376,9 @@ export default function CashManagementPage() {
         key: "purchases",
         Title: "Purchases (Cost)",
         align: "right",
+        width: 130,
         render: (row) => (
-          <span className="font-mono text-slate-700">
+          <span className="font-mono text-slate-700 whitespace-nowrap">
             ৳{Number(row.purchases || 0).toFixed(2)}
           </span>
         ),
@@ -393,8 +387,9 @@ export default function CashManagementPage() {
         key: "expenses",
         Title: "Store Expenses",
         align: "right",
+        width: 130,
         render: (row) => (
-          <span className="font-mono text-rose-600 font-bold">
+          <span className="font-mono text-rose-600 font-bold whitespace-nowrap">
             ৳{Number(row.expenses || 0).toFixed(2)}
           </span>
         ),
@@ -403,8 +398,9 @@ export default function CashManagementPage() {
         key: "grossProfit",
         Title: "Gross Profit",
         align: "right",
+        width: 130,
         render: (row) => (
-          <span className="font-mono font-bold text-slate-800">
+          <span className="font-mono font-bold text-slate-800 whitespace-nowrap">
             ৳{Number(row.grossProfit || 0).toFixed(2)}
           </span>
         ),
@@ -413,9 +409,10 @@ export default function CashManagementPage() {
         key: "netProfit",
         Title: "Real Net Profit",
         align: "right",
+        width: 130,
         render: (row) => (
           <span
-            className={`font-mono font-bold ${
+            className={`font-mono font-bold whitespace-nowrap ${
               row.netProfit >= 0 ? "text-emerald-700" : "text-rose-600"
             }`}
           >
@@ -427,8 +424,9 @@ export default function CashManagementPage() {
         key: "transactions",
         Title: "Tx Count",
         align: "center",
+        width: 90,
         render: (row) => (
-          <span className="font-mono text-slate-400">{row.transactions}</span>
+          <span className="font-mono text-slate-400 whitespace-nowrap">{row.transactions}</span>
         ),
       },
     ],
@@ -478,14 +476,16 @@ export default function CashManagementPage() {
         key: "monthName",
         Title: "Month",
         align: "left",
-        className: "font-bold text-slate-900",
+        width: 120,
+        className: "font-bold text-slate-900 whitespace-nowrap",
       },
       {
         key: "sales",
         Title: "Total Revenue",
         align: "right",
+        width: 140,
         render: (row) => (
-          <span className="font-mono font-bold text-teal-700">
+          <span className="font-mono font-bold text-teal-700 whitespace-nowrap">
             ৳{Number(row.sales || 0).toFixed(2)}
           </span>
         ),
@@ -494,8 +494,9 @@ export default function CashManagementPage() {
         key: "purchases",
         Title: "Procurement Cost",
         align: "right",
+        width: 140,
         render: (row) => (
-          <span className="font-mono text-slate-700">
+          <span className="font-mono text-slate-700 whitespace-nowrap">
             ৳{Number(row.purchases || 0).toFixed(2)}
           </span>
         ),
@@ -504,8 +505,9 @@ export default function CashManagementPage() {
         key: "expenses",
         Title: "Store Expenses",
         align: "right",
+        width: 140,
         render: (row) => (
-          <span className="font-mono text-rose-600 font-bold">
+          <span className="font-mono text-rose-600 font-bold whitespace-nowrap">
             ৳{Number(row.expenses || 0).toFixed(2)}
           </span>
         ),
@@ -514,8 +516,9 @@ export default function CashManagementPage() {
         key: "grossProfit",
         Title: "Gross Profit",
         align: "right",
+        width: 140,
         render: (row) => (
-          <span className="font-mono font-bold text-slate-800">
+          <span className="font-mono font-bold text-slate-800 whitespace-nowrap">
             ৳{Number(row.grossProfit || 0).toFixed(2)}
           </span>
         ),
@@ -524,8 +527,9 @@ export default function CashManagementPage() {
         key: "margin",
         Title: "Net Profit Margin",
         align: "right",
+        width: 130,
         render: (row) => (
-          <span className="font-mono text-slate-500">
+          <span className="font-mono text-slate-500 whitespace-nowrap">
             {row.sales > 0 ? ((row.netProfit / row.sales) * 100).toFixed(1) : "0.0"}%
           </span>
         ),
@@ -534,9 +538,10 @@ export default function CashManagementPage() {
         key: "netProfit",
         Title: "Real Net Profit",
         align: "right",
+        width: 140,
         render: (row) => (
           <span
-            className={`font-mono font-bold ${
+            className={`font-mono font-bold whitespace-nowrap ${
               row.netProfit >= 0 ? "text-emerald-700" : "text-rose-600"
             }`}
           >

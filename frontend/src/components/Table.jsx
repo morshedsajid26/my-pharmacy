@@ -81,8 +81,9 @@ export function Table({
 
           return value;
         },
-        size: typeof head.width === "number" ? head.width : 150,
         width: head.width,
+        minWidth: head.minWidth,
+        maxWidth: head.maxWidth,
         enableSorting: head.sortable !== false,
       })),
     [TableHeads]
@@ -170,9 +171,9 @@ export function Table({
                       key={header.id}
                       className={`font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wider ${headClass || ""} ${alignText} select-none`}
                       style={{
-                        width:
-                          header.column.columnDef.width ||
-                          header.column.columnDef.size,
+                        width: header.column.columnDef.width,
+                        minWidth: header.column.columnDef.minWidth,
+                        maxWidth: header.column.columnDef.maxWidth,
                       }}
                     >
                       <div
@@ -257,6 +258,11 @@ export function Table({
                       <td
                         key={cell.id}
                         className={`py-3.5 px-4 text-sm font-normal text-slate-700 ${alignText} ${customClass}`}
+                        style={{
+                          width: cell.column.columnDef.width,
+                          minWidth: cell.column.columnDef.minWidth,
+                          maxWidth: cell.column.columnDef.maxWidth,
+                        }}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
