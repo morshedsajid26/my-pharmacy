@@ -220,12 +220,12 @@ export default function CashManagementPage() {
       {
         key: "date",
         Title: "Time",
-        align: "left",
-        width: 100,
+     
+        width: "10%",
         render: (row) => {
           const dateObj = new Date(row.date);
           return (
-            <span className="font-mono text-slate-500 whitespace-nowrap">
+            <span className="font-mono text-slate-500 whitespace-nowrap text-xs">
               {dateObj.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -237,8 +237,8 @@ export default function CashManagementPage() {
       {
         key: "type",
         Title: "Activity Type",
-        align: "left",
-        width: 130,
+      
+        width: "10%",
         render: (row) => (
           <span
             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap ${
@@ -258,18 +258,23 @@ export default function CashManagementPage() {
       {
         key: "title",
         Title: "Description / Title",
-        align: "left",
-        minWidth: 240,
-        className: "font-bold text-slate-900 whitespace-nowrap",
+        
+        width: "20%",
+        className: "font-semibold text-slate-900",
+        render: (row) => (
+          <span className="font-semibold text-slate-900 block truncate" title={row.title}>
+            {row.title}
+          </span>
+        ),
       },
       {
         key: "party",
         Title: "Party / Reason",
-        align: "left",
-        width: 160,
-        className: "text-slate-600 whitespace-nowrap",
+        
+        width: "10%",
+        className: "text-slate-600",
         render: (row) => (
-          <span className="truncate max-w-[150px] inline-block" title={row.party || row.category || "-"}>
+          <span className="text-slate-600 block truncate" title={row.party || row.category || "-"}>
             {row.party || row.category || "-"}
           </span>
         ),
@@ -277,8 +282,8 @@ export default function CashManagementPage() {
       {
         key: "cashIn",
         Title: "Cash In (+)",
-        align: "right",
-        width: 135,
+      
+        width: "10%",
         render: (row) =>
           row.flow === "IN" ? (
             <span className="font-mono font-bold text-emerald-600 whitespace-nowrap">
@@ -291,8 +296,8 @@ export default function CashManagementPage() {
       {
         key: "cashOut",
         Title: "Cash Out (-)",
-        align: "right",
-        width: 135,
+       
+        width: "10%",
         render: (row) =>
           row.flow !== "IN" ? (
             <span className="font-mono font-bold text-rose-600 whitespace-nowrap">
@@ -305,8 +310,7 @@ export default function CashManagementPage() {
       {
         key: "profit",
         Title: "Profit / Net",
-        align: "right",
-        width: 135,
+        width: "10%",
         render: (row) => {
           if (row.profit !== undefined) {
             return (
@@ -335,8 +339,7 @@ export default function CashManagementPage() {
       {
         key: "day",
         Title: "Day / Date",
-        align: "left",
-        width: 110,
+        width: "10%",
         render: (row) => (
           <span className="font-bold text-slate-900 font-mono whitespace-nowrap">
             {row.day} {MONTH_NAMES[selectedMonth]?.slice(0, 3)}
@@ -345,9 +348,8 @@ export default function CashManagementPage() {
       },
       {
         key: "shopSales",
-        Title: "Shop Sales",
-        align: "right",
-        width: 120,
+        Title: "Shop Sales",     
+        width: "10%",
         render: (row) => (
           <span className="font-mono whitespace-nowrap">৳{Number(row.shopSales || 0).toFixed(2)}</span>
         ),
@@ -355,17 +357,15 @@ export default function CashManagementPage() {
       {
         key: "onlineSales",
         Title: "Online Sales",
-        align: "right",
-        width: 120,
+        width: "10%",
         render: (row) => (
           <span className="font-mono whitespace-nowrap">৳{Number(row.onlineSales || 0).toFixed(2)}</span>
         ),
       },
       {
         key: "sales",
-        Title: "Total Revenue",
-        align: "right",
-        width: 130,
+        Title: "Total Sales",
+        width: "10%",
         render: (row) => (
           <span className="font-mono font-bold text-teal-700 whitespace-nowrap">
             ৳{Number(row.sales || 0).toFixed(2)}
@@ -374,9 +374,8 @@ export default function CashManagementPage() {
       },
       {
         key: "purchases",
-        Title: "Purchases (Cost)",
-        align: "right",
-        width: 130,
+        Title: "Purchases",
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-slate-700 whitespace-nowrap">
             ৳{Number(row.purchases || 0).toFixed(2)}
@@ -386,8 +385,7 @@ export default function CashManagementPage() {
       {
         key: "expenses",
         Title: "Store Expenses",
-        align: "right",
-        width: 130,
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-rose-600 font-bold whitespace-nowrap">
             ৳{Number(row.expenses || 0).toFixed(2)}
@@ -397,8 +395,7 @@ export default function CashManagementPage() {
       {
         key: "grossProfit",
         Title: "Gross Profit",
-        align: "right",
-        width: 130,
+        width: "10%",
         render: (row) => (
           <span className="font-mono font-bold text-slate-800 whitespace-nowrap">
             ৳{Number(row.grossProfit || 0).toFixed(2)}
@@ -408,8 +405,7 @@ export default function CashManagementPage() {
       {
         key: "netProfit",
         Title: "Real Net Profit",
-        align: "right",
-        width: 130,
+        width: "10%",
         render: (row) => (
           <span
             className={`font-mono font-bold whitespace-nowrap ${
@@ -422,9 +418,8 @@ export default function CashManagementPage() {
       },
       {
         key: "transactions",
-        Title: "Tx Count",
-        align: "center",
-        width: 90,
+        Title: "Transactions",
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-slate-400 whitespace-nowrap">{row.transactions}</span>
         ),
@@ -475,15 +470,13 @@ export default function CashManagementPage() {
       {
         key: "monthName",
         Title: "Month",
-        align: "left",
-        width: 120,
+        width: "10%",
         className: "font-bold text-slate-900 whitespace-nowrap",
       },
       {
         key: "sales",
-        Title: "Total Revenue",
-        align: "right",
-        width: 140,
+        Title: "Total Sales",
+        width: "10%",
         render: (row) => (
           <span className="font-mono font-bold text-teal-700 whitespace-nowrap">
             ৳{Number(row.sales || 0).toFixed(2)}
@@ -492,9 +485,8 @@ export default function CashManagementPage() {
       },
       {
         key: "purchases",
-        Title: "Procurement Cost",
-        align: "right",
-        width: 140,
+        Title: "Purchases",
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-slate-700 whitespace-nowrap">
             ৳{Number(row.purchases || 0).toFixed(2)}
@@ -504,8 +496,7 @@ export default function CashManagementPage() {
       {
         key: "expenses",
         Title: "Store Expenses",
-        align: "right",
-        width: 140,
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-rose-600 font-bold whitespace-nowrap">
             ৳{Number(row.expenses || 0).toFixed(2)}
@@ -515,8 +506,7 @@ export default function CashManagementPage() {
       {
         key: "grossProfit",
         Title: "Gross Profit",
-        align: "right",
-        width: 140,
+        width: "10%",
         render: (row) => (
           <span className="font-mono font-bold text-slate-800 whitespace-nowrap">
             ৳{Number(row.grossProfit || 0).toFixed(2)}
@@ -526,8 +516,7 @@ export default function CashManagementPage() {
       {
         key: "margin",
         Title: "Net Profit Margin",
-        align: "right",
-        width: 130,
+        width: "10%",
         render: (row) => (
           <span className="font-mono text-slate-500 whitespace-nowrap">
             {row.sales > 0 ? ((row.netProfit / row.sales) * 100).toFixed(1) : "0.0"}%
@@ -537,8 +526,7 @@ export default function CashManagementPage() {
       {
         key: "netProfit",
         Title: "Real Net Profit",
-        align: "right",
-        width: 140,
+        width: "10%",
         render: (row) => (
           <span
             className={`font-mono font-bold whitespace-nowrap ${
@@ -1042,7 +1030,7 @@ export default function CashManagementPage() {
               isLoading={isLoading}
               pageSize={15}
               emptyMessage="No transactions recorded for this date and filter."
-              tableClass="min-w-[700px]"
+              tableClass="table-fixed w-full min-w-[750px]"
             />
           </Card>
         </div>
@@ -1060,7 +1048,7 @@ export default function CashManagementPage() {
             pageSize={31}
             isLoading={isLoading}
             footer={monthlyFooter}
-            tableClass="min-w-[850px]"
+            tableClass="table-fixed w-full min-w-[850px]"
             emptyMessage="No ledger data found for this month."
           />
         </Card>
@@ -1078,7 +1066,7 @@ export default function CashManagementPage() {
             pageSize={12}
             isLoading={isLoading}
             footer={yearlyFooter}
-            tableClass="min-w-[750px]"
+            tableClass="table-fixed w-full min-w-[750px]"
             emptyMessage="No ledger data found for this year."
           />
         </Card>
