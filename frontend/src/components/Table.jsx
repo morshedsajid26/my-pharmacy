@@ -42,16 +42,26 @@ export function Table({
   wrapperClass = "overflow-x-auto",
   children,
   headers,
+  isLoading = false,
+  initialPageSize = 10,
+  pageSize,
+  showPagination,
+  footer,
+  emptyMessage = "No records found.",
 }) {
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState([]);
+
+  const effectivePageSize = pageSize || initialPageSize || 10;
 
   const columns = React.useMemo(
     () =>
       (TableHeads || []).map((head) => ({
         accessorKey: head.key,
         header: head.Title,
+        align: head.align || "center",
+        className: head.className || "",
         cell: (info) => {
           if (head.render) {
             return head.render(info.row.original, info.row.index);
@@ -95,7 +105,7 @@ export function Table({
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: effectivePageSize,
       },
     },
   });
@@ -121,6 +131,7 @@ export function Table({
             </thead>
           )}
           <tbody className="divide-y divide-slate-100">{children}</tbody>
+          {footer && <tfoot>{footer}</tfoot>}
         </table>
       </div>
     );
@@ -139,122 +150,180 @@ export function Table({
                 key={headerGroup.id}
                 className="border-b border-slate-200/85 bg-slate-50/90"
               >
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={`text-center font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wider ${headClass} select-none`}
-                    style={{
-                      width:
-                        header.column.columnDef.width ||
-                        header.column.columnDef.size,
-                    }}
-                  >
-                    <div
-                      className="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900 transition-colors"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                {headerGroup.headers.map((header) => {
+                  const align = header.column.columnDef.align || "center";
+                  const alignText =
+                    align === "left"
+                      ? "text-left"
+                      : align === "right"
+                      ? "text-right"
+                      : "text-center";
+                  const justifyAlign =
+                    align === "left"
+                      ? "justify-start"
+                      : align === "right"
+                      ? "justify-end"
+                      : "justify-center";
 
-                      {header.column.getCanSort() && (
-                        <span className="text-slate-400">
-                          {{
-                            asc: (
-                              <ArrowUp
-                                size={13}
-                                className="text-medical-blue-600"
-                              />
-                            ),
-                            desc: (
-                              <ArrowDown
-                                size={13}
-                                className="text-medical-blue-600"
-                              />
-                            ),
-                          }[header.column.getIsSorted()] ?? (
-                            <ArrowUpDown size={13} />
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                  return (
+                    <th
+                      key={header.id}
+                      className={`font-semibold text-slate-600 py-3.5 px-4 text-xs uppercase tracking-wider ${headClass || ""} ${alignText} select-none`}
+                      style={{
+                        width:
+                          header.column.columnDef.width ||
+                          header.column.columnDef.size,
+                      }}
+                    >
+                      <div
+                        className={`flex items-center gap-1.5 cursor-pointer hover:text-slate-900 transition-colors ${justifyAlign}`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+
+                        {header.column.getCanSort() && (
+                          <span className="text-slate-400 shrink-0">
+                            {{
+                              asc: (
+                                <ArrowUp
+                                  size={13}
+                                  className="text-medical-blue-600"
+                                />
+                              ),
+                              desc: (
+                                <ArrowDown
+                                  size={13}
+                                  className="text-medical-blue-600"
+                                />
+                              ),
+                            }[header.column.getIsSorted()] ?? (
+                              <ArrowUpDown size={13} />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
 
           {/* ==== TABLE BODY ==== */}
           <tbody className="divide-y divide-slate-100">
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="hover:bg-slate-50/80 transition-colors group"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="py-3.5 text-center px-4 text-sm font-normal text-slate-700"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan={columns.length || 1}
+                  className="py-12 text-center text-slate-400"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-medical-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span>Loading records...</span>
+                  </div>
+                </td>
               </tr>
-            ))}
+            ) : table.getRowModel().rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length || 1}
+                  className="py-12 text-center text-slate-400 italic"
+                >
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="hover:bg-slate-50/80 transition-colors group"
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    const align = cell.column.columnDef.align || "center";
+                    const alignText =
+                      align === "left"
+                        ? "text-left"
+                        : align === "right"
+                        ? "text-right"
+                        : "text-center";
+                    const customClass = cell.column.columnDef.className || "";
+
+                    return (
+                      <td
+                        key={cell.id}
+                        className={`py-3.5 px-4 text-sm font-normal text-slate-700 ${alignText} ${customClass}`}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
           </tbody>
+
+          {/* ==== OPTIONAL FOOTER (GRAND TOTALS) ==== */}
+          {footer && <tfoot>{footer}</tfoot>}
         </table>
       </div>
 
       {/* ==== PAGINATION CONTROLS ==== */}
-      <div className="flex items-center justify-between px-5 py-3 bg-white border border-slate-200/85 rounded-xl">
-        <div className="text-xs text-slate-500 font-medium">
-          Page{" "}
-          <span className="font-mono font-bold text-slate-900">
-            {table.getState().pagination.pageIndex + 1}
-          </span>{" "}
-          of{" "}
-          <span className="font-mono font-bold text-slate-900">
-            {table.getPageCount()}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <div className="flex items-center gap-1">
-            {table.getPageOptions().map((pageIdx) => (
-              <button
-                key={pageIdx}
-                className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
-                  table.getState().pagination.pageIndex === pageIdx
-                    ? "bg-medical-blue-600 text-white"
-                    : "bg-white text-slate-600 border border-transparent hover:border-slate-200 hover:bg-slate-50"
-                }`}
-                onClick={() => table.setPageIndex(pageIdx)}
-              >
-                {pageIdx + 1}
-              </button>
-            ))}
+      {(showPagination ?? table.getPageCount() > 1) && (
+        <div className="flex items-center justify-between px-5 py-3 bg-white border border-slate-200/85 rounded-xl">
+          <div className="text-xs text-slate-500 font-medium">
+            Page{" "}
+            <span className="font-mono font-bold text-slate-900">
+              {table.getState().pagination.pageIndex + 1}
+            </span>{" "}
+            of{" "}
+            <span className="font-mono font-bold text-slate-900">
+              {table.getPageCount() || 1}
+            </span>
           </div>
 
-          <button
-            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronRight size={16} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {table.getPageOptions().map((pageIdx) => (
+                <button
+                  key={pageIdx}
+                  className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
+                    table.getState().pagination.pageIndex === pageIdx
+                      ? "bg-medical-blue-600 text-white"
+                      : "bg-white text-slate-600 border border-transparent hover:border-slate-200 hover:bg-slate-50"
+                  }`}
+                  onClick={() => table.setPageIndex(pageIdx)}
+                >
+                  {pageIdx + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

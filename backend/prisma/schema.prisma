@@ -210,3 +210,42 @@ model ChatMessage {
   image     String?     @db.Text
   createdAt DateTime    @default(now())
 }
+
+model Expense {
+  id            String   @id @default(cuid())
+  title         String
+  category      String   @default("General") // "Tea & Snacks", "Utilities", "Salary", "Rent", "Transportation", "Maintenance", "Supplies", "Other"
+  amount        Float
+  date          DateTime @default(now())
+  note          String?
+  paymentMethod String   @default("CASH") // "CASH", "BANK", "BKASH"
+  createdBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CashRegister {
+  id              String    @id @default(cuid())
+  date            DateTime  @default(now())
+  dateStr         String    @unique // e.g. "2026-11-22"
+  openingBalance  Float     @default(0)
+  closingBalance  Float?
+  expectedClosing Float?
+  difference      Float?
+  status          String    @default("OPEN") // "OPEN", "CLOSED"
+  note            String?
+  closedAt        DateTime?
+  closedBy        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model CashAdjustment {
+  id        String   @id @default(cuid())
+  type      String   // "CASH_IN", "CASH_OUT"
+  amount    Float
+  reason    String
+  date      DateTime @default(now())
+  createdBy String?
+  createdAt DateTime @default(now())
+}

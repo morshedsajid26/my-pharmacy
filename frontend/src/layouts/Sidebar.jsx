@@ -14,6 +14,7 @@ import {
   X,
   Users,
   CreditCard,
+  Wallet,
   Heart,
   FileText,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const menuItems = [
   { icon: Pill, label: "Medicines", path: "/medicines" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: CreditCard, label: "Due Management", path: "/dues" },
+  { icon: Wallet, label: "Cash Management", path: "/cash-management" },
   { icon: AlertTriangle, label: "Low Stock", path: "/low-stock" },
   { icon: BarChart3, label: "Reports", path: "/reports" },
 ];
