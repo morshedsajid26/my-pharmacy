@@ -32,44 +32,54 @@ export const getCashSummaryService = async ({ timeframe = 'day', dateStr, year, 
       dayExpenses,
       dayAdjustments,
     ] = await Promise.all([
-      prisma.cashRegister.findUnique({
-        where: { dateStr: targetDateStr },
-      }),
-      prisma.sale.findMany({
-        where: { date: { gte: startOfDay, lte: endOfDay } },
-        select: {
-          id: true,
-          invoiceNo: true,
-          date: true,
-          totalAmount: true,
-          paidAmount: true,
-          dueAmount: true,
-          profit: true,
-          isOnline: true,
-          walkingCustomerName: true,
-          customer: { select: { name: true, phone: true } },
-        },
-        orderBy: { date: 'desc' },
-      }),
-      prisma.purchase.findMany({
-        where: { date: { gte: startOfDay, lte: endOfDay } },
-        select: {
-          id: true,
-          invoiceNo: true,
-          date: true,
-          supplier: true,
-          totalAmount: true,
-        },
-        orderBy: { date: 'desc' },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: startOfDay, lte: endOfDay } },
-        orderBy: { date: 'desc' },
-      }),
-      prisma.cashAdjustment.findMany({
-        where: { date: { gte: startOfDay, lte: endOfDay } },
-        orderBy: { date: 'desc' },
-      }),
+      prisma.cashRegister
+        ? prisma.cashRegister.findUnique({
+            where: { dateStr: targetDateStr },
+          }).catch(() => null)
+        : Promise.resolve(null),
+      prisma.sale
+        ? prisma.sale.findMany({
+            where: { date: { gte: startOfDay, lte: endOfDay } },
+            select: {
+              id: true,
+              invoiceNo: true,
+              date: true,
+              totalAmount: true,
+              paidAmount: true,
+              dueAmount: true,
+              profit: true,
+              isOnline: true,
+              walkingCustomerName: true,
+              customer: { select: { name: true, phone: true } },
+            },
+            orderBy: { date: 'desc' },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.purchase
+        ? prisma.purchase.findMany({
+            where: { date: { gte: startOfDay, lte: endOfDay } },
+            select: {
+              id: true,
+              invoiceNo: true,
+              date: true,
+              supplier: true,
+              totalAmount: true,
+            },
+            orderBy: { date: 'desc' },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.expense
+        ? prisma.expense.findMany({
+            where: { date: { gte: startOfDay, lte: endOfDay } },
+            orderBy: { date: 'desc' },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.cashAdjustment
+        ? prisma.cashAdjustment.findMany({
+            where: { date: { gte: startOfDay, lte: endOfDay } },
+            orderBy: { date: 'desc' },
+          }).catch(() => [])
+        : Promise.resolve([]),
     ]);
 
     const openingCash = register?.openingBalance || 0;
@@ -173,21 +183,29 @@ export const getCashSummaryService = async ({ timeframe = 'day', dateStr, year, 
     const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
 
     const [monthSales, monthPurchases, monthExpenses, monthRegisters] = await Promise.all([
-      prisma.sale.findMany({
-        where: { date: { gte: startDate, lt: endDate } },
-        select: { date: true, totalAmount: true, profit: true, isOnline: true },
-      }),
-      prisma.purchase.findMany({
-        where: { date: { gte: startDate, lt: endDate } },
-        select: { date: true, totalAmount: true },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: startDate, lt: endDate } },
-        select: { date: true, amount: true, category: true },
-      }),
-      prisma.cashRegister.findMany({
-        where: { date: { gte: startDate, lt: endDate } },
-      }),
+      prisma.sale
+        ? prisma.sale.findMany({
+            where: { date: { gte: startDate, lt: endDate } },
+            select: { date: true, totalAmount: true, profit: true, isOnline: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.purchase
+        ? prisma.purchase.findMany({
+            where: { date: { gte: startDate, lt: endDate } },
+            select: { date: true, totalAmount: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.expense
+        ? prisma.expense.findMany({
+            where: { date: { gte: startDate, lt: endDate } },
+            select: { date: true, amount: true, category: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      prisma.cashRegister
+        ? prisma.cashRegister.findMany({
+            where: { date: { gte: startDate, lt: endDate } },
+          }).catch(() => [])
+        : Promise.resolve([]),
     ]);
 
     const dailyLedger = Array.from({ length: daysInMonth }, (_, i) => {
@@ -271,18 +289,24 @@ export const getCashSummaryService = async ({ timeframe = 'day', dateStr, year, 
   const endOfYear = new Date(targetYear + 1, 0, 1);
 
   const [yearSales, yearPurchases, yearExpenses] = await Promise.all([
-    prisma.sale.findMany({
-      where: { date: { gte: startOfYear, lt: endOfYear } },
-      select: { date: true, totalAmount: true, profit: true },
-    }),
-    prisma.purchase.findMany({
-      where: { date: { gte: startOfYear, lt: endOfYear } },
-      select: { date: true, totalAmount: true },
-    }),
-    prisma.expense.findMany({
-      where: { date: { gte: startOfYear, lt: endOfYear } },
-      select: { date: true, amount: true },
-    }),
+    prisma.sale
+      ? prisma.sale.findMany({
+          where: { date: { gte: startOfYear, lt: endOfYear } },
+          select: { date: true, totalAmount: true, profit: true },
+        }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.purchase
+      ? prisma.purchase.findMany({
+          where: { date: { gte: startOfYear, lt: endOfYear } },
+          select: { date: true, totalAmount: true },
+        }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.expense
+      ? prisma.expense.findMany({
+          where: { date: { gte: startOfYear, lt: endOfYear } },
+          select: { date: true, amount: true },
+        }).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   const monthlyLedger = months.map((monthName, idx) => ({
