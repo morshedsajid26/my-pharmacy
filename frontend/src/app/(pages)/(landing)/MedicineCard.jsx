@@ -1,6 +1,6 @@
 "use client";
 
-import { Pill, Heart, Minus, Plus, Check } from "lucide-react";
+import { Pill, Heart, Minus, Plus, Check, Eye } from "lucide-react";
 
 export default function MedicineCard({
   medicine,
@@ -12,6 +12,7 @@ export default function MedicineCard({
   onDecreaseQuantity,
   onAddToCart,
   onRequestRestock,
+  onViewProduct,
 }) {
   const cartItem = cart?.find((item) => item?.id === medicine?.id);
   const qtyInCart = cartItem ? cartItem.quantity || 0 : 0;
@@ -20,8 +21,17 @@ export default function MedicineCard({
   const isAvailable = (medicine?.stock || 0) > 0;
   const isRequested = wishlist?.includes(medicine?.id);
 
+  const handleCardClick = () => {
+    if (onViewProduct) {
+      onViewProduct(medicine);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200/85 hover:border-medical-blue-600/40 hover:shadow-md transition-all duration-200 overflow-hidden flex flex-row sm:flex-col justify-between group h-full">
+    <div
+      onClick={handleCardClick}
+      className="bg-white rounded-xl border border-slate-200/85 hover:border-medical-blue-600/50 hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-row sm:flex-col justify-between group h-full cursor-pointer select-none"
+    >
       {/* Medicine Image / Clinical Stage */}
       <div className="w-[110px] sm:w-full shrink-0 min-h-[120px] sm:h-36 bg-slate-50/70 flex items-center justify-center relative border-r sm:border-r-0 sm:border-b border-slate-100 overflow-hidden p-3">
         {medicine?.image && (
@@ -48,10 +58,18 @@ export default function MedicineCard({
           <Pill className="w-6 h-6" strokeWidth={1.75} />
         </div>
 
+        {/* View Details Quick Hover Overlay */}
+        <div className="hidden sm:flex absolute inset-0 bg-slate-900/25 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center pointer-events-none z-20 backdrop-blur-[1px]">
+          <span className="px-2.5 py-1 rounded-lg bg-white/95 text-slate-900 text-[11px] font-bold shadow-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+            <Eye className="w-3.5 h-3.5 text-medical-blue-600" />
+            View Product
+          </span>
+        </div>
+
         {/* Low stock indicator */}
         {medicine?.stock <= 5 && medicine?.stock >= 1 && (
           <span className="absolute top-2.5 left-2.5 bg-amber-50 text-amber-800 border border-amber-200/80 text-[10px] font-semibold px-2 py-0.5 rounded-md z-20">
-            {medicine.stock} left
+            Low Stock
           </span>
         )}
       </div>
@@ -78,11 +96,21 @@ export default function MedicineCard({
           </div>
 
           <h3
-            className="font-bold text-slate-900 text-sm sm:text-[15px] leading-snug line-clamp-2 sm:truncate mt-1"
+            className="font-bold text-slate-900 text-sm sm:text-[15px] leading-snug line-clamp-2 sm:truncate mt-1 group-hover:text-medical-blue-600 transition-colors"
             title={medicine?.name}
           >
             {medicine?.name}
           </h3>
+
+          {medicine?.genericName && (
+            <p
+              className="text-[11px] font-medium text-teal-700 truncate mt-0.5"
+              title={`Generic: ${medicine.genericName}`}
+            >
+              {medicine.genericName}
+            </p>
+          )}
+
           <p className="text-xs font-medium text-slate-500 mt-0.5 truncate">
             {medicine?.company}
           </p>
@@ -99,13 +127,19 @@ export default function MedicineCard({
           </div>
 
           {/* Card Actions Footer */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
+          <div
+            className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
             {isAvailable ? (
               <>
                 {qtyInCart === 0 && (
                   <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-lg p-0.5 shrink-0">
                     <button
-                      onClick={onDecreaseQuantity}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDecreaseQuantity && onDecreaseQuantity();
+                      }}
                       disabled={selectedQuantity <= 1}
                       className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="Decrease quantity"
@@ -116,7 +150,10 @@ export default function MedicineCard({
                       {selectedQuantity}
                     </span>
                     <button
-                      onClick={onIncreaseQuantity}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onIncreaseQuantity && onIncreaseQuantity();
+                      }}
                       disabled={selectedQuantity >= remainingStock}
                       className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="Increase quantity"
@@ -127,13 +164,12 @@ export default function MedicineCard({
                 )}
 
                 <button
-                  onClick={
-                    qtyInCart > 0
-                      ? undefined
-                      : () =>
-                          onAddToCart &&
-                          onAddToCart(medicine, selectedQuantity)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (qtyInCart === 0 && onAddToCart) {
+                      onAddToCart(medicine, selectedQuantity);
+                    }
+                  }}
                   disabled={remainingStock < 1}
                   className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                     remainingStock < 1
@@ -146,7 +182,7 @@ export default function MedicineCard({
                   {qtyInCart > 0 ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      <span>In Cart ({qtyInCart})</span>
+                      <span>Added</span>
                     </>
                   ) : (
                     "Add to Cart"
@@ -160,7 +196,10 @@ export default function MedicineCard({
                 </span>
 
                 <button
-                  onClick={onRequestRestock}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRequestRestock && onRequestRestock();
+                  }}
                   disabled={wishlistLoading}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
                     isRequested

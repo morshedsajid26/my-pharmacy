@@ -17,3 +17,12 @@ export const getPublicMedicineById = async (req, res) => {
     return res.status(404).json({ success: false, message: error.message });
   }
 };
+
+export const getPublicMedicineAlternatives = async (req, res) => {
+  try {
+    const alternatives = await itemService.getPublicMedicineAlternativesService(req.params.id);
+    return res.status(200).json({ success: true, count: alternatives.length, data: alternatives });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

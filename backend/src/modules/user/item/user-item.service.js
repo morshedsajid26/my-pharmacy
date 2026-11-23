@@ -23,3 +23,17 @@ export const getPublicMedicineByIdService = async (id) => {
   if (!medicine) throw new Error('Medicine not found');
   return medicine;
 };
+
+export const getPublicMedicineAlternativesService = async (id) => {
+  const medicine = await prisma.medicine.findUnique({ where: { id } });
+  if (!medicine || !medicine.genericName) return [];
+
+  return await prisma.medicine.findMany({
+    where: {
+      id: { not: id },
+      genericName: { equals: medicine.genericName, mode: 'insensitive' },
+      stock: { gt: 0 },
+    },
+    orderBy: { stock: 'desc' },
+  });
+};

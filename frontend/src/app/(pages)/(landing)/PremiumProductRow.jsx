@@ -14,6 +14,7 @@ export default function PremiumProductRow({
   onDecreaseQuantity,
   onAddToCart,
   onRequestRestock,
+  onViewProduct,
 }) {
   if (!medicines || medicines.length === 0) return null;
 
@@ -54,6 +55,7 @@ export default function PremiumProductRow({
                 onAddToCart(med, selectedQuantities[med.id] || 1)
               }
               onRequestRestock={() => onRequestRestock(med.id)}
+              onViewProduct={onViewProduct}
             />
           </div>
         ))}

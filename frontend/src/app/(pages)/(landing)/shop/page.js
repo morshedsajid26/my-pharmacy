@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 
 import MedicineCard from "../MedicineCard";
 import Pagination from "@/components/Pagination";
+import ProductDetailModal from "@/components/ProductDetailModal";
 
 function ShopContent() {
   const router = useRouter();
@@ -44,6 +45,7 @@ function ShopContent() {
 
   // Selected purchase quantity per medicine card
   const [selectedQuantities, setSelectedQuantities] = useState({});
+  const [viewingMedicine, setViewingMedicine] = useState(null);
 
   // Reset to page 1 when search or filters change
   useEffect(() => {
@@ -299,6 +301,7 @@ function ShopContent() {
                       }));
                     }}
                     onRequestRestock={() => handleRequestRestock(med.id)}
+                    onViewProduct={(medicineToView) => setViewingMedicine(medicineToView)}
                   />
                 ))}
               </div>
@@ -343,6 +346,23 @@ function ShopContent() {
           )}
         </section>
       </div>
+
+      {/* PRODUCT DETAILS & ALTERNATIVE MEDICINES MODAL */}
+      <ProductDetailModal
+        isOpen={Boolean(viewingMedicine)}
+        onClose={() => setViewingMedicine(null)}
+        medicine={viewingMedicine}
+        allMedicines={medicines}
+        cart={cart}
+        wishlist={wishlist}
+        wishlistLoading={wishlistLoading}
+        onAddToCart={(med, qty) => {
+          addToCart(med, qty);
+          setSelectedQuantities((prev) => ({ ...prev, [med.id]: 1 }));
+        }}
+        onRequestRestock={handleRequestRestock}
+        onSelectMedicine={(med) => setViewingMedicine(med)}
+      />
     </div>
   );
 }

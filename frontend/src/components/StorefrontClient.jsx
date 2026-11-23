@@ -59,6 +59,7 @@ import PremiumBrands from "../app/(pages)/(landing)/PremiumBrands";
 import PremiumProductRow from "../app/(pages)/(landing)/PremiumProductRow";
 import PremiumCTA from "../app/(pages)/(landing)/PremiumCTA";
 import ChatWidget from "./ChatWidget";
+import ProductDetailModal from "@/components/ProductDetailModal";
 
 export default function StorefrontClient({
   initialMedicines,
@@ -102,6 +103,7 @@ export default function StorefrontClient({
   const { cart, isCartOpen, setIsCartOpen, addToCart, getCartTotal } = useCart();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
+  const [viewingMedicine, setViewingMedicine] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
 
   // Orders & Checkout State
@@ -406,6 +408,7 @@ export default function StorefrontClient({
               setSelectedQuantities(prev => ({ ...prev, [med.id]: 1 }));
             }}
             onRequestRestock={handleRequestRestock}
+            onViewProduct={(med) => setViewingMedicine(med)}
           />
 
           <PremiumCTA />
@@ -440,6 +443,7 @@ export default function StorefrontClient({
               setSelectedQuantities(prev => ({ ...prev, [med.id]: 1 }));
             }}
             onRequestRestock={handleRequestRestock}
+            onViewProduct={(med) => setViewingMedicine(med)}
           />
         </>
       )}
@@ -630,6 +634,7 @@ export default function StorefrontClient({
                         }));
                       }}
                       onRequestRestock={() => handleRequestRestock(med.id)}
+                      onViewProduct={(medicineToView) => setViewingMedicine(medicineToView)}
                     />
                   ))
                 ) : (
@@ -1082,6 +1087,23 @@ export default function StorefrontClient({
         </div>
       )}
 
+
+      {/* PRODUCT DETAILS & ALTERNATIVE MEDICINES MODAL */}
+      <ProductDetailModal
+        isOpen={Boolean(viewingMedicine)}
+        onClose={() => setViewingMedicine(null)}
+        medicine={viewingMedicine}
+        allMedicines={medicines}
+        cart={cart}
+        wishlist={wishlist}
+        wishlistLoading={wishlistLoading}
+        onAddToCart={(med, qty) => {
+          addToCart(med, qty);
+          setSelectedQuantities((prev) => ({ ...prev, [med.id]: 1 }));
+        }}
+        onRequestRestock={handleRequestRestock}
+        onSelectMedicine={(med) => setViewingMedicine(med)}
+      />
 
     </div>
   );

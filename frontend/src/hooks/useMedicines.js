@@ -101,3 +101,41 @@ export function usePublicMedicines(params = {}) {
     refetch: fetchPublic.refetch,
   };
 }
+
+export function usePublicMedicine(id) {
+  const fetchSingle = useQuery({
+    queryKey: ["public-medicine", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await api.get(`/user/medicines/${id}`);
+      return res?.data || res;
+    },
+    enabled: Boolean(id),
+  });
+
+  return {
+    medicine: fetchSingle.data || null,
+    isLoading: fetchSingle.isLoading,
+    isError: fetchSingle.isError,
+    refetch: fetchSingle.refetch,
+  };
+}
+
+export function useMedicineAlternatives(id) {
+  const fetchAlternatives = useQuery({
+    queryKey: ["medicine-alternatives", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const res = await api.get(`/user/medicines/${id}/alternatives`);
+      return res?.data || res;
+    },
+    enabled: Boolean(id),
+  });
+
+  return {
+    alternatives: fetchAlternatives.data || [],
+    isLoading: fetchAlternatives.isLoading,
+    isError: fetchAlternatives.isError,
+    refetch: fetchAlternatives.refetch,
+  };
+}
