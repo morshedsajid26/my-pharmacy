@@ -31,9 +31,10 @@ model Medicine {
   genericName     String?
   company         String
   category        String
-  purchasePrice   Float
-  sellingPrice    Float
-  stock           Int               @default(0)
+  purchasePrice         Float
+  sellingPrice          Float
+  onlineDiscountPercent Float             @default(0)
+  stock                 Int               @default(0)
   expiryDate      DateTime?
   image           String?
   status          String            @default("In Stock") // "In Stock", "Low", "Out of Stock"

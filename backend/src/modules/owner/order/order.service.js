@@ -43,7 +43,8 @@ export const approveOnlineOrderService = async (orderId) => {
         throw new Error(`Insufficient stock for ${medicine.name}. Only ${medicine.stock} left in stock.`);
       }
 
-      const profit = (medicine.sellingPrice - medicine.purchasePrice) * item.quantity;
+      const effectiveUnitPrice = item.unitPrice !== undefined ? item.unitPrice : medicine.sellingPrice;
+      const profit = (effectiveUnitPrice - medicine.purchasePrice) * item.quantity;
       totalProfit += profit;
 
       const newStock = medicine.stock - item.quantity;
@@ -58,7 +59,7 @@ export const approveOnlineOrderService = async (orderId) => {
       saleItems.push({
         medicineId: item.medicineId,
         quantity: item.quantity,
-        unitPrice: medicine.sellingPrice,
+        unitPrice: effectiveUnitPrice,
         totalPrice: item.totalPrice,
       });
     }

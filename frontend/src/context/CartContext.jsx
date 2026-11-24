@@ -95,13 +95,22 @@ export function CartProvider({ children }) {
       return toast.error(`${med.name || "Medicine"} is currently out of stock!`);
     }
 
+    const discountPercent = Number(med.onlineDiscountPercent) || 0;
+    const baseSellingPrice = Number(med.sellingPrice) || 0;
+    const effectivePrice =
+      discountPercent > 0
+        ? Number((baseSellingPrice * (1 - discountPercent / 100)).toFixed(2))
+        : baseSellingPrice;
+
     // Sanitize medicine item so only serializable plain data fields are stored
     const sanitizedItem = {
       id: String(med.id),
       name: String(med.name || "Medicine"),
       company: String(med.company || ""),
       category: String(med.category || ""),
-      sellingPrice: Number(med.sellingPrice) || 0,
+      sellingPrice: effectivePrice, // Discounted effective price charged online
+      originalPrice: baseSellingPrice, // Original MRP
+      onlineDiscountPercent: discountPercent,
       purchasePrice: Number(med.purchasePrice) || 0,
       stock: availableStock,
       image: typeof med.image === "string" ? med.image : null,
@@ -165,6 +174,17 @@ export function CartProvider({ children }) {
     );
   };
 
+  const getCartOriginalTotal = () => {
+    return cart.reduce((total, item) => {
+      const original = Number(item?.originalPrice) || Number(item?.sellingPrice) || 0;
+      return total + original * (Number(item?.quantity) || 0);
+    }, 0);
+  };
+
+  const getProductSavings = () => {
+    return Math.max(0, getCartOriginalTotal() - getCartTotal());
+  };
+
   const getCartDeliveryCharge = () => {
     const subtotal = getCartTotal();
     if (subtotal === 0) return 0;
@@ -209,6 +229,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         clearCart,
         getCartTotal,
+        getCartOriginalTotal,
+        getProductSavings,
         getCartDeliveryCharge,
         getCartDiscount,
         getCartGrandTotal,

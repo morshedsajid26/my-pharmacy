@@ -32,13 +32,17 @@ export const createOnlineOrderService = async (customer, { items, notes, deliver
         throw new Error(`Insufficient stock for ${medicine.name}. Only ${medicine.stock} left.`);
       }
 
-      const itemTotal = medicine.sellingPrice * cartItem.quantity;
+      const discountPercent = Number(medicine.onlineDiscountPercent) || 0;
+      const unitPrice = discountPercent > 0 
+        ? parseFloat((medicine.sellingPrice * (1 - discountPercent / 100)).toFixed(2))
+        : medicine.sellingPrice;
+      const itemTotal = parseFloat((unitPrice * cartItem.quantity).toFixed(2));
       subtotal += itemTotal;
 
       orderItemsToCreate.push({
         medicineId: medicine.id,
         quantity: cartItem.quantity,
-        unitPrice: medicine.sellingPrice,
+        unitPrice,
         totalPrice: itemTotal,
       });
     }

@@ -43,6 +43,7 @@ export const addMedicineService = async (data) => {
       category: data.category || 'Tablet',
       purchasePrice: parseFloat(data.purchasePrice) || 0,
       sellingPrice: parseFloat(data.sellingPrice) || 0,
+      onlineDiscountPercent: Math.max(0, Math.min(100, parseFloat(data.onlineDiscountPercent) || 0)),
       stock,
       expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
       image: data.image || null,
@@ -59,16 +60,20 @@ export const updateMedicineService = async (id, data) => {
   const status = stock === 0 ? 'Out of Stock' : stock <= 10 ? 'Low' : 'In Stock';
 
   const updatePayload = {
-    ...data,
+    name: data.name !== undefined ? data.name : existing.name,
+    genericName: data.genericName !== undefined ? (data.genericName || null) : existing.genericName,
+    company: data.company !== undefined ? data.company : existing.company,
+    category: data.category !== undefined ? (data.category || 'Tablet') : existing.category,
+    purchasePrice: data.purchasePrice !== undefined ? (parseFloat(data.purchasePrice) || 0) : existing.purchasePrice,
+    sellingPrice: data.sellingPrice !== undefined ? (parseFloat(data.sellingPrice) || 0) : existing.sellingPrice,
+    onlineDiscountPercent: data.onlineDiscountPercent !== undefined
+      ? Math.max(0, Math.min(100, parseFloat(data.onlineDiscountPercent) || 0))
+      : (existing.onlineDiscountPercent || 0),
     stock,
     status,
+    expiryDate: data.expiryDate !== undefined ? (data.expiryDate ? new Date(data.expiryDate) : null) : existing.expiryDate,
+    image: data.image !== undefined ? (data.image || null) : existing.image,
   };
-
-  if (data.purchasePrice !== undefined) updatePayload.purchasePrice = parseFloat(data.purchasePrice);
-  if (data.sellingPrice !== undefined) updatePayload.sellingPrice = parseFloat(data.sellingPrice);
-  if (data.expiryDate !== undefined) {
-    updatePayload.expiryDate = data.expiryDate ? new Date(data.expiryDate) : null;
-  }
 
   return await prisma.medicine.update({
     where: { id },

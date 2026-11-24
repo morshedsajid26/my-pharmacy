@@ -40,6 +40,8 @@ export default function CartDrawer() {
     removeFromCart,
     clearCart,
     getCartTotal,
+    getCartOriginalTotal,
+    getProductSavings,
     getCartDeliveryCharge,
     getCartDiscount,
     getCartGrandTotal,
@@ -496,7 +498,12 @@ export default function CartDrawer() {
               <>
                 <div className="space-y-4">
                   {cart.map((item) => {
-                    const itemTotal = (Number(item?.sellingPrice) || 0) * (Number(item?.quantity) || 0);
+                    const itemPrice = Number(item?.sellingPrice) || 0;
+                    const itemOriginal = Number(item?.originalPrice) || itemPrice;
+                    const hasDiscount =
+                      (Number(item?.onlineDiscountPercent) || 0) > 0 &&
+                      itemOriginal > itemPrice;
+                    const itemTotal = itemPrice * (Number(item?.quantity) || 0);
 
                     return (
                       <div
@@ -511,9 +518,19 @@ export default function CartDrawer() {
                             {item.company}
                           </p>
                           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                            <span className="text-xs font-medium text-slate-500">
-                              ৳{item.sellingPrice} each
+                            <span className="text-xs font-bold text-slate-800">
+                              ৳{itemPrice.toFixed(2)} each
                             </span>
+                            {hasDiscount && (
+                              <>
+                                <span className="text-xs text-slate-400 line-through">
+                                  ৳{itemOriginal.toFixed(2)}
+                                </span>
+                                <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                                  -{item.onlineDiscountPercent}%
+                                </span>
+                              </>
+                            )}
                             <span className="text-slate-300">•</span>
                             <span className="text-xs font-black text-medical-blue-600 bg-medical-blue-50/80 px-2 py-0.5 rounded-md border border-medical-blue-100">
                               Total: ৳{Number.isInteger(itemTotal) ? itemTotal : itemTotal.toFixed(2)}
@@ -589,9 +606,32 @@ export default function CartDrawer() {
           {cart.length > 0 && (
             <div className="p-6 border-t border-slate-100 bg-slate-50 space-y-4">
               <div className="space-y-2.5 border-b border-slate-200/60 pb-3">
+                {getProductSavings() > 0 && (
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span className="font-semibold">Original MRP Total:</span>
+                    <span className="line-through font-mono">
+                      ৳{getCartOriginalTotal().toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {getProductSavings() > 0 && (
+                  <div className="flex items-center justify-between text-xs text-rose-600 font-bold">
+                    <span className="flex items-center gap-1">
+                      <span>Product Discount Savings:</span>
+                      <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-black uppercase">
+                        SAVED
+                      </span>
+                    </span>
+                    <span className="font-mono">
+                      -৳{getProductSavings().toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-slate-500">Subtotal:</span>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="font-bold text-slate-700">Subtotal:</span>
+                  <span className="font-bold text-slate-900 font-mono">
                     ৳{getCartTotal().toFixed(2)}
                   </span>
                 </div>

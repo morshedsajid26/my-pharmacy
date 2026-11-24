@@ -93,6 +93,11 @@ export default function ProductDetailModal({
   const remainingStock = Math.max(0, (medicine?.stock || 0) - qtyInCart);
   const isRequested = wishlist?.includes(medicine?.id);
 
+  const discountPercent = Number(medicine?.onlineDiscountPercent) || 0;
+  const onlinePrice = discountPercent > 0 
+    ? (Number(medicine?.sellingPrice) || 0) * (1 - discountPercent / 100) 
+    : (Number(medicine?.sellingPrice) || 0);
+
   const handleIncrease = () => {
     if (selectedQuantity < remainingStock) {
       setSelectedQuantity((prev) => prev + 1);
@@ -169,7 +174,7 @@ export default function ProductDetailModal({
                 {isAvailable ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    In Stock ({medicine.stock} units)
+                    In Stock
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
@@ -178,6 +183,15 @@ export default function ProductDetailModal({
                   </span>
                 )}
               </div>
+
+              {/* Floating Online Discount Badge */}
+              {discountPercent > 0 && (
+                <div className="absolute top-3.5 right-3.5">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-2xs">
+                    -{discountPercent}% OFF
+                  </span>
+                </div>
+              )}
 
               {medicine?.category && (
                 <div className="absolute bottom-3.5 left-3.5">
@@ -231,10 +245,24 @@ export default function ProductDetailModal({
 
               {/* Price & Purchase Actions Box */}
               <div className="pt-4 border-t border-slate-100 space-y-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono">
-                    ৳{Number(medicine.sellingPrice || 0).toFixed(2)}
-                  </span>
+                <div className="flex items-baseline gap-2.5 flex-wrap">
+                  {discountPercent > 0 ? (
+                    <>
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono">
+                        ৳{onlinePrice.toFixed(2)}
+                      </span>
+                      <span className="text-base sm:text-lg text-slate-400 line-through font-mono">
+                        ৳{Number(medicine.sellingPrice || 0).toFixed(2)}
+                      </span>
+                      <span className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                        {discountPercent}% OFF
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono">
+                      ৳{Number(medicine.sellingPrice || 0).toFixed(2)}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400 font-semibold">
                     / unit (incl. VAT)
                   </span>
@@ -337,6 +365,8 @@ export default function ProductDetailModal({
                   const altCartItem = cart?.find((item) => item?.id === alt.id);
                   const altQtyInCart = altCartItem ? altCartItem.quantity || 0 : 0;
                   const altRemaining = Math.max(0, (alt.stock || 0) - altQtyInCart);
+                  const altDiscount = Number(alt.onlineDiscountPercent) || 0;
+                  const altOnlinePrice = altDiscount > 0 ? (Number(alt.sellingPrice) || 0) * (1 - altDiscount / 100) : (Number(alt.sellingPrice) || 0);
 
                   return (
                     <div
@@ -347,7 +377,7 @@ export default function ProductDetailModal({
                       <div>
                         <div className="flex items-start gap-3">
                           {/* Mini Thumbnail */}
-                          <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center p-1 overflow-hidden">
+                          <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center p-1 overflow-hidden relative">
                             {alt.image ? (
                               <img
                                 src={alt.image}
@@ -359,6 +389,11 @@ export default function ProductDetailModal({
                               />
                             ) : (
                               <Pill className="w-6 h-6 text-slate-400 group-hover:text-teal-600 transition-colors" />
+                            )}
+                            {altDiscount > 0 && (
+                              <span className="absolute top-0.5 right-0.5 bg-rose-600 text-white text-[9px] font-black px-1 rounded">
+                                -{altDiscount}%
+                              </span>
                             )}
                           </div>
 
@@ -383,15 +418,26 @@ export default function ProductDetailModal({
                         {/* Price & Stock */}
                         <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
                           <div>
-                            <span className="text-base font-bold font-mono text-slate-900">
-                              ৳{Number(alt.sellingPrice || 0).toFixed(2)}
-                            </span>
+                            {altDiscount > 0 ? (
+                              <div className="flex items-baseline gap-1.5 flex-wrap">
+                                <span className="text-base font-bold font-mono text-slate-900">
+                                  ৳{altOnlinePrice.toFixed(2)}
+                                </span>
+                                <span className="text-xs text-slate-400 line-through font-mono">
+                                  ৳{Number(alt.sellingPrice || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-base font-bold font-mono text-slate-900">
+                                ৳{Number(alt.sellingPrice || 0).toFixed(2)}
+                              </span>
+                            )}
                             <span className="text-[10px] text-slate-400 ml-1">/ unit</span>
                           </div>
 
                           <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>{alt.stock} in stock</span>
+                            <span>In Stock</span>
                           </span>
                         </div>
                       </div>

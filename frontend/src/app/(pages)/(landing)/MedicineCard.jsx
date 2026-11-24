@@ -21,6 +21,11 @@ export default function MedicineCard({
   const isAvailable = (medicine?.stock || 0) > 0;
   const isRequested = wishlist?.includes(medicine?.id);
 
+  const discountPercent = Number(medicine?.onlineDiscountPercent) || 0;
+  const onlinePrice = discountPercent > 0 
+    ? (Number(medicine?.sellingPrice) || 0) * (1 - discountPercent / 100) 
+    : (Number(medicine?.sellingPrice) || 0);
+
   const handleCardClick = () => {
     if (onViewProduct) {
       onViewProduct(medicine);
@@ -65,6 +70,13 @@ export default function MedicineCard({
             View Product
           </span>
         </div>
+
+        {/* Discount badge */}
+        {discountPercent > 0 && (
+          <span className="absolute top-2.5 right-2.5 bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-2xs z-20">
+            -{discountPercent}%
+          </span>
+        )}
 
         {/* Low stock indicator */}
         {medicine?.stock <= 5 && medicine?.stock >= 1 && (
@@ -117,10 +129,21 @@ export default function MedicineCard({
         </div>
 
         <div className="mt-3 sm:mt-4 flex flex-col justify-end">
-          <div className="flex items-baseline gap-1 mb-2.5">
-            <span className="text-base sm:text-lg font-bold text-slate-900 font-mono">
-              ৳{medicine?.sellingPrice}
-            </span>
+          <div className="flex items-baseline gap-1.5 mb-2.5 flex-wrap">
+            {discountPercent > 0 ? (
+              <>
+                <span className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                  ৳{onlinePrice.toFixed(2)}
+                </span>
+                <span className="text-xs text-slate-400 line-through font-mono">
+                  ৳{Number(medicine?.sellingPrice || 0).toFixed(2)}
+                </span>
+              </>
+            ) : (
+              <span className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                ৳{Number(medicine?.sellingPrice || 0).toFixed(2)}
+              </span>
+            )}
             <span className="text-[11px] font-medium text-slate-400">
               / unit
             </span>

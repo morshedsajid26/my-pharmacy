@@ -39,6 +39,7 @@ export default function MedicinesPage() {
       category: "Tablet",
       purchasePrice: 0,
       sellingPrice: 0,
+      onlineDiscountPercent: 0,
       stock: 0,
       image: ""
     });
@@ -53,10 +54,21 @@ export default function MedicinesPage() {
 
   const handleSave = useCallback(async () => {
     try {
+      const payload = {
+        name: formData.name,
+        genericName: formData.genericName || "",
+        company: formData.company,
+        category: formData.category || "Tablet",
+        purchasePrice: parseFloat(formData.purchasePrice) || 0,
+        sellingPrice: parseFloat(formData.sellingPrice) || 0,
+        onlineDiscountPercent: Math.max(0, Math.min(100, parseFloat(formData.onlineDiscountPercent) || 0)),
+        stock: parseInt(formData.stock, 10) || 0,
+        image: formData.image || "",
+      };
       if (editingMedicine) {
-        await updateMedicine({ id: editingMedicine.id, data: formData });
+        await updateMedicine({ id: editingMedicine.id, data: payload });
       } else {
-        await addMedicine(formData);
+        await addMedicine(payload);
       }
       setIsModalOpen(false);
     } catch (err) {
@@ -109,9 +121,20 @@ export default function MedicinesPage() {
     { key: "purchasePrice", Title: "Purchase Price", width: "12%" , render: (row) => (
       <span className="text-slate-500">৳{row.purchasePrice?.toFixed(2)}</span>
     )},
-    { key: "sellingPrice", Title: "Selling Price", width: "11%" , render: (row) => (
-      <span className="font-medium text-slate-900">৳{row.sellingPrice?.toFixed(2)}</span>
-    )},
+    { key: "sellingPrice", Title: "Selling Price", width: "12%" , render: (row) => {
+      const discount = Number(row.onlineDiscountPercent) || 0;
+      const onlinePrice = discount > 0 ? row.sellingPrice * (1 - discount / 100) : row.sellingPrice;
+      return (
+        <div>
+          <div className="font-bold text-slate-900 font-mono">৳{row.sellingPrice?.toFixed(2)}</div>
+          {discount > 0 && (
+            <div className="text-[10px] font-bold text-emerald-600 font-mono">
+              Online: ৳{onlinePrice.toFixed(2)} (-{discount}%)
+            </div>
+          )}
+        </div>
+      );
+    }},
     { key: "status", Title: "Status", width: "10%" , render: (row) => getStatusBadge(row.status || "In Stock") },
     { key: "image", Title: "Image", width: "8%" , render: (row) => (
       <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.image ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
@@ -240,27 +263,74 @@ export default function MedicinesPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <InputField 
-              label="Purchase Price" 
+              label="Purchase Price (৳)" 
               type="number" 
               step="0.01" 
               value={formData.purchasePrice || 0} 
-              onChange={(e) => setFormData({...formData, purchasePrice: parseFloat(e.target.value)})}
+              onChange={(e) => setFormData({...formData, purchasePrice: parseFloat(e.target.value) || 0})}
             />
             <InputField 
-              label="Selling Price" 
+              label="Selling Price / MRP (৳)" 
               type="number" 
               step="0.01" 
               value={formData.sellingPrice || 0} 
-              onChange={(e) => setFormData({...formData, sellingPrice: parseFloat(e.target.value)})}
+              onChange={(e) => setFormData({...formData, sellingPrice: parseFloat(e.target.value) || 0})}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <InputField 
+              label="Online Discount (%)" 
+              type="number" 
+              step="0.1" 
+              min="0"
+              max="100"
+              placeholder="0 (No discount)"
+              value={formData.onlineDiscountPercent ?? 0} 
+              onChange={(e) => setFormData({...formData, onlineDiscountPercent: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0))})}
+            />
+            <InputField 
               label="Current Stock" 
               type="number" 
               value={formData.stock || 0} 
-              onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value)})}
+              onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value) || 0})}
             />
+          </div>
+
+          {/* Real-time Online Margin & Profit Preview */}
+          {(Number(formData.sellingPrice) > 0) && (() => {
+            const disc = Number(formData.onlineDiscountPercent) || 0;
+            const onlinePrice = disc > 0 ? formData.sellingPrice * (1 - disc / 100) : formData.sellingPrice;
+            const profit = onlinePrice - (Number(formData.purchasePrice) || 0);
+            const isLoss = profit < 0;
+
+            return (
+              <div className={`p-3 rounded-xl border text-xs space-y-1 ${
+                isLoss 
+                  ? "bg-rose-50 border-rose-200 text-rose-900" 
+                  : disc > 0 
+                  ? "bg-teal-50/70 border-teal-200/80 text-teal-950" 
+                  : "bg-slate-50 border-slate-200 text-slate-700"
+              }`}>
+                <div className="flex items-center justify-between font-semibold">
+                  <span>Customer Online Price:</span>
+                  <span className="font-mono text-sm font-bold">
+                    ৳{onlinePrice.toFixed(2)} {disc > 0 && `(${disc}% OFF)`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Unit Profit from Online Sale:</span>
+                  <span className={`font-mono font-bold ${isLoss ? "text-rose-700" : "text-emerald-700"}`}>
+                    {isLoss ? "Loss: -৳" : "+৳"}{Math.abs(profit).toFixed(2)}
+                  </span>
+                </div>
+                {isLoss && (
+                  <p className="text-[11px] font-bold text-rose-600 mt-1">
+                    ⚠️ Warning: Online price is lower than purchase price (৳{formData.purchasePrice})!
+                  </p>
+                )}
+              </div>
+            );
+          })()}
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">
                 Medicine Image
@@ -325,7 +395,6 @@ export default function MedicinesPage() {
               />
             </div>
           </div>
-        </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}
