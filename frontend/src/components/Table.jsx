@@ -86,7 +86,7 @@ export function Table({
         maxWidth: head.maxWidth,
         enableSorting: head.sortable !== false,
       })),
-    [TableHeads]
+    [TableHeads],
   );
 
   const table = useReactTable({
@@ -157,14 +157,14 @@ export function Table({
                     align === "left"
                       ? "text-left"
                       : align === "right"
-                      ? "text-right"
-                      : "text-center";
+                        ? "text-right"
+                        : "text-center";
                   const justifyAlign =
                     align === "left"
                       ? "justify-start"
                       : align === "right"
-                      ? "justify-end"
-                      : "justify-center";
+                        ? "justify-end"
+                        : "justify-center";
 
                   return (
                     <th
@@ -184,7 +184,7 @@ export function Table({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
 
                         {header.column.getCanSort() && (
@@ -250,8 +250,8 @@ export function Table({
                       align === "left"
                         ? "text-left"
                         : align === "right"
-                        ? "text-right"
-                        : "text-center";
+                          ? "text-right"
+                          : "text-center";
                     const customClass = cell.column.columnDef.className || "";
 
                     return (
@@ -266,7 +266,7 @@ export function Table({
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </td>
                     );

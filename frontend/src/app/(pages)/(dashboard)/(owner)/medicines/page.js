@@ -103,45 +103,44 @@ export default function MedicinesPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "name", Title: "Medicine Name", width: "16%", render: (row) => (
+    { key: "name", Title: "Medicine Name", width: "14%", render: (row) => (
       <div className="font-bold text-slate-900">{row.name}</div>
     )},
-    { key: "genericName", Title: "Generic Name", width: "14%", render: (row) => (
+    { key: "genericName", Title: "Generic Name", width: "12%", render: (row) => (
       <div className="text-slate-500 font-medium">{row.genericName || "-"}</div>
     )},
-    { key: "company", Title: "Company", width: "15%" },
-    { key: "category", Title: "Category", width: "10%" , render: (row) => (
+    { key: "company", Title: "Company", width: "12%" },
+    { key: "category", Title: "Category", width: "9%" , render: (row) => (
       <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-medium">{row.category}</span>
     )},
-    { key: "stock", Title: "Stock", width: "8%" , render: (row) => (
+    { key: "stock", Title: "Stock", width: "6%" , render: (row) => (
       <span className={row.stock <= 5 ? "text-red-600 font-bold" : row.stock <= 10 ? "text-amber-600 font-bold" : "font-medium"}>
         {row.stock}
       </span>
     )},
-    { key: "purchasePrice", Title: "Purchase Price", width: "12%" , render: (row) => (
+    { key: "purchasePrice", Title: "Purchase Price", width: "9%" , render: (row) => (
       <span className="text-slate-500">৳{row.purchasePrice?.toFixed(2)}</span>
     )},
-    { key: "sellingPrice", Title: "Selling Price", width: "12%" , render: (row) => {
+    { key: "sellingPrice", Title: "Selling Price", width: "9%" , render: (row) => (
+      <span className="font-medium text-slate-900">৳{row.sellingPrice?.toFixed(2)}</span>
+    )},
+    { key: "onlineDiscountPercent", Title: "Discount", width: "8%" , render: (row) => {
       const discount = Number(row.onlineDiscountPercent) || 0;
-      const onlinePrice = discount > 0 ? row.sellingPrice * (1 - discount / 100) : row.sellingPrice;
-      return (
-        <div>
-          <div className="font-bold text-slate-900 font-mono">৳{row.sellingPrice?.toFixed(2)}</div>
-          {discount > 0 && (
-            <div className="text-[10px] font-bold text-emerald-600 font-mono">
-              Online: ৳{onlinePrice.toFixed(2)} (-{discount}%)
-            </div>
-          )}
-        </div>
+      return discount > 0 ? (
+        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+          {discount}%
+        </span>
+      ) : (
+        <span className="text-slate-400 text-xs">0%</span>
       );
     }},
-    { key: "status", Title: "Status", width: "10%" , render: (row) => getStatusBadge(row.status || "In Stock") },
-    { key: "image", Title: "Image", width: "8%" , render: (row) => (
+    { key: "status", Title: "Status", width: "8%" , render: (row) => getStatusBadge(row.status || "In Stock") },
+    { key: "image", Title: "Image", width: "6%" , render: (row) => (
       <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.image ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
         {row.image ? "Yes" : "No"}
       </span>
     )},
-    { key: "actions", Title: "Actions", width: "8%" , sortable: false, render: (row) => (
+    { key: "actions", Title: "Actions", width: "7%" , sortable: false, render: (row) => (
       <div className="flex items-center justify-center gap-2">
         <button 
           onClick={() => openEditModal(row)} 
