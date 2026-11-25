@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ShoppingBag,
   X,
@@ -42,6 +42,7 @@ export default function CartDrawer() {
     getCartTotal,
     getCartOriginalTotal,
     getProductSavings,
+    getDeliveryDetails,
     getCartDeliveryCharge,
     getCartDiscount,
     getCartGrandTotal,
@@ -50,6 +51,22 @@ export default function CartDrawer() {
   } = useCart();
 
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+
+  const savedAddressesList = useMemo(() => {
+    if (!customer?.address) return [];
+    const raw = [];
+    try {
+      const parsed = JSON.parse(customer.address);
+      if (Array.isArray(parsed)) raw.push(...parsed);
+      else raw.push(customer.address);
+    } catch (e) {
+      raw.push(customer.address);
+    }
+    return deduplicateAddresses(raw);
+  }, [customer?.address]);
+
+  const activeSelectedAddress = savedAddressesList[selectedAddressIndex] || savedAddressesList[0] || null;
+  const deliveryInfo = getDeliveryDetails(activeSelectedAddress);
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -640,18 +657,33 @@ export default function CartDrawer() {
                   <span className="font-bold text-slate-500">
                     Delivery Charge:
                   </span>
-                  {getCartDeliveryCharge() === 0 ? (
+                  {deliveryInfo.charge === 0 ? (
                     <span className="text-xs font-black text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
                       FREE
                     </span>
                   ) : (
                     <span className="font-bold text-slate-800 font-mono">
-                      ৳{getCartDeliveryCharge().toFixed(2)}
+                      ৳{deliveryInfo.charge.toFixed(2)}
                     </span>
                   )}
                 </div>
 
-                {getCartDeliveryCharge() > 0 && (
+                {deliveryInfo.isDistanceBased && deliveryInfo.distanceKm !== null && (
+                  <p className="text-[10px] text-medical-blue-700 font-semibold leading-none">
+                    📍 {deliveryInfo.distanceKm.toFixed(1)} km from store × ৳{deliveryInfo.ratePerKm}/km
+                  </p>
+                )}
+
+                {!deliveryInfo.isDistanceBased &&
+                  deliveryInfo.charge > 0 &&
+                  settings?.storeLat != null &&
+                  settings?.storeLng != null && (
+                    <p className="text-[10px] text-slate-500 font-medium leading-none">
+                      📍 Pin GPS address above for exact ৳{deliveryInfo.ratePerKm}/km distance rate
+                    </p>
+                  )}
+
+                {deliveryInfo.charge > 0 && (
                   <p className="text-[10px] text-amber-600 font-semibold leading-none">
                     💡 Add ৳
                     {(
@@ -697,7 +729,7 @@ export default function CartDrawer() {
                   Grand Total:
                 </span>
                 <span className="text-2xl font-black text-slate-900 font-mono">
-                  ৳{getCartGrandTotal().toFixed(2)}
+                  ৳{getCartGrandTotal(activeSelectedAddress).toFixed(2)}
                 </span>
               </div>
 

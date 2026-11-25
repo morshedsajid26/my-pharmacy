@@ -11,6 +11,10 @@ export const getPublicStorefrontSettingsService = async () => {
       id: 'settings',
       minOrderForFreeDelivery: 500,
       deliveryCharge: 20,
+      deliveryChargePerKm: 5,
+      storeAddress: null,
+      storeLat: null,
+      storeLng: null,
       discountTiers: [],
     }
   );

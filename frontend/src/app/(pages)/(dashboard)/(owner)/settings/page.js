@@ -6,8 +6,9 @@ import api from "@/lib/api";
 import InputField from "@/components/InputField";
 import { Button } from "@/components/Button";
 import Password from "@/components/Password";
-import { Camera, Save, Loader2, Shield, Trash2, Edit2, X, Settings, Truck, Percent, ShoppingBag, Globe } from "lucide-react";
+import { Camera, Save, Loader2, Shield, Trash2, Edit2, X, Settings, Truck, ShoppingBag, Globe, MapPin, Crosshair, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
+import { getCurrentDevicePosition, reverseGeocode } from "@/lib/locationUtils";
 
 export default function SettingsPage() {
   const { user: authUser, setUser } = useAuth();
@@ -22,11 +23,25 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   
+  // Store Location state (configured in Account Profile)
+  const [storeAddress, setStoreAddress] = useState("");
+  const [storeLat, setStoreLat] = useState("");
+  const [storeLng, setStoreLng] = useState("");
+  const [detectingStoreLoc, setDetectingStoreLoc] = useState(false);
+  const [storeGpsPrompt, setStoreGpsPrompt] = useState({
+    isOpen: false,
+    lat: "",
+    lng: "",
+    houseShop: "",
+    roadBlock: "",
+    areaCity: "",
+  });
+  const [savingStoreLoc, setSavingStoreLoc] = useState(false);
+
   // Storefront settings state
   const [minOrder, setMinOrder] = useState(500);
   const [delCharge, setDelCharge] = useState(20);
-  const [discThreshold, setDiscThreshold] = useState(1000);
-  const [discPercent, setDiscPercent] = useState(10);
+  const [delChargePerKm, setDelChargePerKm] = useState(5);
   
   // Track original values to reset on Cancel
   const [originalData, setOriginalData] = useState(null);
@@ -68,12 +83,12 @@ export default function SettingsPage() {
         }
 
         if (storeSettings) {
-          setMinOrder(storeSettings.minOrderForFreeDelivery);
-          setDelCharge(storeSettings.deliveryCharge);
-          // Use first discount tier if available
-          const firstTier = storeSettings.discountTiers && storeSettings.discountTiers[0];
-          setDiscThreshold(firstTier?.threshold ?? 0);
-          setDiscPercent(firstTier?.percent ?? 0);
+          setMinOrder(storeSettings.minOrderForFreeDelivery ?? 500);
+          setDelCharge(storeSettings.deliveryCharge ?? 20);
+          setDelChargePerKm(storeSettings.deliveryChargePerKm ?? 5);
+          setStoreAddress(storeSettings.storeAddress || "");
+          setStoreLat(storeSettings.storeLat != null ? String(storeSettings.storeLat) : "");
+          setStoreLng(storeSettings.storeLng != null ? String(storeSettings.storeLng) : "");
         }
       } catch (error) {
         console.error("Failed to load settings:", error);
@@ -156,6 +171,70 @@ export default function SettingsPage() {
     toast.success("Changes discarded");
   };
 
+  // Detect Store GPS Location & open quick Road/Block confirmation
+  const handleDetectStoreLocation = async () => {
+    setDetectingStoreLoc(true);
+    try {
+      toast.loading("Detecting store GPS location...", { id: "store-geo" });
+      const { latitude, longitude } = await getCurrentDevicePosition();
+      toast.loading("Resolving store address...", { id: "store-geo" });
+      const geo = await reverseGeocode(latitude, longitude);
+      toast.dismiss("store-geo");
+
+      const latStr = Number(latitude).toFixed(6);
+      const lngStr = Number(longitude).toFixed(6);
+
+      setStoreGpsPrompt({
+        isOpen: true,
+        lat: latStr,
+        lng: lngStr,
+        houseShop: geo.houseNumber ? `House ${geo.houseNumber}` : "",
+        roadBlock: geo.road || "",
+        areaCity: geo.readable || `GPS Location (${latStr}, ${lngStr})`,
+      });
+      toast.success("GPS pinned! Add Road / Block if needed and save.");
+    } catch (err) {
+      toast.dismiss("store-geo");
+      toast.error(err.message || "Could not detect store GPS location");
+    } finally {
+      setDetectingStoreLoc(false);
+    }
+  };
+
+  // Confirm & Save Store GPS Location
+  const handleSaveStoreGpsLocation = async () => {
+    setSavingStoreLoc(true);
+    try {
+      const parts = [];
+      if (storeGpsPrompt.houseShop.trim()) parts.push(storeGpsPrompt.houseShop.trim());
+      if (storeGpsPrompt.roadBlock.trim()) {
+        const rb = storeGpsPrompt.roadBlock.trim();
+        if (!storeGpsPrompt.areaCity.toLowerCase().includes(rb.toLowerCase())) {
+          parts.push(rb);
+        }
+      }
+      if (storeGpsPrompt.areaCity.trim()) parts.push(storeGpsPrompt.areaCity.trim());
+
+      const finalAddr = parts.filter(Boolean).join(", ") || `GPS Location (${storeGpsPrompt.lat}, ${storeGpsPrompt.lng})`;
+
+      await api.put("/owner/settings", {
+        storeAddress: finalAddr,
+        storeLat: parseFloat(storeGpsPrompt.lat),
+        storeLng: parseFloat(storeGpsPrompt.lng),
+      });
+
+      setStoreLat(storeGpsPrompt.lat);
+      setStoreLng(storeGpsPrompt.lng);
+      setStoreAddress(finalAddr);
+      setStoreGpsPrompt((prev) => ({ ...prev, isOpen: false }));
+      toast.success("Store GPS location saved!");
+    } catch (err) {
+      toast.error(err.message || "Failed to save store location");
+    } finally {
+      setSavingStoreLoc(false);
+    }
+  };
+
   // Handle Account Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -189,7 +268,14 @@ export default function SettingsPage() {
         payload.password = password;
       }
 
-      const res = await api.put("/auth/profile", payload);
+      const [res] = await Promise.all([
+        api.put("/auth/profile", payload),
+        api.put("/owner/settings", {
+          storeAddress: storeAddress.trim() || null,
+          storeLat: storeLat !== "" ? parseFloat(storeLat) : null,
+          storeLng: storeLng !== "" ? parseFloat(storeLng) : null,
+        }),
+      ]);
       const result = res?.data || res;
 
       if (result.success || result.user) {
@@ -207,7 +293,7 @@ export default function SettingsPage() {
         setConfirmPassword("");
         setIsEditing(false);
         
-        toast.success("Profile settings updated successfully!");
+        toast.success("Profile & Store Location updated successfully!");
       }
     } catch (error) {
       toast.error(error.message || "Failed to update profile settings");
@@ -221,13 +307,8 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!isEditingStorefront) return;
 
-    if (parseFloat(minOrder) < 0 || parseFloat(delCharge) < 0 || parseFloat(discThreshold) < 0 || parseFloat(discPercent) < 0) {
+    if (parseFloat(minOrder) < 0 || parseFloat(delCharge) < 0 || parseFloat(delChargePerKm) < 0) {
       toast.error("Settings values cannot be negative.");
-      return;
-    }
-
-    if (parseFloat(discPercent) > 100) {
-      toast.error("Discount percentage cannot exceed 100%.");
       return;
     }
 
@@ -236,10 +317,8 @@ export default function SettingsPage() {
       const payload = {
         minOrderForFreeDelivery: parseFloat(minOrder),
         deliveryCharge: parseFloat(delCharge),
-        discountTiers: [{
-          threshold: parseFloat(discThreshold),
-          percent: parseFloat(discPercent)
-        }]
+        deliveryChargePerKm: parseFloat(delChargePerKm),
+        discountTiers: [],
       };
 
       await api.put("/owner/settings", payload);
@@ -444,6 +523,139 @@ export default function SettingsPage() {
                 />
               </div>
 
+              {/* Store Location Section (GPS Only) */}
+              <div className="pt-5 border-t border-slate-100 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                      <MapPin size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-slate-900">Store GPS Location</h4>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Used to calculate per-km delivery distance to customer locations.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDetectStoreLocation}
+                    disabled={detectingStoreLoc}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-medical-blue-600 hover:bg-medical-blue-700 px-3.5 py-2 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {detectingStoreLoc ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Crosshair size={13} />
+                    )}
+                    <span>{storeLat && storeLng ? "Update Store GPS" : "Set Store GPS Location"}</span>
+                  </button>
+                </div>
+
+                {storeGpsPrompt.isOpen ? (
+                  <div className="p-4 rounded-xl bg-white border-2 border-medical-blue-500 shadow-sm space-y-3 animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <MapPin size={14} className="text-medical-blue-600" />
+                        <span>Confirm Store Address Details</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>GPS Pinned</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Shop / House No. (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Shop 4, House 12"
+                          value={storeGpsPrompt.houseShop}
+                          onChange={(e) => setStoreGpsPrompt({ ...storeGpsPrompt, houseShop: e.target.value })}
+                          className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-medical-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Road / Block / Section / Village
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Road 5, Block C / Vill: Charpara"
+                          value={storeGpsPrompt.roadBlock}
+                          onChange={(e) => setStoreGpsPrompt({ ...storeGpsPrompt, roadBlock: e.target.value })}
+                          className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-medical-blue-500 outline-none"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    <div className="text-xs">
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Area / Upazila / District (Auto-detected from GPS)
+                      </label>
+                      <input
+                        type="text"
+                        value={storeGpsPrompt.areaCity}
+                        onChange={(e) => setStoreGpsPrompt({ ...storeGpsPrompt, areaCity: e.target.value })}
+                        className="w-full h-9 px-3 border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 outline-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setStoreGpsPrompt((prev) => ({ ...prev, isOpen: false }))}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveStoreGpsLocation}
+                        disabled={savingStoreLoc}
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-medical-blue-600 hover:bg-medical-blue-700 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {savingStoreLoc ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                        <span>Save Store Location</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : storeLat && storeLng ? (
+                  <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>GPS Pinned</span>
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-800 break-words">
+                        {storeAddress || "Store Location Pinned"}
+                      </p>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${storeLat},${storeLng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 inline-flex items-center gap-1 text-xs font-bold text-medical-blue-600 hover:text-medical-blue-700 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 transition-colors"
+                      title="View Store on Google Maps"
+                    >
+                      <span>Map</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-800 font-semibold">
+                    Store GPS location is not set yet. Click &quot;Set Store GPS Location&quot; while at your pharmacy to pin it automatically.
+                  </div>
+                )}
+              </div>
+
               {isEditing && (
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                   <Button
@@ -497,7 +709,7 @@ export default function SettingsPage() {
           </div>
 
           <form onSubmit={handleStorefrontSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="max-w-2xl">
               {/* Delivery and Logistics Settings */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 md:p-8 space-y-6">
                 <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
@@ -535,7 +747,33 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-black text-slate-600 block">Standard Delivery Charge (৳)</label>
+                    <label className="text-xs font-black text-slate-600 block">Delivery Rate Per KM (৳ / km)</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">৳</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        required
+                        disabled={!isEditingStorefront}
+                        value={delChargePerKm}
+                        onChange={(e) => setDelChargePerKm(e.target.value)}
+                        className={`w-full h-11 pl-8 pr-12 text-xs font-bold border rounded-xl outline-none transition-colors font-mono ${
+                          !isEditingStorefront 
+                            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
+                            : "bg-white border-slate-200 focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500"
+                        }`}
+                        placeholder="e.g. 5"
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[11px] select-none">/ km</span>
+                    </div>
+                    <p className="text-[9px] text-slate-400 font-medium">
+                      Distance-based charge calculated from your Store GPS location to the customer's GPS address (minimum 1 km charge).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-slate-600 block">Fallback Flat Delivery Charge (৳)</label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">৳</span>
                       <input
@@ -554,69 +792,7 @@ export default function SettingsPage() {
                         placeholder="e.g. 20"
                       />
                     </div>
-                    <p className="text-[9px] text-slate-400 font-medium">Fixed shipping charge applied if the order size falls below the free tier threshold.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Discount Thresholds Settings */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 md:p-8 space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <Percent size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 text-sm">Promotional Order Discounts</h3>
-                    <p className="text-[10px] text-slate-400 font-semibold">Reward customers ordering high values with percentage incentives.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-black text-slate-600 block">Order Discount Threshold (৳)</label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">৳</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        disabled={!isEditingStorefront}
-                        value={discThreshold}
-                        onChange={(e) => setDiscThreshold(e.target.value)}
-                        className={`w-full h-11 pl-8 pr-4 text-xs font-bold border rounded-xl outline-none transition-colors font-mono ${
-                          !isEditingStorefront 
-                            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-                            : "bg-white border-slate-200 focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500"
-                        }`}
-                        placeholder="e.g. 1000"
-                      />
-                    </div>
-                    <p className="text-[9px] text-slate-400 font-medium">Automatic percentage discount will trigger when the customer subtotal exceeds this amount.</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-black text-slate-600 block">Discount Rate (%)</label>
-                    <div className="relative">
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">%</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        required
-                        disabled={!isEditingStorefront}
-                        value={discPercent}
-                        onChange={(e) => setDiscPercent(e.target.value)}
-                        className={`w-full h-11 pl-4 pr-8 text-xs font-bold border rounded-xl outline-none transition-colors font-mono ${
-                          !isEditingStorefront 
-                            ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-                            : "bg-white border-slate-200 focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500"
-                        }`}
-                        placeholder="e.g. 10"
-                      />
-                    </div>
-                    <p className="text-[9px] text-slate-400 font-medium">Percentage multiplier applied directly as savings to the customer's grand total.</p>
+                    <p className="text-[9px] text-slate-400 font-medium">Used only if a customer's address does not have GPS coordinates pinned (or store GPS is not set).</p>
                   </div>
                 </div>
               </div>

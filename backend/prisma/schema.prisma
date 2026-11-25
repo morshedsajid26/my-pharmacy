@@ -157,6 +157,10 @@ model StorefrontSetting {
   id                      String         @id @default("settings")
   minOrderForFreeDelivery Float          @default(500)
   deliveryCharge          Float          @default(20)
+  deliveryChargePerKm     Float          @default(5)
+  storeAddress            String?
+  storeLat                Float?
+  storeLng                Float?
   discountTiers           DiscountTier[]
   updatedAt               DateTime       @updatedAt
 }

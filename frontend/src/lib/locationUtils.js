@@ -94,37 +94,120 @@ export const reverseGeocode = async (latitude, longitude) => {
 
     const addr = data.address;
     const parts = [];
+    const addUnique = (val) => {
+      if (!val || typeof val !== "string") return;
+      const clean = val.trim();
+      if (!clean) return;
+      const lower = clean.toLowerCase();
+      // Skip broad country/division labels
+      if (lower === "bangladesh" || lower.includes("division") || lower.includes("বিভাগ")) return;
+      // Avoid exact or substring duplicates
+      const alreadyIncluded = parts.some(
+        (existing) =>
+          existing.toLowerCase() === lower ||
+          existing.toLowerCase().includes(lower) ||
+          lower.includes(existing.toLowerCase())
+      );
+      if (!alreadyIncluded) {
+        parts.push(clean);
+      }
+    };
 
-    // House / Building / Amenity
+    // 1. Specific POI / House / Building / Road
     const houseNo = addr.house_number || addr.house_name || "";
-    const building = addr.building || addr.amenity || addr.shop || addr.office || "";
-    const road = addr.road || addr.pedestrian || addr.street || addr.residential || addr.footway || "";
+    const building = addr.building || addr.shop || addr.amenity || addr.office || addr.commercial || "";
+    let road = addr.road || addr.pedestrian || addr.street || addr.footway || addr.path || "";
 
-    const streetDetails = [houseNo, building, road].filter(Boolean).join(", ");
-    if (streetDetails) parts.push(streetDetails);
-
-    // Neighbourhood / Suburb / Thana / Quarter
-    const area = addr.neighbourhood || addr.suburb || addr.quarter || addr.subdistrict || addr.residential || addr.village || "";
-    if (area && !parts.includes(area)) parts.push(area);
-
-    // City / Town / District
-    const city = addr.city || addr.town || addr.municipality || addr.state_district || addr.county || "";
-    if (city && !parts.includes(city)) parts.push(city);
-
-    // Postal code
-    if (addr.postcode) parts.push(addr.postcode);
-
-    let formatted = parts.filter(Boolean).join(", ");
-    
-    // If formatted has only area/city and display_name has richer details, enrich it
-    if (parts.length <= 2 && data.display_name) {
-      const displayParts = data.display_name
-        .split(", ")
-        .filter((p) => p !== "Bangladesh" && !p.toLowerCase().includes("division"));
-      if (displayParts.length > 2) {
-        formatted = displayParts.slice(0, 4).join(", ");
+    // If Nominatim didn't return a road/street name, try Photon reverse geocoder to snap to nearest street
+    if (!road) {
+      try {
+        const photonRes = await fetch(
+          `https://photon.komoot.io/reverse?lon=${lon}&lat=${lat}&limit=3`
+        );
+        if (photonRes.ok) {
+          const photonData = await photonRes.json();
+          const features = photonData?.features || [];
+          for (const f of features) {
+            const p = f?.properties || {};
+            if (p.street) {
+              road = p.street;
+              break;
+            }
+            if (p.name && (p.osm_key === "highway" || p.type === "street")) {
+              road = p.name;
+              break;
+            }
+          }
+        }
+      } catch (_) {
+        // Ignore Photon fallback error silently
       }
     }
+
+    if (data.name) addUnique(data.name);
+    if (houseNo) addUnique(houseNo);
+    if (building) addUnique(building);
+    if (road) addUnique(road);
+
+    // 2. Section / Block / Neighbourhood / Village (Gram)
+    const sectionOrVill = [
+      addr.neighbourhood,
+      addr.quarter,
+      addr.residential,
+      addr.hamlet,
+      addr.village,
+      addr.isolated_dwelling,
+      addr.locality,
+    ];
+    sectionOrVill.forEach(addUnique);
+
+    // 3. Area / Suburb / Thana / Upazila / Municipality
+    const areaOrUpazila = [
+      addr.suburb,
+      addr.borough,
+      addr.city_district,
+      addr.subdistrict,
+      addr.town,
+      addr.municipality,
+      addr.county,
+    ];
+    areaOrUpazila.forEach(addUnique);
+
+    // 4. City / Zila (District)
+    const cityOrZila = [addr.city, addr.state_district];
+    cityOrZila.forEach(addUnique);
+
+    // 5. Fallback enrichment from display_name if road/section/village was missed
+    if (parts.length <= 3 && data.display_name) {
+      const displayParts = data.display_name
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => {
+          const l = p.toLowerCase();
+          return (
+            p &&
+            l !== "bangladesh" &&
+            !l.includes("division") &&
+            !l.includes("বিভাগ") &&
+            !/^\d{4}$/.test(p)
+          );
+        });
+      displayParts.forEach(addUnique);
+    }
+
+    // 6. Postal code at the end
+    if (addr.postcode) addUnique(addr.postcode);
+
+    const formatted = parts.filter(Boolean).join(", ");
+    const primaryArea =
+      addr.neighbourhood ||
+      addr.quarter ||
+      addr.village ||
+      addr.suburb ||
+      addr.subdistrict ||
+      addr.county ||
+      "";
+    const primaryCity = addr.city || addr.town || addr.state_district || addr.county || "";
 
     const readable = (formatted && formatted.length > 5)
       ? formatted
@@ -134,8 +217,8 @@ export const reverseGeocode = async (latitude, longitude) => {
       readable,
       houseNumber: houseNo,
       road: road,
-      area: area || city,
-      city: city,
+      area: primaryArea || primaryCity,
+      city: primaryCity,
       postcode: addr.postcode || "",
       fullDisplayName: data.display_name || "",
       toString() { return this.readable; },
@@ -326,5 +409,43 @@ export const deduplicateAddresses = (addressList = []) => {
   }
   return result;
 };
+
+/**
+ * Calculate great-circle distance in kilometers between two GPS coordinates using the Haversine formula.
+ * @param {number} lat1
+ * @param {number} lon1
+ * @param {number} lat2
+ * @param {number} lon2
+ * @returns {number|null} Distance in km, or null if coordinates are invalid
+ */
+export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const nLat1 = Number(lat1);
+  const nLon1 = Number(lon1);
+  const nLat2 = Number(lat2);
+  const nLon2 = Number(lon2);
+
+  if (
+    lat1 === null || lat1 === undefined || lat1 === "" ||
+    lon1 === null || lon1 === undefined || lon1 === "" ||
+    lat2 === null || lat2 === undefined || lat2 === "" ||
+    lon2 === null || lon2 === undefined || lon2 === "" ||
+    Number.isNaN(nLat1) || Number.isNaN(nLon1) || Number.isNaN(nLat2) || Number.isNaN(nLon2)
+  ) {
+    return null;
+  }
+
+  const R = 6371; // Earth radius in km
+  const dLat = ((nLat2 - nLat1) * Math.PI) / 180;
+  const dLon = ((nLon2 - nLon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((nLat1 * Math.PI) / 180) *
+      Math.cos((nLat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 
 

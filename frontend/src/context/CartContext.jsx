@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import { parseLocationFromAddress, calculateDistanceKm } from "@/lib/locationUtils";
 
 const CartContext = createContext();
 
@@ -12,6 +13,10 @@ export function CartProvider({ children }) {
   const [settings, setSettings] = useState({
     minOrderForFreeDelivery: 500,
     deliveryCharge: 20,
+    deliveryChargePerKm: 5,
+    storeAddress: null,
+    storeLat: null,
+    storeLng: null,
     discountTiers: [],
   });
 
@@ -185,33 +190,66 @@ export function CartProvider({ children }) {
     return Math.max(0, getCartOriginalTotal() - getCartTotal());
   };
 
-  const getCartDeliveryCharge = () => {
+  const getDeliveryDetails = (selectedAddress = null) => {
     const subtotal = getCartTotal();
-    if (subtotal === 0) return 0;
     const minOrder = Number(settings?.minOrderForFreeDelivery) || 500;
-    const charge = Number(settings?.deliveryCharge) || 20;
-    return subtotal >= minOrder ? 0 : charge;
-  };
+    const flatCharge = Number(settings?.deliveryCharge ?? 20);
+    const ratePerKm = Number(settings?.deliveryChargePerKm ?? 5);
 
-  const getCartDiscount = () => {
-    const subtotal = getCartTotal();
-    if (!settings?.discountTiers || !Array.isArray(settings.discountTiers) || settings.discountTiers.length === 0) {
-      return 0;
+    if (subtotal === 0) {
+      return { charge: 0, distanceKm: null, isDistanceBased: false, isFree: false, ratePerKm };
     }
-    const applicableTiers = settings.discountTiers.filter(
-      (t) => t && subtotal >= (Number(t.threshold) || 0),
-    );
-    if (applicableTiers.length === 0) return 0;
-    const bestTier = applicableTiers.reduce((prev, curr) =>
-      (Number(curr.percent) || 0) > (Number(prev.percent) || 0) ? curr : prev,
-    );
-    return (subtotal * (Number(bestTier.percent) || 0)) / 100;
+
+    let distanceKm = null;
+    if (selectedAddress && settings?.storeLat != null && settings?.storeLng != null) {
+      const parsed = parseLocationFromAddress(selectedAddress);
+      if (parsed.hasCoordinates) {
+        distanceKm = calculateDistanceKm(
+          settings.storeLat,
+          settings.storeLng,
+          parsed.latitude,
+          parsed.longitude
+        );
+      }
+    }
+
+    if (subtotal >= minOrder) {
+      return { charge: 0, distanceKm, isDistanceBased: false, isFree: true, ratePerKm };
+    }
+
+    if (distanceKm !== null && ratePerKm > 0) {
+      const computedCharge = Math.max(ratePerKm, Math.round(distanceKm * ratePerKm));
+      return {
+        charge: computedCharge,
+        distanceKm,
+        isDistanceBased: true,
+        isFree: false,
+        ratePerKm,
+      };
+    }
+
+    return {
+      charge: flatCharge,
+      distanceKm: null,
+      isDistanceBased: false,
+      isFree: false,
+      ratePerKm,
+    };
   };
 
-  const getCartGrandTotal = () => {
+  const getCartDeliveryCharge = (selectedAddress = null) => {
+    return getDeliveryDetails(selectedAddress).charge;
+  };
+
+  // Storefront tier discount disabled in favor of per-product online discounts
+  const getCartDiscount = () => {
+    return 0;
+  };
+
+  const getCartGrandTotal = (selectedAddress = null) => {
     const subtotal = getCartTotal();
     if (subtotal === 0) return 0;
-    const total = subtotal + getCartDeliveryCharge() - getCartDiscount();
+    const total = subtotal + getCartDeliveryCharge(selectedAddress) - getCartDiscount();
     return Math.max(0, total);
   };
 
@@ -231,6 +269,7 @@ export function CartProvider({ children }) {
         getCartTotal,
         getCartOriginalTotal,
         getProductSavings,
+        getDeliveryDetails,
         getCartDeliveryCharge,
         getCartDiscount,
         getCartGrandTotal,
