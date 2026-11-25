@@ -9,11 +9,11 @@ import {
   getUnsold,
   getLedgerYears,
 } from './dashboard.controller.js';
-import { protect, requireStaffOrAdmin } from '../../../middlewares/auth.js';
+import { protect, requireOwner } from '../../../middlewares/auth.js';
 
 const router = express.Router();
 
-router.use(protect, requireStaffOrAdmin);
+router.use(protect, requireOwner);
 
 router.get('/summary', getDashboardSummary);
 router.get('/charts', getChartData);

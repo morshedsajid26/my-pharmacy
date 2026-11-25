@@ -118,18 +118,20 @@ export function Navbar() {
             <div className="absolute right-0 top-11 mt-1 w-48 bg-white border border-slate-200/90 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
               <div className="px-3.5 py-2 border-b border-slate-100">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Operator Account
+                  {String(user?.role || "").toLowerCase() === "staff" ? "Staff Account" : "Owner Account"}
                 </p>
               </div>
 
-              <Link
-                href="/settings"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-medical-blue-600 font-medium transition-colors"
-              >
-                <Settings size={14} className="text-slate-400" />
-                <span>System Settings</span>
-              </Link>
+              {String(user?.role || "").toLowerCase() !== "staff" && (
+                <Link
+                  href="/settings"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-medical-blue-600 font-medium transition-colors"
+                >
+                  <Settings size={14} className="text-slate-400" />
+                  <span>System Settings</span>
+                </Link>
+              )}
 
               <button
                 onClick={() => {

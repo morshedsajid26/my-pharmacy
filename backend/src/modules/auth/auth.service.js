@@ -28,7 +28,8 @@ export const unifiedLogin = async ({ email, emailOrPhone, identifier, phone, pas
       user.password === password;
 
     if (isMatch) {
-      const userRole = 'owner';
+      const rawRole = String(user.role || 'owner').toLowerCase();
+      const userRole = rawRole === 'staff' ? 'staff' : 'owner';
       const token = generateToken({
         id: user.id,
         email: user.email,
@@ -40,6 +41,7 @@ export const unifiedLogin = async ({ email, emailOrPhone, identifier, phone, pas
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone || null,
         role: userRole,
         profilePicture: user.profilePicture,
         type: 'user',

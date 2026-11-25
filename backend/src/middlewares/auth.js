@@ -39,13 +39,13 @@ export const protect = async (req, res, next) => {
     } else {
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, name: true, email: true, role: true, profilePicture: true }
+        select: { id: true, name: true, email: true, phone: true, role: true, profilePicture: true }
       });
       if (!user) {
         return res.status(401).json({ success: false, message: 'User account not found' });
       }
-      // Strictly two roles: 'owner' and 'customer'
-      req.user = { ...user, type: 'user', role: 'owner' };
+      const normalizedRole = String(user.role || 'owner').toLowerCase() === 'staff' ? 'staff' : 'owner';
+      req.user = { ...user, type: 'user', role: normalizedRole };
     }
 
     next();
@@ -62,9 +62,15 @@ export const requireOwner = (req, res, next) => {
   return res.status(403).json({ success: false, message: 'Access denied: Owner role required' });
 };
 
-// Aliases for backwards compatibility with any existing route imports
 export const requireAdmin = requireOwner;
-export const requireStaffOrAdmin = requireOwner;
+
+export const requireStaffOrAdmin = (req, res, next) => {
+  const role = String(req.user?.role || '').toLowerCase();
+  if (req.user && (role === 'owner' || role === 'staff' || role === 'admin')) {
+    return next();
+  }
+  return res.status(403).json({ success: false, message: 'Access denied: Staff or Owner role required' });
+};
 
 export const requireCustomer = (req, res, next) => {
   const role = String(req.user?.role || '').toLowerCase();

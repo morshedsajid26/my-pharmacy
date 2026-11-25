@@ -187,6 +187,9 @@ export const getCustomerOrdersService = async (customerId) => {
   return await prisma.onlineOrder.findMany({
     where: { customerId },
     include: {
+      assignedStaff: {
+        select: { name: true, phone: true },
+      },
       items: {
         include: {
           medicine: { select: { name: true, company: true, category: true, image: true } },
@@ -205,7 +208,9 @@ export const getCustomerStatsService = async (customerId) => {
 
   const totalOrders = orders.length;
   const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const pendingOrders = orders.filter((o) => ['PENDING', 'PROCESSING'].includes(o.status)).length;
+  const pendingOrders = orders.filter((o) =>
+    ['PENDING', 'ACCEPTED', 'PACKED', 'SHIPPED', 'PROCESSING'].includes(o.status)
+  ).length;
 
   return {
     totalOrders,

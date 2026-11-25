@@ -9,6 +9,7 @@ import prescriptionRoutes from './prescription/prescription.route.js';
 import requestRoutes from './customer_request/request.route.js';
 import settingsRoutes from './settings/settings.route.js';
 import cashRoutes from './cash_management/cash.route.js';
+import staffRoutes from './staff/staff.route.js';
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ router.use('/prescriptions', prescriptionRoutes);
 router.use('/requests', requestRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/cash', cashRoutes);
+router.use('/staff', staffRoutes);
 
 export default router;

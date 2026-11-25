@@ -40,6 +40,8 @@ export function useLogin() {
       setTimeout(() => {
         if (result.role === "customer") {
           router.replace("/overview");
+        } else if (result.role === "staff") {
+          router.replace("/staff-dashboard");
         } else {
           router.replace("/dashboard");
         }
@@ -55,7 +57,11 @@ export function useLogin() {
   useEffect(() => {
     if (!loginMutation.isPending) {
       if (user) {
-        router.replace("/dashboard");
+        if (String(user.role || "").toLowerCase() === "staff") {
+          router.replace("/staff-dashboard");
+        } else {
+          router.replace("/dashboard");
+        }
       } else if (customer) {
         router.replace("/overview");
       }

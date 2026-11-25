@@ -13,17 +13,19 @@ import {
   Plus,
   X,
   Users,
+  UserCog,
   CreditCard,
   Wallet,
   Heart,
   FileText,
+  PackageCheck,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 import { useAuth } from "../context/AuthContext";
-import { usePendingOrdersCount } from "@/hooks/useOnlineOrders";
+import { usePendingOrdersCount, useStaffAssignedOrders } from "@/hooks/useOnlineOrders";
 
-const menuItems = [
+const ownerMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: ShoppingCart, label: "Sales (POS)", path: "/sales" },
   { icon: ShoppingBag, label: "Online Orders", path: "/online-orders" },
@@ -32,10 +34,18 @@ const menuItems = [
   { icon: Truck, label: "Purchases", path: "/purchases" },
   { icon: Pill, label: "Medicines", path: "/medicines" },
   { icon: Users, label: "Customers", path: "/customers" },
+  { icon: UserCog, label: "Staff Management", path: "/staff-management" },
   { icon: CreditCard, label: "Due Management", path: "/dues" },
   { icon: Wallet, label: "Cash Management", path: "/cash-management" },
   { icon: AlertTriangle, label: "Low Stock", path: "/low-stock" },
   { icon: BarChart3, label: "Reports", path: "/reports" },
+];
+
+const staffMenuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/staff-dashboard" },
+  { icon: ShoppingCart, label: "Sales (POS)", path: "/sales" },
+  { icon: Pill, label: "Medicines", path: "/medicines" },
+  { icon: PackageCheck, label: "Assigned Orders", path: "/assigned-orders" },
 ];
 
 export function Sidebar() {
@@ -47,7 +57,12 @@ export function Sidebar() {
   const { user } = useAuth();
   const pathname = usePathname();
 
+  const isStaffUser = String(user?.role || "").toLowerCase() === "staff";
+  const menuItems = isStaffUser ? staffMenuItems : ownerMenuItems;
+
   const { pendingCount: pendingOrdersCount } = usePendingOrdersCount();
+  const { orders: activeAssignedOrders } = useStaffAssignedOrders("SHIPPED");
+  const assignedPendingCount = isStaffUser ? activeAssignedOrders.length : 0;
 
   return (
     <>
@@ -80,7 +95,7 @@ export function Sidebar() {
                   S&amp;S <span className="text-medical-blue-600">Pharmacy</span>
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium mt-0.5">
-                  Management Console
+                  {isStaffUser ? "Staff Portal" : "Management Console"}
                 </span>
               </div>
             )}
@@ -137,6 +152,19 @@ export function Sidebar() {
                     )}
                   >
                     {pendingOrdersCount}
+                  </span>
+                )}
+
+                {item.path === "/assigned-orders" && assignedPendingCount > 0 && (
+                  <span
+                    className={cn(
+                      "bg-medical-blue-600 text-white font-mono font-bold text-[10px] px-1.5 min-w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+                      isSidebarCollapsed
+                        ? "absolute top-1 right-1.5 min-w-4 h-4 text-[9px] px-1"
+                        : "ml-auto"
+                    )}
+                  >
+                    {assignedPendingCount}
                   </span>
                 )}
 

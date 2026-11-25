@@ -18,7 +18,10 @@ import {
   Eye,
   X,
   Navigation,
-  ExternalLink
+  ExternalLink,
+  Truck,
+  Phone,
+  Check
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { Table } from "@/components/Table";
@@ -46,6 +49,56 @@ export default function CustomerOrdersPage() {
   };
 
   const [viewingOrder, setViewingOrder] = useState(null);
+
+  const renderStatusBadge = (status) => {
+    const s = String(status || "PENDING").toUpperCase();
+    if (s === "PENDING") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          Pending
+        </span>
+      );
+    }
+    if (s === "ACCEPTED" || s === "APPROVED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+          <Check size={12} className="text-blue-600" />
+          Accepted
+        </span>
+      );
+    }
+    if (s === "PACKED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
+          <Package size={12} className="text-indigo-600" />
+          Packed
+        </span>
+      );
+    }
+    if (s === "SHIPPED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">
+          <Truck size={12} className="text-sky-600" />
+          Shipped
+        </span>
+      );
+    }
+    if (s === "DELIVERED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          <CheckCircle size={12} className="text-emerald-600" />
+          Delivered
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
+        <XCircle size={12} className="text-red-500" />
+        Rejected
+      </span>
+    );
+  };
 
   const tableHeads = [
     { 
@@ -107,24 +160,7 @@ export default function CustomerOrdersPage() {
     { 
       key: "status", 
       Title: "Status", 
-      render: (row) => (
-        row.status === "PENDING" ? (
-          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
-            Reviewing
-          </span>
-        ) : row.status === "APPROVED" ? (
-          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            <CheckCircle size={12} className="text-emerald-500" />
-            Approved
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
-            <XCircle size={12} className="text-red-500" />
-            Rejected
-          </span>
-        )
-      )
+      render: (row) => renderStatusBadge(row.status)
     },
     { 
       key: "actions", 
@@ -235,24 +271,64 @@ export default function CustomerOrdersPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {viewingOrder.status === "PENDING" ? (
-                      <span className="inline-flex items-center gap-1.5 font-black text-xs text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-200">
-                        <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                        <span>Pending Approval</span>
-                      </span>
-                    ) : viewingOrder.status === "APPROVED" ? (
-                      <span className="inline-flex items-center gap-1.5 font-black text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        <CheckCircle size={12} className="text-emerald-500" />
-                        <span>Approved</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 font-black text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">
-                        <XCircle size={12} className="text-red-500" />
-                        <span>Rejected</span>
-                      </span>
-                    )}
+                    {renderStatusBadge(viewingOrder.status)}
                   </div>
                 </div>
+
+                {/* Live Order Status Tracker */}
+                {viewingOrder.status !== "REJECTED" && (() => {
+                  const steps = ["PENDING", "ACCEPTED", "PACKED", "SHIPPED", "DELIVERED"];
+                  const normalized = viewingOrder.status === "APPROVED" ? "ACCEPTED" : viewingOrder.status;
+                  const currentIdx = Math.max(0, steps.indexOf(normalized));
+                  return (
+                    <div className="bg-white p-4 rounded-xl border border-slate-200/60 space-y-2.5">
+                      <div className="grid grid-cols-5 gap-1">
+                        {steps.map((step, idx) => {
+                          const done = idx <= currentIdx;
+                          return (
+                            <div key={step} className="flex flex-col items-center text-center gap-1.5">
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border ${
+                                  done
+                                    ? "bg-medical-blue-600 border-medical-blue-600 text-white"
+                                    : "bg-slate-50 border-slate-200 text-slate-400"
+                                }`}
+                              >
+                                {done ? <Check size={12} /> : idx + 1}
+                              </div>
+                              <span
+                                className={`text-[9px] font-bold uppercase tracking-tight ${
+                                  done ? "text-medical-blue-700" : "text-slate-400"
+                                }`}
+                              >
+                                {step}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {viewingOrder.assignedStaff && (
+                        <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <span className="text-slate-500 font-semibold flex items-center gap-1.5">
+                            <Truck size={13} className="text-sky-600" />
+                            <span>Delivery Person:</span>
+                            <strong className="text-slate-900">{viewingOrder.assignedStaff.name}</strong>
+                          </span>
+                          {viewingOrder.assignedStaff.phone && (
+                            <a
+                              href={`tel:${viewingOrder.assignedStaff.phone}`}
+                              className="inline-flex items-center gap-1 font-bold text-medical-blue-600 hover:underline"
+                            >
+                              <Phone size={12} />
+                              <span>{viewingOrder.assignedStaff.phone}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Ordered Items detailed receipt grid */}
                 <div className="space-y-2">

@@ -11,18 +11,20 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(cuid())
+  id                  String        @id @default(cuid())
   name                String?
-  email               String    @unique
+  email               String        @unique
+  phone               String?
   password            String
-  role                String    @default("staff") // "admin", "staff"
+  role                String        @default("staff") // "owner", "admin", "staff"
   profilePicture      String?
   resetOtp            String?
   resetOtpExpiresAt   DateTime?
   resetToken          String?
   resetTokenExpiresAt DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  assignedOrders      OnlineOrder[] @relation("AssignedStaff")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 }
 
 model Medicine {
@@ -132,25 +134,31 @@ model PrescriptionOrder {
 }
 
 model OnlineOrder {
-  id             String            @id @default(cuid())
-  orderNo        String            @unique
-  customer       Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId     String
-  customerName   String
-  customerPhone  String
-  address        String
-  notes          String?
-  subtotal       Float             @default(0)
-  deliveryCharge Float             @default(0)
-  discount       Float             @default(0)
-  totalAmount    Float
-  status         String            @default("PENDING")
-  paymentMethod  String            @default("COD") // COD, SSLCOMMERZ
-  paymentStatus  String            @default("UNPAID") // UNPAID, PAID, FAILED
-  transactionId  String?           @unique
-  items          OnlineOrderItem[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  orderNo         String            @unique
+  customer        Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId      String
+  customerName    String
+  customerPhone   String
+  address         String
+  notes           String?
+  subtotal        Float             @default(0)
+  deliveryCharge  Float             @default(0)
+  discount        Float             @default(0)
+  totalAmount     Float
+  status          String            @default("PENDING") // PENDING, ACCEPTED, PACKED, SHIPPED, DELIVERED, REJECTED
+  paymentMethod   String            @default("COD") // COD, SSLCOMMERZ
+  paymentStatus   String            @default("UNPAID") // UNPAID, PAID, FAILED
+  transactionId   String?           @unique
+  assignedStaffId String?
+  assignedStaff   User?             @relation("AssignedStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  acceptedAt      DateTime?
+  packedAt        DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  items           OnlineOrderItem[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model StorefrontSetting {

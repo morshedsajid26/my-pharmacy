@@ -85,9 +85,8 @@ export function AuthProvider({ children }) {
               profileRes;
 
             if (userData && (userData.id || userData.email || userData.phone)) {
-              const role = (
-                String(profileRes?.role || userData.role || userData.type || "").toLowerCase() === "customer"
-              ) ? "customer" : "owner";
+              const rawRole = String(profileRes?.role || userData.role || userData.type || "").toLowerCase();
+              const role = rawRole === "customer" ? "customer" : rawRole === "staff" ? "staff" : "owner";
 
               Cookies.set("role", role, { expires: 7, path: "/" });
               if (typeof window !== "undefined") {
@@ -103,11 +102,11 @@ export function AuthProvider({ children }) {
                   localStorage.removeItem("token");
                 }
               } else {
-                const ownerUser = { ...userData, role: "owner" };
-                setUser(ownerUser);
+                const portalUser = { ...userData, role };
+                setUser(portalUser);
                 setCustomer(null);
                 if (typeof window !== "undefined") {
-                  localStorage.setItem("user", JSON.stringify(ownerUser));
+                  localStorage.setItem("user", JSON.stringify(portalUser));
                   localStorage.removeItem("customer");
                   localStorage.removeItem("customer_token");
                 }
@@ -156,11 +155,13 @@ export function AuthProvider({ children }) {
       });
 
       const token = res.token || res.data?.token;
-      const returnedRole = (
-        String(res.role || res.user?.role || res.customer?.role || "").toLowerCase() === "customer" ||
-        res.customer ||
-        res.user?.type === "customer"
-      ) ? "customer" : "owner";
+      const rawReturnedRole = String(res.role || res.user?.role || res.customer?.role || "").toLowerCase();
+      const returnedRole =
+        rawReturnedRole === "customer" || res.customer || res.user?.type === "customer"
+          ? "customer"
+          : rawReturnedRole === "staff"
+          ? "staff"
+          : "owner";
 
       if (token) {
         if (returnedRole === "customer") {
@@ -176,16 +177,16 @@ export function AuthProvider({ children }) {
           setCustomer(cust);
           setUser(null);
         } else {
-          const ownerUser = { ...(res.user || res.data?.user), role: "owner" };
+          const portalUser = { ...(res.user || res.data?.user), role: returnedRole };
           localStorage.setItem("token", token);
-          localStorage.setItem("role", "owner");
-          localStorage.setItem("user", JSON.stringify(ownerUser));
+          localStorage.setItem("role", returnedRole);
+          localStorage.setItem("user", JSON.stringify(portalUser));
 
           Cookies.set("token", token, { expires: 7, path: "/" });
           Cookies.set("session", token, { expires: 7, path: "/" });
-          Cookies.set("role", "owner", { expires: 7, path: "/" });
+          Cookies.set("role", returnedRole, { expires: 7, path: "/" });
 
-          setUser(ownerUser);
+          setUser(portalUser);
           setCustomer(null);
         }
       }

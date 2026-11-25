@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/layouts/Sidebar";
 import { Navbar } from "@/layouts/Navbar";
@@ -9,16 +9,21 @@ import { useUI } from "@/context/UIContext";
 import { cn } from "@/utils/cn";
 import { Loader2 } from "lucide-react";
 
+const STAFF_ALLOWED_PATHS = ["/staff-dashboard", "/sales", "/medicines", "/assigned-orders"];
+
 export default function DashboardLayout({ children }) {
   const { isSidebarCollapsed } = useUI();
   const { user, customer, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
+  const role = String(user?.role || "").toLowerCase();
+  const isStaff = role === "staff";
   const isAuthorized =
-    user &&
-    ["admin", "staff", "pharmacist", "owner"].includes(
-      String(user.role || "").toLowerCase()
-    );
+    user && ["admin", "staff", "pharmacist", "owner"].includes(role);
+
+  const isStaffBlockedRoute =
+    isStaff && !STAFF_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   // Enforce Route Protection
   useEffect(() => {
@@ -29,9 +34,11 @@ export default function DashboardLayout({ children }) {
         } else {
           router.replace("/login");
         }
-      } 
+      } else if (isStaffBlockedRoute) {
+        router.replace("/staff-dashboard");
+      }
     }
-  }, [isAuthorized, customer, loading, router]);
+  }, [isAuthorized, isStaffBlockedRoute, customer, loading, router]);
 
   // Render Premium Medical Authenticating Screen during initialization
   if (loading) {
@@ -46,7 +53,7 @@ export default function DashboardLayout({ children }) {
   }
 
   // Prevent flash of private dashboard content before redirection
-  if (!isAuthorized) {
+  if (!isAuthorized || isStaffBlockedRoute) {
     return null;
   }
 

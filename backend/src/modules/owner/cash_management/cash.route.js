@@ -8,12 +8,12 @@ import {
   deleteExpense,
   createCashAdjustment,
 } from './cash.controller.js';
-import { protect, requireStaffOrAdmin } from '../../../middlewares/auth.js';
+import { protect, requireOwner } from '../../../middlewares/auth.js';
 
 const router = express.Router();
 
-// Require authenticated owner/staff for all cash drawer and financial ledger operations
-router.use(protect, requireStaffOrAdmin);
+// Require authenticated owner for all cash drawer and financial ledger operations
+router.use(protect, requireOwner);
 
 router.get('/summary', getCashSummary);
 router.post('/register/open', openRegister);

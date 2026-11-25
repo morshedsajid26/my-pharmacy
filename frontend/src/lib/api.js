@@ -55,6 +55,30 @@ export function getAuthToken(configUrl = "") {
   return staffToken || customerToken || null;
 }
 
+export function isOwner() {
+  if (typeof window === "undefined") return false;
+  const role = String(
+    Cookies.get("role") || localStorage.getItem("role") || ""
+  ).toLowerCase();
+  const token =
+    Cookies.get("token") ||
+    localStorage.getItem("token") ||
+    Cookies.get("session");
+  return !!token && ["admin", "owner"].includes(role);
+}
+
+export function isStaff() {
+  if (typeof window === "undefined") return false;
+  const role = String(
+    Cookies.get("role") || localStorage.getItem("role") || ""
+  ).toLowerCase();
+  const token =
+    Cookies.get("token") ||
+    localStorage.getItem("token") ||
+    Cookies.get("session");
+  return !!token && role === "staff";
+}
+
 export function isStaffOrAdmin() {
   if (typeof window === "undefined") return false;
   const role = String(
