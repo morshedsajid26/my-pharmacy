@@ -40,7 +40,7 @@ const restoreOrderStock = async (tx, order) => {
   }
 };
 
-const recordDeliveredSale = async (tx, order) => {
+const recordDeliveredSale = async (tx, order, currentUser = null) => {
   let totalProfit = 0;
   const saleItems = [];
 
@@ -93,6 +93,10 @@ const recordDeliveredSale = async (tx, order) => {
   }
 
   const invoiceNo = `INV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+  const attributedStaffId =
+    order.assignedStaffId ||
+    (String(currentUser?.role || '').toLowerCase() === 'staff' ? currentUser.id : null);
+
   await tx.sale.create({
     data: {
       invoiceNo,
@@ -103,6 +107,7 @@ const recordDeliveredSale = async (tx, order) => {
       itemsCount: order.items.length,
       customerId: dbCustomer.id,
       isOnline: true,
+      staffId: attributedStaffId,
       items: { create: saleItems },
     },
   });
@@ -283,7 +288,7 @@ export const deliverOnlineOrderService = async (orderId, currentUser) => {
       updateData.acceptedAt = new Date();
     }
 
-    const invoiceNo = await recordDeliveredSale(tx, order);
+    const invoiceNo = await recordDeliveredSale(tx, order, currentUser);
 
     const updatedOrder = await tx.onlineOrder.update({
       where: { id: orderId },
@@ -372,7 +377,7 @@ export const getStaffDashboardService = async (staffId) => {
     prisma.medicine.count(),
     prisma.medicine.count({ where: { stock: { lte: 10 } } }),
     prisma.sale.aggregate({
-      where: { date: { gte: startOfToday } },
+      where: { staffId, date: { gte: startOfToday } },
       _count: { id: true },
       _sum: { totalAmount: true },
     }),

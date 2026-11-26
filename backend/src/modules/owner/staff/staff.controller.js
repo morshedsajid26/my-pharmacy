@@ -9,6 +9,15 @@ export const getAllStaff = async (req, res) => {
   }
 };
 
+export const getStaffById = async (req, res) => {
+  try {
+    const data = await staffService.getStaffDetailsService(req.params.id);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return res.status(404).json({ success: false, message: error.message });
+  }
+};
+
 export const createStaff = async (req, res) => {
   try {
     const staff = await staffService.createStaffService(req.body);

@@ -4,13 +4,14 @@ export const getSalesHistoryService = async () => {
   return await prisma.sale.findMany({
     include: {
       customer: true,
+      staff: { select: { id: true, name: true, email: true, role: true } },
       items: { include: { medicine: true } },
     },
     orderBy: { date: 'desc' },
   });
 };
 
-export const recordSaleService = async ({ items, totalAmount, customerId, paidAmount = 0, dueAmount = 0, walkingCustomerName }) => {
+export const recordSaleService = async ({ items, totalAmount, customerId, paidAmount = 0, dueAmount = 0, walkingCustomerName }, staffId = null) => {
   return await prisma.$transaction(async (tx) => {
     const invoiceNo = `INV-${Date.now()}`;
     let totalProfit = 0;
@@ -70,6 +71,7 @@ export const recordSaleService = async ({ items, totalAmount, customerId, paidAm
         itemsCount: items.length,
         customerId: customerId || null,
         walkingCustomerName: walkingCustomerName || null,
+        staffId: staffId || null,
         items: {
           create: saleItems,
         },
@@ -77,6 +79,7 @@ export const recordSaleService = async ({ items, totalAmount, customerId, paidAm
       include: {
         items: { include: { medicine: true } },
         customer: true,
+        staff: { select: { id: true, name: true, role: true } },
       },
     });
   });

@@ -69,3 +69,22 @@ export function useStaff() {
     isDeleting: deleteStaffMutation.isPending,
   };
 }
+
+export function useStaffDetails(staffId) {
+  const detailsQuery = useQuery({
+    queryKey: ["staff-details", staffId],
+    queryFn: async () => {
+      const res = await api.get(`/owner/staff/${staffId}`);
+      return res?.data || res;
+    },
+    enabled: !!staffId && isOwner(),
+    retry: false,
+  });
+
+  return {
+    details: detailsQuery.data || null,
+    isLoading: detailsQuery.isLoading,
+    isError: detailsQuery.isError,
+    refetch: detailsQuery.refetch,
+  };
+}

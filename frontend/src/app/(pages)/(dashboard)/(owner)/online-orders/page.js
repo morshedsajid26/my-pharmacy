@@ -26,6 +26,8 @@ import {
 import { Toaster } from "react-hot-toast";
 import { useOnlineOrders } from "@/hooks/useOnlineOrders";
 import { useStaff } from "@/hooks/useStaff";
+import { Table } from "@/components/Table";
+import { OrderStatusBadge, normalizeOrderStatus as normalizeStatus } from "@/components/OrderStatusBadge";
 import { parseLocationFromAddress } from "@/lib/locationUtils";
 
 const TABS = [
@@ -37,61 +39,6 @@ const TABS = [
   { key: "REJECTED", label: "Rejected" },
   { key: "ALL", label: "All Orders" },
 ];
-
-const normalizeStatus = (status) => {
-  const s = String(status || "PENDING").toUpperCase();
-  return s === "APPROVED" ? "ACCEPTED" : s;
-};
-
-export function OrderStatusBadge({ status }) {
-  const s = normalizeStatus(status);
-  if (s === "PENDING") {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-        <span>Pending</span>
-      </span>
-    );
-  }
-  if (s === "ACCEPTED") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 whitespace-nowrap">
-        <Check size={11} strokeWidth={2.5} />
-        <span>Accepted</span>
-      </span>
-    );
-  }
-  if (s === "PACKED") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 whitespace-nowrap">
-        <Package size={11} />
-        <span>Packed</span>
-      </span>
-    );
-  }
-  if (s === "SHIPPED") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80 whitespace-nowrap">
-        <Truck size={11} />
-        <span>Shipped</span>
-      </span>
-    );
-  }
-  if (s === "DELIVERED") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-        <CheckCircle2 size={11} />
-        <span>Delivered</span>
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80 whitespace-nowrap">
-      <X size={11} strokeWidth={2.5} />
-      <span>Rejected</span>
-    </span>
-  );
-}
 
 export default function OnlineOrdersPage() {
   const [activeTab, setActiveTab] = useState("ALL");
@@ -257,6 +204,268 @@ export default function OnlineOrdersPage() {
 
   const confirmMeta = getConfirmMeta();
 
+  const orderColumns = useMemo(
+    () => [
+      {
+        key: "orderNo",
+        Title: "Order",
+        align: "left",
+        width: "16%",
+        render: (order) => (
+          <div className="text-left">
+            <div className="font-extrabold text-slate-900 font-mono text-xs">
+              {order.orderNo}
+            </div>
+            <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+              <Calendar size={10} className="shrink-0" />
+              <span className="truncate">
+                {new Date(order.createdAt).toLocaleDateString()}{" "}
+                {new Date(order.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "customerName",
+        Title: "Customer",
+        align: "left",
+        width: "13%",
+        render: (order) => (
+          <div className="text-left">
+            <div className="font-bold text-slate-800 truncate max-w-[135px] text-xs">
+              {order.customerName}
+            </div>
+            <a
+              href={`tel:${order.customerPhone}`}
+              className="text-[11px] text-slate-500 hover:text-medical-blue-600 flex items-center gap-1 mt-0.5 font-medium"
+            >
+              <Phone size={10} className="shrink-0" />
+              <span>{order.customerPhone}</span>
+            </a>
+          </div>
+        ),
+      },
+      {
+        key: "address",
+        Title: "Address",
+        align: "left",
+        width: "18%",
+        render: (order) => {
+          const loc = parseLocationFromAddress(order.address);
+          return (
+            <a
+              href={loc.directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2 text-xs text-slate-700 hover:text-medical-blue-600 transition-colors max-w-[195px] text-left"
+              title={loc.cleanAddress}
+            >
+              <div className="w-7 h-7 rounded-lg bg-medical-blue-50 text-medical-blue-600 group-hover:bg-medical-blue-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                <Navigation size={12} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="truncate block font-semibold text-slate-700 group-hover:text-medical-blue-600">
+                    {loc.cleanAddress}
+                  </span>
+                  {loc.hasCoordinates && (
+                    <span className="px-1 rounded text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      GPS
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-medical-blue-600/80 font-bold inline-flex items-center gap-0.5">
+                  <span>Map Directions</span>
+                  <ExternalLink size={9} />
+                </span>
+              </div>
+            </a>
+          );
+        },
+      },
+      {
+        key: "totalAmount",
+        Title: "Amount",
+        width: "10%",
+        render: (order) => {
+          const itemCount = order.items?.length || 0;
+          return (
+            <div>
+              <div className="font-black text-slate-900 font-mono text-xs">
+                ৳{Number(order.totalAmount || 0).toFixed(2)}
+              </div>
+              <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        key: "paymentStatus",
+        Title: "Payment",
+        width: "9%",
+        render: (order) => (
+          <div className="flex flex-col gap-1 items-center">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              {order.paymentMethod || "COD"}
+            </span>
+            <span
+              className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                order.paymentStatus === "PAID"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : order.paymentStatus === "FAILED"
+                  ? "bg-rose-50 text-rose-700 border border-rose-200"
+                  : "bg-slate-100 text-slate-600 border border-slate-200/80"
+              }`}
+            >
+              {order.paymentStatus || "UNPAID"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "assignedStaff",
+        Title: "Staff",
+        width: "11%",
+        sortable: false,
+        render: (order) =>
+          order.assignedStaff ? (
+            <Link
+              href={`/staff-management/${order.assignedStaff.id}`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200/80 text-[11px] font-bold text-sky-800 max-w-[125px] transition-colors"
+              title="View Staff Profile"
+            >
+              <UserCheck size={12} className="text-sky-600 shrink-0" />
+              <span className="truncate">{order.assignedStaff.name}</span>
+            </Link>
+          ) : (
+            <span className="text-[11px] text-slate-400 font-medium italic">Unassigned</span>
+          ),
+      },
+      {
+        key: "status",
+        Title: "Status",
+        width: "10%",
+        render: (order) => <OrderStatusBadge status={order.status} />,
+      },
+      {
+        key: "actions",
+        Title: "Actions",
+        align: "right",
+        width: "13%",
+        sortable: false,
+        render: (order) => {
+          const st = normalizeStatus(order.status);
+          return (
+            <div className="inline-flex items-center justify-end gap-1.5">
+              {st === "PENDING" && (
+                <>
+                  <button
+                    onClick={() => triggerConfirm("ACCEPT", order)}
+                    className="h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Accept Order"
+                  >
+                    <Check size={13} />
+                    <span>Accept</span>
+                  </button>
+                  <button
+                    onClick={() => triggerConfirm("REJECT", order)}
+                    className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
+                    title="Reject Order"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              )}
+
+              {st === "ACCEPTED" && (
+                <>
+                  <button
+                    onClick={() => triggerConfirm("PACK", order)}
+                    className="h-8 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Mark as Packed"
+                  >
+                    <Package size={12} />
+                    <span>Pack</span>
+                  </button>
+                  <button
+                    onClick={() => openAssignModal(order)}
+                    className="h-8 px-2.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    title="Assign Staff & Ship"
+                  >
+                    <Truck size={12} />
+                    <span>Assign</span>
+                  </button>
+                  <button
+                    onClick={() => triggerConfirm("REJECT", order)}
+                    className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
+                    title="Reject Order"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              )}
+
+              {st === "PACKED" && (
+                <>
+                  <button
+                    onClick={() => openAssignModal(order)}
+                    className="h-8 px-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Assign Staff & Ship"
+                  >
+                    <Truck size={12} />
+                    <span>Assign &amp; Ship</span>
+                  </button>
+                  <button
+                    onClick={() => triggerConfirm("REJECT", order)}
+                    className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
+                    title="Reject Order"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              )}
+
+              {st === "SHIPPED" && (
+                <>
+                  <button
+                    onClick={() => triggerConfirm("DELIVER", order)}
+                    className="h-8 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    title="Mark Delivered"
+                  >
+                    <CheckCircle2 size={12} />
+                    <span>Deliver</span>
+                  </button>
+                  <button
+                    onClick={() => openAssignModal(order)}
+                    className="h-8 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer"
+                    title="Reassign Staff"
+                  >
+                    Staff
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => setSelectedOrder(order)}
+                className="h-8 w-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors inline-flex items-center justify-center cursor-pointer"
+                title="View Full Order Details"
+              >
+                <Eye size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [staffList]
+  );
+
   return (
     <div className="space-y-6">
       <Toaster position="top-center" />
@@ -370,10 +579,10 @@ export default function OnlineOrdersPage() {
         </button>
       </div>
 
-      {/* UNIFIED ORDERS TABLE CARD */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        {/* Card Toolbar: Pill Tabs + Search */}
-        <div className="p-4 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-50/40">
+      {/* UNIFIED ORDERS TOOLBAR + SHARED TABLE COMPONENT */}
+      <div className="space-y-4">
+        {/* Toolbar: Pill Tabs + Search */}
+        <div className="p-4 rounded-xl border border-slate-200/85 bg-white flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           {/* Segmented Pill Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 xl:pb-0">
             {TABS.map((tab) => {
@@ -386,7 +595,7 @@ export default function OnlineOrdersPage() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer border ${
                     isActive
                       ? "bg-medical-blue-600 text-white border-medical-blue-600 shadow-2xs"
-                      : "bg-white text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900"
+                      : "bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   <span>{tab.label}</span>
@@ -396,7 +605,7 @@ export default function OnlineOrdersPage() {
                         ? "bg-white/20 text-white"
                         : tab.key === "PENDING" && count > 0
                         ? "bg-amber-100 text-amber-800"
-                        : "bg-slate-100 text-slate-500"
+                        : "bg-white text-slate-500"
                     }`}
                   >
                     {count}
@@ -414,270 +623,22 @@ export default function OnlineOrdersPage() {
               placeholder="Search order #, customer, phone, staff..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs font-semibold bg-white border border-slate-200 rounded-xl outline-none focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500 transition-all"
+              className="w-full h-9 pl-9 pr-3 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-medical-blue-500 focus:ring-1 focus:ring-medical-blue-500 transition-all"
             />
           </div>
         </div>
 
-        {/* Table Content */}
-        {loading ? (
-          <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-medical-blue-600" />
-            <p className="text-slate-500 font-medium text-xs">Fetching online orders...</p>
-          </div>
-        ) : filteredOrders.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 text-slate-500 font-extrabold text-[11px] tracking-wider uppercase border-b border-slate-100">
-                  <th className="px-4 py-3.5 w-[16%]">Order</th>
-                  <th className="px-4 py-3.5 w-[13%]">Customer</th>
-                  <th className="px-4 py-3.5 w-[17%]">Address</th>
-                  <th className="px-4 py-3.5 w-[10%]">Amount</th>
-                  <th className="px-4 py-3.5 w-[10%]">Payment</th>
-                  <th className="px-4 py-3.5 w-[11%]">Staff</th>
-                  <th className="px-4 py-3.5 w-[10%]">Status</th>
-                  <th className="px-4 py-3.5 w-[13%] text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredOrders.map((order) => {
-                  const st = normalizeStatus(order.status);
-                  const loc = parseLocationFromAddress(order.address);
-                  const itemCount = order.items?.length || 0;
-
-                  return (
-                    <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
-                      {/* Order No & Timestamp */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <div className="font-extrabold text-slate-900 font-mono text-xs">
-                          {order.orderNo}
-                        </div>
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Calendar size={10} className="shrink-0" />
-                          <span className="truncate">
-                            {new Date(order.createdAt).toLocaleDateString()}{" "}
-                            {new Date(order.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Customer */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <div className="font-bold text-slate-800 truncate max-w-[140px]">
-                          {order.customerName}
-                        </div>
-                        <a
-                          href={`tel:${order.customerPhone}`}
-                          className="text-[11px] text-slate-500 hover:text-medical-blue-600 flex items-center gap-1 mt-0.5 font-medium"
-                        >
-                          <Phone size={10} className="shrink-0" />
-                          <span>{order.customerPhone}</span>
-                        </a>
-                      </td>
-
-                      {/* Delivery Address */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <a
-                          href={loc.directionsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group inline-flex items-center gap-2 text-xs text-slate-700 hover:text-medical-blue-600 transition-colors max-w-[200px]"
-                          title={loc.cleanAddress}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-medical-blue-50 text-medical-blue-600 group-hover:bg-medical-blue-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
-                            <Navigation size={12} />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1">
-                              <span className="truncate block font-semibold text-slate-700 group-hover:text-medical-blue-600">
-                                {loc.cleanAddress}
-                              </span>
-                              {loc.hasCoordinates && (
-                                <span className="px-1 rounded text-[8px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                  GPS
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-medical-blue-600/80 font-bold inline-flex items-center gap-0.5">
-                              <span>Map Directions</span>
-                              <ExternalLink size={9} />
-                            </span>
-                          </div>
-                        </a>
-                      </td>
-
-                      {/* Amount & Item count */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <div className="font-black text-slate-900 font-mono text-sm">
-                          ৳{Number(order.totalAmount || 0).toFixed(2)}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                          {itemCount} {itemCount === 1 ? "item" : "items"}
-                        </div>
-                      </td>
-
-                      {/* Payment */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <div className="flex flex-col gap-1 items-start">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            {order.paymentMethod || "COD"}
-                          </span>
-                          <span
-                            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
-                              order.paymentStatus === "PAID"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : order.paymentStatus === "FAILED"
-                                ? "bg-rose-50 text-rose-700 border border-rose-200"
-                                : "bg-slate-100 text-slate-600 border border-slate-200/80"
-                            }`}
-                          >
-                            {order.paymentStatus || "UNPAID"}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Assigned Staff */}
-                      <td className="px-4 py-3.5 align-middle">
-                        {order.assignedStaff ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 border border-sky-200/80 text-[11px] font-bold text-sky-800 max-w-[130px]">
-                            <UserCheck size={12} className="text-sky-600 shrink-0" />
-                            <span className="truncate">{order.assignedStaff.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-medium italic">
-                            Unassigned
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3.5 align-middle">
-                        <OrderStatusBadge status={st} />
-                      </td>
-
-                      {/* Clean Uniform Actions */}
-                      <td className="px-4 py-3.5 align-middle text-right">
-                        <div className="inline-flex items-center justify-end gap-1.5">
-                          {st === "PENDING" && (
-                            <>
-                              <button
-                                onClick={() => triggerConfirm("ACCEPT", order)}
-                                className="h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Accept Order"
-                              >
-                                <Check size={13} />
-                                <span>Accept</span>
-                              </button>
-                              <button
-                                onClick={() => triggerConfirm("REJECT", order)}
-                                className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
-                                title="Reject Order"
-                              >
-                                <X size={14} />
-                              </button>
-                            </>
-                          )}
-
-                          {st === "ACCEPTED" && (
-                            <>
-                              <button
-                                onClick={() => triggerConfirm("PACK", order)}
-                                className="h-8 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Mark as Packed"
-                              >
-                                <Package size={12} />
-                                <span>Pack</span>
-                              </button>
-                              <button
-                                onClick={() => openAssignModal(order)}
-                                className="h-8 px-2.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
-                                title="Assign Staff & Ship"
-                              >
-                                <Truck size={12} />
-                                <span>Assign</span>
-                              </button>
-                              <button
-                                onClick={() => triggerConfirm("REJECT", order)}
-                                className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
-                                title="Reject Order"
-                              >
-                                <X size={14} />
-                              </button>
-                            </>
-                          )}
-
-                          {st === "PACKED" && (
-                            <>
-                              <button
-                                onClick={() => openAssignModal(order)}
-                                className="h-8 px-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Assign Staff & Ship"
-                              >
-                                <Truck size={12} />
-                                <span>Assign &amp; Ship</span>
-                              </button>
-                              <button
-                                onClick={() => triggerConfirm("REJECT", order)}
-                                className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors inline-flex items-center justify-center cursor-pointer"
-                                title="Reject Order"
-                              >
-                                <X size={14} />
-                              </button>
-                            </>
-                          )}
-
-                          {st === "SHIPPED" && (
-                            <>
-                              <button
-                                onClick={() => triggerConfirm("DELIVER", order)}
-                                className="h-8 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Mark Delivered"
-                              >
-                                <CheckCircle2 size={12} />
-                                <span>Deliver</span>
-                              </button>
-                              <button
-                                onClick={() => openAssignModal(order)}
-                                className="h-8 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer"
-                                title="Reassign Staff"
-                              >
-                                Staff
-                              </button>
-                            </>
-                          )}
-
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="h-8 w-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors inline-flex items-center justify-center cursor-pointer"
-                            title="View Full Order Details"
-                          >
-                            <Eye size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-16 text-center flex flex-col items-center justify-center px-4">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-300 flex items-center justify-center mb-3">
-              <ShoppingBag size={24} />
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">No orders found</h3>
-            <p className="text-slate-400 text-xs mt-1">
-              {searchTerm
-                ? `No orders matched "${searchTerm}" in ${activeTab}.`
-                : `There are currently no orders in ${activeTab}.`}
-            </p>
-          </div>
-        )}
+        {/* Shared Table Component with Built-in Sorting & Pagination */}
+        <Table
+          TableHeads={orderColumns}
+          TableRows={filteredOrders}
+          isLoading={loading}
+          emptyMessage={
+            searchTerm
+              ? `No orders matched "${searchTerm}" in ${activeTab}.`
+              : `There are currently no orders in ${activeTab}.`
+          }
+        />
       </div>
 
       {/* DETAILS VIEW MODAL */}

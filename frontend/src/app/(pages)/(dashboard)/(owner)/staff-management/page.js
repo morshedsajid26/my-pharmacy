@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   UserCog,
   Plus,
   Edit2,
   Trash2,
+  Eye,
   Loader2,
   Phone,
   Mail,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useStaff } from "@/hooks/useStaff";
+import { Table } from "@/components/Table";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import InputField from "@/components/InputField";
@@ -115,6 +118,148 @@ export default function StaffManagementPage() {
     }
   };
 
+  const staffColumns = useMemo(
+    () => [
+      {
+        key: "name",
+        Title: "Staff Member",
+        align: "left",
+        width: "19%",
+        render: (staff) => (
+          <div className="flex items-center gap-3 text-left">
+            <div className="w-9 h-9 rounded-xl bg-medical-blue-50 border border-medical-blue-200/70 flex items-center justify-center text-medical-blue-700 font-black text-xs shrink-0">
+              {staff.name ? staff.name.charAt(0).toUpperCase() : "S"}
+            </div>
+            <div className="min-w-0">
+              <Link
+                href={`/staff-management/${staff.id}`}
+                className="font-bold text-slate-900 hover:text-medical-blue-600 transition-colors block truncate"
+              >
+                {staff.name || "Unnamed Staff"}
+              </Link>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                Staff
+              </span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "email",
+        Title: "Contact",
+        align: "left",
+        width: "21%",
+        render: (staff) => (
+          <div className="space-y-1 text-left">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+              <Mail size={12} className="text-slate-400 shrink-0" />
+              <span className="truncate max-w-[180px]">{staff.email}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Phone size={12} className="text-slate-400 shrink-0" />
+              <span>{staff.phone || "No phone"}</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "todaySalesAmount",
+        Title: "Today's Sales",
+        width: "13%",
+        render: (staff) => (
+          <div>
+            <div className="font-black text-slate-900 font-mono text-xs">
+              ৳{Number(staff.todaySalesAmount || 0).toFixed(0)}
+            </div>
+            <div className="text-[10px] text-slate-400 font-semibold">
+              {staff.todaySalesCount || 0} bills
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "monthlySalesAmount",
+        Title: "Monthly Sales",
+        width: "13%",
+        render: (staff) => (
+          <span className="font-bold text-emerald-700 font-mono text-xs">
+            ৳{Number(staff.monthlySalesAmount || 0).toFixed(0)}
+          </span>
+        ),
+      },
+      {
+        key: "activeDeliveries",
+        Title: "Assigned Orders",
+        width: "14%",
+        render: (staff) => (
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                staff.activeDeliveries > 0
+                  ? "bg-sky-50 text-sky-700 border border-sky-200"
+                  : "bg-slate-50 text-slate-400 border border-slate-200"
+              }`}
+              title="Out for delivery (Shipped)"
+            >
+              <Truck size={11} />
+              <span>{staff.activeDeliveries || 0}</span>
+            </span>
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+              title="Completed deliveries"
+            >
+              <CheckCircle2 size={11} />
+              <span>{staff.completedDeliveries || 0}</span>
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "createdAt",
+        Title: "Joined",
+        width: "10%",
+        render: (staff) => (
+          <div className="inline-flex items-center gap-1 text-xs text-slate-500">
+            <Calendar size={11} className="text-slate-400" />
+            <span>{new Date(staff.createdAt).toLocaleDateString()}</span>
+          </div>
+        ),
+      },
+      {
+        key: "actions",
+        Title: "Actions",
+        width: "10%",
+        sortable: false,
+        render: (staff) => (
+          <div className="flex items-center justify-center gap-1.5">
+            <Link
+              href={`/staff-management/${staff.id}`}
+              className="p-1.5 rounded-lg bg-medical-blue-50 text-medical-blue-600 hover:bg-medical-blue-100 transition-colors"
+              title="View Staff Performance & Assigned Orders"
+            >
+              <Eye size={15} />
+            </Link>
+            <button
+              onClick={() => openEditModal(staff)}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-medical-blue-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Edit Staff"
+            >
+              <Edit2 size={15} />
+            </button>
+            <button
+              onClick={() => setStaffToDelete(staff)}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Delete Staff"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
   return (
     <div className="space-y-6">
       <Toaster position="top-center" />
@@ -127,7 +272,7 @@ export default function StaffManagementPage() {
             <span>Staff Management</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Create and manage staff accounts for POS sales, medicine inventory viewing, and online order deliveries.
+            Create staff accounts, view daily/monthly/yearly sales performance, and track assigned deliveries.
           </p>
         </div>
 
@@ -173,17 +318,17 @@ export default function StaffManagementPage() {
         </div>
       </div>
 
-      {/* Search & Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Search Toolbar + Shared Table Component */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/85">
           <div className="relative w-full sm:max-w-sm">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search staff by name, email, or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-medical-blue-500 transition-colors"
+              className="w-full h-9 pl-9 pr-4 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-medical-blue-500 transition-colors"
             />
           </div>
           <span className="text-xs font-bold text-slate-400">
@@ -191,115 +336,12 @@ export default function StaffManagementPage() {
           </span>
         </div>
 
-        {isLoading ? (
-          <div className="h-56 flex flex-col items-center justify-center gap-3 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-medical-blue-600" />
-            <span className="text-sm font-medium">Loading staff accounts...</span>
-          </div>
-        ) : filteredStaff.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 font-extrabold text-[11px] tracking-wider uppercase border-b border-slate-100">
-                  <th className="px-6 py-4">Staff Member</th>
-                  <th className="px-6 py-4">Contact</th>
-                  <th className="px-6 py-4 text-center">Active Deliveries</th>
-                  <th className="px-6 py-4 text-center">Completed</th>
-                  <th className="px-6 py-4">Joined</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {filteredStaff.map((staff) => (
-                  <tr key={staff.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-medical-blue-50 border border-medical-blue-200/70 flex items-center justify-center text-medical-blue-700 font-black text-xs shrink-0">
-                          {staff.name ? staff.name.charAt(0).toUpperCase() : "S"}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900">{staff.name || "Unnamed Staff"}</div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                            Staff
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                        <Mail size={12} className="text-slate-400" />
-                        <span>{staff.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Phone size={12} className="text-slate-400" />
-                        <span>{staff.phone || "No phone"}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          staff.activeDeliveries > 0
-                            ? "bg-sky-50 text-sky-700 border border-sky-200"
-                            : "bg-slate-50 text-slate-400 border border-slate-200"
-                        }`}
-                      >
-                        <Truck size={12} />
-                        <span>{staff.activeDeliveries || 0}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <CheckCircle2 size={12} />
-                        <span>{staff.completedDeliveries || 0}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={12} className="text-slate-400" />
-                        <span>{new Date(staff.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEditModal(staff)}
-                          className="p-2 rounded-lg text-slate-500 hover:text-medical-blue-600 hover:bg-medical-blue-50 transition-colors cursor-pointer"
-                          title="Edit Staff"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => setStaffToDelete(staff)}
-                          className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Delete Staff"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-16 text-center flex flex-col items-center justify-center px-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
-              <UserCog size={26} />
-            </div>
-            <h3 className="text-base font-bold text-slate-800">No Staff Accounts Found</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">
-              Create your first staff account so they can log in to the Staff Dashboard, record POS sales, and complete assigned online deliveries.
-            </p>
-            <Button
-              onClick={openAddModal}
-              className="mt-4 gap-2 bg-medical-blue-600 hover:bg-medical-blue-700 text-white rounded-xl px-4 py-2 text-xs font-bold"
-            >
-              <Plus size={15} />
-              <span>Create First Staff Account</span>
-            </Button>
-          </div>
-        )}
+        <Table
+          TableHeads={staffColumns}
+          TableRows={filteredStaff}
+          isLoading={isLoading}
+          emptyMessage="No staff accounts found. Click 'Add New Staff' to create one."
+        />
       </div>
 
       {/* Add / Edit Staff Modal */}
@@ -353,7 +395,7 @@ export default function StaffManagementPage() {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 font-medium">
-            Staff accounts can log in via the standard login page using their Email &amp; Password. They will automatically access the dedicated Staff Dashboard (POS Sales, Medicines, and Assigned Orders).
+            Staff accounts log in via the standard login page using their Email &amp; Password and get access to the dedicated Staff Dashboard (Sales POS, Medicines, Assigned Orders).
           </div>
         </div>
       </Modal>

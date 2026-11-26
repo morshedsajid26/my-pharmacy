@@ -538,7 +538,7 @@ export default function PurchasesPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-slate-400 italic">No item details available for this record</td>
+                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400 italic">No item details available for this record</td>
                   </tr>
                 )}
               </tbody>

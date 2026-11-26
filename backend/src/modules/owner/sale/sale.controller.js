@@ -11,7 +11,7 @@ export const getSalesHistory = async (req, res) => {
 
 export const recordSale = async (req, res) => {
   try {
-    const sale = await saleService.recordSaleService(req.body);
+    const sale = await saleService.recordSaleService(req.body, req.user?.id || null);
     return res.status(201).json({ success: true, message: 'Sale recorded successfully', data: sale });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
