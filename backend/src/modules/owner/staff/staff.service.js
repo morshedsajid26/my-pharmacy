@@ -28,7 +28,7 @@ export const getAllStaffService = async () => {
         },
       },
       sales: {
-        where: { date: { gte: startOfMonth } },
+        where: { isOnline: false, date: { gte: startOfMonth } },
         select: {
           id: true,
           date: true,
@@ -94,7 +94,7 @@ export const getStaffDetailsService = async (staffId) => {
 
   const [sales, assignedOrders] = await Promise.all([
     prisma.sale.findMany({
-      where: { staffId },
+      where: { staffId, isOnline: false },
       include: {
         customer: { select: { id: true, name: true, phone: true } },
         items: { include: { medicine: { select: { id: true, name: true } } } },

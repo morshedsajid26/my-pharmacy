@@ -2,7 +2,7 @@ import * as saleService from './sale.service.js';
 
 export const getSalesHistory = async (req, res) => {
   try {
-    const sales = await saleService.getSalesHistoryService();
+    const sales = await saleService.getSalesHistoryService(req.user);
     return res.status(200).json({ success: true, count: sales.length, data: sales });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

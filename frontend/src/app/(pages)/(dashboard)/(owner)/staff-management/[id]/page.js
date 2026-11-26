@@ -181,15 +181,15 @@ export default function ViewStaffPage() {
         key: "date",
         Title: "Date",
         align: "left",
-        width: "20%",
+        width: "35%",
         render: (row) => (
           <span className="font-bold text-slate-900 text-xs">{row.displayDate}</span>
         ),
       },
       {
         key: "salesCount",
-        Title: "Total Sales",
-        width: "14%",
+        Title: "POS Bills",
+        width: "25%",
         render: (row) => (
           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold text-xs font-mono">
             {row.salesCount}
@@ -197,32 +197,10 @@ export default function ViewStaffPage() {
         ),
       },
       {
-        key: "posCount",
-        Title: "POS Sales",
-        width: "16%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-slate-800 font-mono">৳{Number(row.posAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.posCount} bills</span>
-          </div>
-        ),
-      },
-      {
-        key: "onlineCount",
-        Title: "Online Deliveries",
-        width: "18%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-sky-700 font-mono">৳{Number(row.onlineAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.onlineCount} orders</span>
-          </div>
-        ),
-      },
-      {
         key: "totalAmount",
-        Title: "Total Amount",
+        Title: "POS Sales Amount",
         align: "right",
-        width: "22%",
+        width: "40%",
         render: (row) => (
           <span className="font-black text-emerald-700 font-mono text-sm">
             ৳{Number(row.totalAmount || 0).toFixed(2)}
@@ -239,15 +217,15 @@ export default function ViewStaffPage() {
         key: "monthKey",
         Title: "Month",
         align: "left",
-        width: "24%",
+        width: "35%",
         render: (row) => (
           <span className="font-bold text-slate-900 text-xs">{row.monthLabel}</span>
         ),
       },
       {
         key: "salesCount",
-        Title: "Total Sales",
-        width: "14%",
+        Title: "POS Bills",
+        width: "25%",
         render: (row) => (
           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold text-xs font-mono">
             {row.salesCount}
@@ -255,32 +233,10 @@ export default function ViewStaffPage() {
         ),
       },
       {
-        key: "posAmount",
-        Title: "POS Sales",
-        width: "18%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-slate-800 font-mono">৳{Number(row.posAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.posCount} bills</span>
-          </div>
-        ),
-      },
-      {
-        key: "onlineAmount",
-        Title: "Online Deliveries",
-        width: "18%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-sky-700 font-mono">৳{Number(row.onlineAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.onlineCount} orders</span>
-          </div>
-        ),
-      },
-      {
         key: "totalAmount",
-        Title: "Monthly Total",
+        Title: "Monthly POS Total",
         align: "right",
-        width: "26%",
+        width: "40%",
         render: (row) => (
           <span className="font-black text-emerald-700 font-mono text-sm">
             ৳{Number(row.totalAmount || 0).toFixed(2)}
@@ -297,15 +253,15 @@ export default function ViewStaffPage() {
         key: "year",
         Title: "Year",
         align: "left",
-        width: "20%",
+        width: "35%",
         render: (row) => (
           <span className="font-black text-slate-900 font-mono text-sm">{row.year}</span>
         ),
       },
       {
         key: "salesCount",
-        Title: "Total Sales",
-        width: "16%",
+        Title: "POS Bills",
+        width: "25%",
         render: (row) => (
           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold text-xs font-mono">
             {row.salesCount}
@@ -313,32 +269,10 @@ export default function ViewStaffPage() {
         ),
       },
       {
-        key: "posAmount",
-        Title: "POS Sales",
-        width: "20%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-slate-800 font-mono">৳{Number(row.posAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.posCount} bills</span>
-          </div>
-        ),
-      },
-      {
-        key: "onlineAmount",
-        Title: "Online Deliveries",
-        width: "20%",
-        render: (row) => (
-          <div className="text-xs">
-            <span className="font-bold text-sky-700 font-mono">৳{Number(row.onlineAmount || 0).toFixed(2)}</span>
-            <span className="text-[10px] text-slate-400 block">{row.onlineCount} orders</span>
-          </div>
-        ),
-      },
-      {
         key: "totalAmount",
-        Title: "Yearly Total",
+        Title: "Yearly POS Total",
         align: "right",
-        width: "24%",
+        width: "40%",
         render: (row) => (
           <span className="font-black text-emerald-700 font-mono text-sm">
             ৳{Number(row.totalAmount || 0).toFixed(2)}
@@ -525,12 +459,12 @@ export default function ViewStaffPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex items-center justify-between shadow-2xs">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Today&apos;s Sales</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Today&apos;s POS Sales</p>
             <p className="text-2xl font-black text-slate-900 font-mono mt-1">
               ৳{Number(salesSummary.today?.amount || 0).toFixed(2)}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              {salesSummary.today?.count || 0} sales ({salesSummary.today?.posCount || 0} POS · {salesSummary.today?.onlineCount || 0} Online)
+              {salesSummary.today?.count || 0} POS bills today
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-medical-blue-50 text-medical-blue-600 flex items-center justify-center">
@@ -540,12 +474,12 @@ export default function ViewStaffPage() {
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex items-center justify-between shadow-2xs">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly Sales</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Monthly POS Sales</p>
             <p className="text-2xl font-black text-indigo-700 font-mono mt-1">
               ৳{Number(salesSummary.monthly?.amount || 0).toFixed(2)}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              {salesSummary.monthly?.count || 0} sales this month
+              {salesSummary.monthly?.count || 0} POS bills this month
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -555,12 +489,12 @@ export default function ViewStaffPage() {
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex items-center justify-between shadow-2xs">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Yearly Sales</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Yearly POS Sales</p>
             <p className="text-2xl font-black text-emerald-700 font-mono mt-1">
               ৳{Number(salesSummary.yearly?.amount || 0).toFixed(2)}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              {salesSummary.yearly?.count || 0} sales this year
+              {salesSummary.yearly?.count || 0} POS bills this year
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -570,12 +504,12 @@ export default function ViewStaffPage() {
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex items-center justify-between shadow-2xs">
           <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">All-Time Sales</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">All-Time POS Sales</p>
             <p className="text-2xl font-black text-slate-900 font-mono mt-1">
               ৳{Number(salesSummary.allTime?.amount || 0).toFixed(2)}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              {salesSummary.allTime?.count || 0} total transactions
+              {salesSummary.allTime?.count || 0} total POS bills
             </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">

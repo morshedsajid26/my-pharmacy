@@ -23,7 +23,7 @@ import {
 import { cn } from "../utils/cn";
 import { useUI } from "../context/UIContext";
 import { useAuth } from "../context/AuthContext";
-import { usePendingOrdersCount, useStaffAssignedOrders } from "@/hooks/useOnlineOrders";
+import { usePendingOrdersCount } from "@/hooks/useOnlineOrders";
 
 const ownerMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -61,8 +61,6 @@ export function Sidebar() {
   const menuItems = isStaffUser ? staffMenuItems : ownerMenuItems;
 
   const { pendingCount: pendingOrdersCount } = usePendingOrdersCount();
-  const { orders: activeAssignedOrders } = useStaffAssignedOrders("SHIPPED");
-  const assignedPendingCount = isStaffUser ? activeAssignedOrders.length : 0;
 
   return (
     <>
@@ -152,19 +150,6 @@ export function Sidebar() {
                     )}
                   >
                     {pendingOrdersCount}
-                  </span>
-                )}
-
-                {item.path === "/assigned-orders" && assignedPendingCount > 0 && (
-                  <span
-                    className={cn(
-                      "bg-medical-blue-600 text-white font-mono font-bold text-[10px] px-1.5 min-w-5 h-5 rounded-full flex items-center justify-center shrink-0",
-                      isSidebarCollapsed
-                        ? "absolute top-1 right-1.5 min-w-4 h-4 text-[9px] px-1"
-                        : "ml-auto"
-                    )}
-                  >
-                    {assignedPendingCount}
                   </span>
                 )}
 

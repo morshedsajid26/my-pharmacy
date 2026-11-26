@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 import InputField from "@/components/InputField";
 import Dropdown from "@/components/Dropdown";
 import { useSales } from "@/hooks/useSales";
+import { useAuth } from "@/context/AuthContext";
 import { useMedicines } from "@/hooks/useMedicines";
 import { useCustomers } from "@/hooks/useCustomers";
 import toast from "react-hot-toast";
@@ -174,11 +175,36 @@ export default function SalesPage() {
     }
   };
 
+  const { user } = useAuth();
+  const isStaff = String(user?.role || "").toLowerCase() === "staff";
+
   const saleColumns = useMemo(() => [
-    { key: "invoiceNo", Title: "Invoice No", width: "18%", render: (row) => <span className="font-mono font-bold text-slate-800">#{row.invoiceNo}</span> },
-    { key: "createdAt", Title: "Date", width: "15%", render: (row) => new Date(row.createdAt).toLocaleDateString() },
-    { key: "customer", Title: "Customer", width: "30%", render: (row) => <span className="font-semibold text-slate-700">{row.customer?.name || row.walkingCustomerName || "Walking Customer"}</span> },
-    { key: "totalAmount", Title: "Total", width: "15%", render: (row) => <span className="font-black text-slate-900">৳{row.totalAmount?.toFixed(2)}</span> },
+    { key: "invoiceNo", Title: "Invoice No", width: "16%", render: (row) => <span className="font-mono font-bold text-slate-800">#{row.invoiceNo}</span> },
+    { key: "createdAt", Title: "Date", width: "13%", render: (row) => new Date(row.createdAt).toLocaleDateString() },
+    { key: "customer", Title: "Customer", width: isStaff ? "34%" : "24%", render: (row) => <span className="font-semibold text-slate-700">{row.customer?.name || row.walkingCustomerName || "Walking Customer"}</span> },
+    ...(!isStaff
+      ? [
+          {
+            key: "soldBy",
+            Title: "Sold By",
+            width: "14%",
+            sortable: false,
+            render: (row) =>
+              row.isOnline ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                  {row.staff?.name ? `Online (${row.staff.name})` : "Online"}
+                </span>
+              ) : row.staff?.name ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                  {row.staff.name}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400">Owner</span>
+              ),
+          },
+        ]
+      : []),
+    { key: "totalAmount", Title: "Total", width: "13%", render: (row) => <span className="font-black text-slate-900">৳{row.totalAmount?.toFixed(2)}</span> },
     { 
       key: "paymentStatus", 
       Title: "Status", 
@@ -196,7 +222,7 @@ export default function SalesPage() {
     { 
       key: "actions", 
       Title: "Action", 
-      width: "10%",
+      width: "8%",
       sortable: false, 
       render: (row) => (
         <div className="flex items-center justify-center gap-2">
@@ -213,7 +239,7 @@ export default function SalesPage() {
         </div>
       )
     }
-  ], []);
+  ], [isStaff]);
 
   return (
     <div className="space-y-6">

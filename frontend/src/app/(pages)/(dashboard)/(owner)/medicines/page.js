@@ -9,9 +9,12 @@ import { Modal } from "@/components/Modal";
 import InputField from "@/components/InputField";
 import Dropdown from "@/components/Dropdown";
 import { useMedicines } from "@/hooks/useMedicines";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 export default function MedicinesPage() {
+  const { user } = useAuth();
+  const isStaff = String(user?.role || "").toLowerCase() === "staff";
   const [searchTerm, setSearchTerm] = useState("");
   const {
     medicines,
@@ -219,35 +222,39 @@ export default function MedicinesPage() {
           </span>
         ),
       },
-      {
-        key: "actions",
-        Title: "Actions",
-        width: "5%",
-        sortable: false,
-        render: (row) => (
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={() => openEditModal(row)}
-              className="p-1.5 text-slate-400 hover:text-medical-blue-600 hover:bg-medical-blue-50 rounded-lg transition-colors"
-            >
-              <Edit2 size={16} />
-            </button>
-            <button
-              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              onClick={() => confirmDelete(row)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Trash2 size={16} />
-              )}
-            </button>
-          </div>
-        ),
-      },
+      ...(!isStaff
+        ? [
+            {
+              key: "actions",
+              Title: "Actions",
+              width: "5%",
+              sortable: false,
+              render: (row) => (
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => openEditModal(row)}
+                    className="p-1.5 text-slate-400 hover:text-medical-blue-600 hover:bg-medical-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    onClick={() => confirmDelete(row)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
+                  </button>
+                </div>
+              ),
+            },
+          ]
+        : []),
     ],
-    [isDeleting, confirmDelete, openEditModal],
+    [isStaff, isDeleting, confirmDelete, openEditModal],
   );
 
   return (
@@ -255,16 +262,20 @@ export default function MedicinesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Medicine Management
+            {isStaff ? "Medicines Inventory" : "Medicine Management"}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Manage your pharmacy inventory and stock levels
+            {isStaff
+              ? "View pharmacy medicines, stock availability, and pricing"
+              : "Manage your pharmacy inventory and stock levels"}
           </p>
         </div>
-        <Button onClick={openAddModal} className="gap-2">
-          <Plus size={18} />
-          <span>Add New Medicine</span>
-        </Button>
+        {!isStaff && (
+          <Button onClick={openAddModal} className="gap-2">
+            <Plus size={18} />
+            <span>Add New Medicine</span>
+          </Button>
+        )}
       </div>
 
       <Card className="overflow-hidden">

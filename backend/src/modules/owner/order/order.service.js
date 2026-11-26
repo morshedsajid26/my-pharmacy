@@ -377,7 +377,7 @@ export const getStaffDashboardService = async (staffId) => {
     prisma.medicine.count(),
     prisma.medicine.count({ where: { stock: { lte: 10 } } }),
     prisma.sale.aggregate({
-      where: { staffId, date: { gte: startOfToday } },
+      where: { staffId, isOnline: false, date: { gte: startOfToday } },
       _count: { id: true },
       _sum: { totalAmount: true },
     }),

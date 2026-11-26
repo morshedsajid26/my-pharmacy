@@ -1,7 +1,13 @@
 import prisma from '../../../config/db.js';
 
-export const getSalesHistoryService = async () => {
+export const getSalesHistoryService = async (currentUser = null) => {
+  const isStaff = String(currentUser?.role || '').toLowerCase() === 'staff';
+  const where = isStaff
+    ? { staffId: currentUser.id, isOnline: false }
+    : {};
+
   return await prisma.sale.findMany({
+    where,
     include: {
       customer: true,
       staff: { select: { id: true, name: true, email: true, role: true } },
